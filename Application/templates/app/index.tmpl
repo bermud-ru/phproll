@@ -45,15 +45,18 @@
 </footer>
 
 <script>
-    (function ($) {
-        document.application = new Application({
-            title: 'Roll SPA software []',
-            workspace: $("[role='workspace']"),
-            navbar: $('.navbar.navbar-inverse.navbar-fixed-top .container'),
-            hash: window.location.hash
-        });
-        document.application.run();
-    })(jQuery);
+//    http://stackoverflow.com/questions/11663559/how-to-install-jquery-with-composer
+//    http://www.phpclasses.org/blog/package/8429/post/1-Using-Composer-to-Install-JavaScript-CSS-and-Images-Under-the-Web-Document-Directory.html
+
+(function ($) {
+    document.sparoll = new SPARoll({
+        title: 'Roll SPA software []',
+        workspace: $("[role='workspace']"),
+        navbar: $('.navbar.navbar-inverse.navbar-fixed-top .container'),
+        hash: window.location.hash
+    });
+    document.sparoll.run();
+})(jQuery);
 </script>
 
 </body>

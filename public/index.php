@@ -8,7 +8,7 @@
  *
  */
 
-namespace Application;
+namespace Application;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 
 spl_autoload_register(function($className)
 {
