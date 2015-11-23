@@ -1,0 +1,11 @@
+.buildpath
+.empty
+.htaccess
+.idea
+.project
+.settings
+.DS_Store
+Capfile
+vendor
+composer*
+library*
