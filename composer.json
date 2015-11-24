@@ -26,6 +26,21 @@
     {
       "type": "git",
       "url": "https://github.com/bermud-ru/SPARoll.git"
+    },
+    {
+      "type": "package",
+      "package": {
+        "name": "bermud-ru/phproll",
+        "version": "dev-master",
+        "source": {
+          "url": "git://github.com/bermud-ru/PHPRoll.git",
+          "type": "git",
+          "reference": "master"
+        },
+        "autoload": {
+          "psr-0": { "": "src/" }
+        }
+      }
     }
   ],
 
