@@ -1,0 +1,45 @@
+{
+  "name": "bermud-ru/PHPRoll-dev",
+  "version": "0.1.0",
+  "type": "project",
+  "description": "RESTFull SPA framework (PHP-proxy & Javascript DOM application)",
+  "keywords": [
+    "rest",
+    "spa",
+    "framework"
+  ],
+  "homepage": "http://www.infotelecom.pro/",
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Andrew Novikoff",
+      "email": "bermud@nm.ru",
+      "homepage": "http://www.infotelecom.pro/",
+      "role": "Founder and project lead"
+    }
+  ],
+  "autoload": {
+    "psr-0": { "": "src/" }
+  },
+
+  "repositories": [
+
+  ],
+
+
+  "require": {
+    "php": ">=5.6.0",
+    "ext-curl": "*",
+    "ext-dom": "*",
+    "ext-fileinfo": "*",
+    "ext-iconv": "*",
+    "ext-json": "*",
+    "ext-libxml": "*",
+    "ext-pcre": "*",
+    "ext-PDO": "*",
+    "ext-SimpleXML": "*",
+    "ext-xml": "*",
+    "ext-mbstring": "*",
+
+  }
+}

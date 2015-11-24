@@ -7,5 +7,4 @@
 .DS_Store
 Capfile
 vendor
-composer*
 library*
