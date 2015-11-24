@@ -25,7 +25,7 @@
   "repositories": [
     {
       "type": "git",
-      "url": "https://github.com/bermud-ru/SPARoll.git"
+      "url": "git://github.com/bermud-ru/sparoll.git"
     },
     {
       "type": "package",
@@ -33,7 +33,7 @@
         "name": "bermud-ru/phproll",
         "version": "dev-master",
         "source": {
-          "url": "git://github.com/bermud-ru/PHPRoll.git",
+          "url": "git://github.com/bermud-ru/phproll.git",
           "type": "git",
           "reference": "master"
         },
