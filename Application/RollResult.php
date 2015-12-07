@@ -1,6 +1,6 @@
 <?php
 /**
- *  CRollResult.php
+ *  RollResult.php
  *
  * @category Application
  * @author Андрей Новиков <bermud@nm.ru>
@@ -8,7 +8,7 @@
  */
 namespace Application;
 
-class CRollResult {
+class RollResult {
     protected $owner = null;
     protected $type = 'json';
     public $isError = false;

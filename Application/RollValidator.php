@@ -1,6 +1,6 @@
 <?php
 /**
- *  CRollValidator.php
+ *  RollValidator.php
  *
  * @category Application
  * @author Андрей Новиков <bermud@nm.ru>
@@ -8,7 +8,7 @@
  */
 namespace Application;
 
-class CRollValidator {
+class RollValidator {
     protected $_owner;
 
     function __construct(&$owner){
