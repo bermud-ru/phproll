@@ -48,7 +48,10 @@
             "Application/RollHelper.php",
             "Application/RollRest.php",
             "Application/RollResult.php",
-            "Application/RollValidator.php"
+            "Application/RollValidator.php",
+            "Application/Extensions/File.php",
+            "Application/Extensions/Rest.php",
+            "Application/Extensions/Sqlite.php"
           ]
         }
       }
