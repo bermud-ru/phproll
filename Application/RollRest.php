@@ -26,8 +26,8 @@ class RollRest implements \Application\IRollRest
         $this->_config = $config;
         $this->_instance = $this;
         $this->_method = strtolower($_SERVER['REQUEST_METHOD']);
-        $this->_result = new \Application\CResult($this->_instance);
-        $this->_validator = new \Application\CValidator($this->_instance);
+        $this->_result = new \Application\RollResult($this->_instance);
+        $this->_validator = new \Application\RollValidator($this->_instance);
         $this->getHelper(@$this->_config['helper']);
     }
 
@@ -41,7 +41,7 @@ class RollRest implements \Application\IRollRest
             $type = strtolower($cfg['type']);
             $class = '\Application\Extensions\\' . ucfirst($type);
             $object = new $class($cfg);
-            if ($object instanceof \Application\IRest) return $object->instance($route);
+            if ($object instanceof \Application\IRollRest) return $object->instance($route);
         }
 
         return null;
