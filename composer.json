@@ -42,7 +42,7 @@
           "reference": "master"
         },
         "autoload": {
-          "psr-4": { "bermud-ru/phproll": "Application/" }
+          "namespace": { "Application": "Application/" }
         }
       }
     }
