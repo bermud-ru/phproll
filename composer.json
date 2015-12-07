@@ -24,6 +24,10 @@
 
   "repositories": [
     {
+      "url": "git://github.com/bermud-ru/sparoll.git",
+      "type": "git"
+    },
+    {
       "type": "git",
       "url": "git://github.com/bermud-ru/sparoll.git"
     },
@@ -45,6 +49,7 @@
   ],
 
   "require": {
+    "bermud-ru/sparoll":"*@dev",
     "php": ">=5.6.0",
     "ext-curl": "*",
     "ext-dom": "*",
@@ -56,7 +61,31 @@
     "ext-PDO": "*",
     "ext-SimpleXML": "*",
     "ext-xml": "*",
-    "ext-mbstring": "*",
-    "bermud-ru/sparoll": "*"
+    "ext-mbstring": "*"
+  },
+
+  "scripts": {
+    "post-install-cmd": [
+      "mkdir -p public/bootstrap",
+      "cp -R vendor/twbs/bootstrap/dist/ public/bootstrap/",
+      "cp -R vendor/bermud-ru/sparoll/*.js public/js/",
+      "mkdir -p public/js/roll",
+      "cp -R vendor/bermud-ru/sparoll/roll/ public/js/roll/",
+      "mkdir -p public/js/handlebars",
+      "cp -R vendor/bermud-ru/sparoll/handlebars/*.js public/js/handlebars/"
+    ],
+    "post-update-cmd": [
+      "mkdir -p public/bootstrap",
+      "cp -R vendor/twbs/bootstrap/dist/ public/bootstrap/",
+      "mkdir -p public/js",
+      "cp -R vendor/bermud-ru/sparoll/*.js public/js/",
+      "mkdir -p public/js/roll",
+      "cp -R vendor/bermud-ru/sparoll/roll/ public/js/roll/",
+      "mkdir -p public/js/handlebars",
+      "cp -R vendor/bermud-ru/sparoll/handlebars/*.js public/js/handlebars/"
+    ]
   }
 }
+
+
+

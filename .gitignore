@@ -8,3 +8,4 @@
 Capfile
 vendor
 library*
+composer.lock
