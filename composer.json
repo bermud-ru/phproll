@@ -42,7 +42,7 @@
           "reference": "master"
         },
         "autoload": {
-          "namespace": { "Application": "Application/" }
+          "psr-0": { "Application": "Application/" }
         }
       }
     }
