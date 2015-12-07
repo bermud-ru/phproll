@@ -42,14 +42,7 @@
           "reference": "master"
         },
         "autoload": {
-          "classmap": [
-            "Application/IRollRest.php",
-            "Application/PHPRoll.php",
-            "Application/RollHelper.php",
-            "Application/RollRest.php",
-            "Application/RollResult.php",
-            "Application/RollValidator.php"
-          ]
+          "psr-4": { "bermud-ru/phproll": "Application/" }
         }
       }
     }
