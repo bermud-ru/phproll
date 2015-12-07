@@ -42,7 +42,7 @@
           "reference": "master"
         },
         "autoload": {
-          "psr-0": { "PHPRoll": "Application/" }
+          "psr-0": { "bermud-ru/phproll": "Application/" }
         }
       }
     }
