@@ -57,6 +57,6 @@
     "ext-SimpleXML": "*",
     "ext-xml": "*",
     "ext-mbstring": "*",
-    "bermud-ru/SPARoll": "*"
+    "bermud-ru/sparoll": "*"
   }
 }
