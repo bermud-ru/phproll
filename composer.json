@@ -1,65 +1,46 @@
 {
-  "name": "bermud-ru/phproll-dev",
+  "name": "bermud-ru/index.spa.php",
   "version": "0.1.0",
   "type": "project",
-  "description": "RESTFull SPA framework (PHP-proxy & Javascript DOM application)",
+  "description": "Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend",
   "keywords": [
-    "rest",
-    "spa",
-    "framework"
+    "simple", "PHP",
+    "rest", "application",
+    "ria", "spa",
+    "javascript", "framework"
   ],
-  "homepage": "http://www.infotelecom.pro/",
+  "homepage": "http://novikov.be/",
   "license": "BSD-3-Clause",
   "authors": [
     {
       "name": "Andrew Novikoff",
-      "email": "bermud@nm.ru",
-      "homepage": "http://www.infotelecom.pro/",
+      "email": "andrey@novikov.be",
+      "homepage": "http://novikov.be/",
       "role": "Founder and project lead"
     }
   ],
-  "autoload": {
-    "psr-0": { "Application": "Application/" }
-  },
 
   "repositories": [
     {
-      "url": "git://github.com/bermud-ru/sparoll.git",
-      "type": "git"
-    },
-    {
-      "type": "git",
-      "url": "git://github.com/bermud-ru/sparoll.git"
-    },
-    {
       "type": "package",
       "package": {
-        "name": "bermud-ru/phproll",
+        "name": "bermud-ru/index.spa.php",
         "version": "dev-master",
         "source": {
-          "url": "git://github.com/bermud-ru/phproll.git",
+          "url": "git@github.com:bermud-ru/index.spa.php.git",
           "type": "git",
           "reference": "master"
-        },
-        "autoload": {
-          "classmap": [
-            "Application/IRollRest.php",
-            "Application/PHPRoll.php",
-            "Application/RollHelper.php",
-            "Application/RollRest.php",
-            "Application/RollResult.php",
-            "Application/RollValidator.php",
-            "Application/Extensions/File.php",
-            "Application/Extensions/Rest.php",
-            "Application/Extensions/Sqlite.php"
-          ]
         }
       }
+    },
+    {
+      "url": "git://github.com/bermud-ru/jsroll.git",
+      "type": "git"
     }
   ],
 
   "require": {
-    "bermud-ru/sparoll":"*@dev",
+    "bermud-ru/jsroll":"*@dev",
     "php": ">=5.6.0",
     "ext-curl": "*",
     "ext-dom": "*",
@@ -76,26 +57,12 @@
 
   "scripts": {
     "post-install-cmd": [
-      "mkdir -p public/bootstrap",
-      "cp -R vendor/twbs/bootstrap/dist/ public/bootstrap/",
-      "cp -R vendor/bermud-ru/sparoll/*.js public/js/",
-      "mkdir -p public/js/roll",
-      "cp -R vendor/bermud-ru/sparoll/roll/ public/js/roll/",
-      "mkdir -p public/js/handlebars",
-      "cp -R vendor/bermud-ru/sparoll/handlebars/*.js public/js/handlebars/"
+      "mkdir -p public/js",
+      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
     ],
     "post-update-cmd": [
-      "mkdir -p public/bootstrap",
-      "cp -R vendor/twbs/bootstrap/dist/ public/bootstrap/",
       "mkdir -p public/js",
-      "cp -R vendor/bermud-ru/sparoll/*.js public/js/",
-      "mkdir -p public/js/roll",
-      "cp -R vendor/bermud-ru/sparoll/roll/ public/js/roll/",
-      "mkdir -p public/js/handlebars",
-      "cp -R vendor/bermud-ru/sparoll/handlebars/*.js public/js/handlebars/"
+      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
     ]
   }
 }
-
-
-

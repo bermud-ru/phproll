@@ -1,0 +1,119 @@
+<?php
+
+namespace Application;
+if (in_array($_SERVER['REQUEST_METHOD'], array('POST'))) {
+    if ($error) $json(array('result'=>'error', 'message'=> $error['message']));
+}
+$next = 'index';
+$page['GET']['header'][] = <<<EOT
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="description" content="git@github.com:bermud-ru/index.spa.php.git"/>
+    <meta name="author" content="Андрей Новиков <andrey@novikov.be>"/>
+    <script type="text/javascript" src="/js/jsroll.min.js" charset="UTF-8"></script>
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/css/index.css" rel="stylesheet" />
+    <title>Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend</title>
+    <script id="handlebars-alert" type="text/x-template">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    <span class="result">{%error%}</span> <span class="message">{%message%}</span>
+    </script>
+</head>
+EOT;
+$page['GET']['body'][] = <<<EOT
+<body>
+<div id="app" role="application">
+    <div class="container" role="workspace">
+        <div class="jumbotron panel panel-default">
+EOT;
+$page['POST']['body'][] = $page['GET']['body'][] = <<<EOT
+            <form action="{$script}" method="post" datatype="html">
+                <div class="row">
+                    <h5>Caption SPA frame</h5>
+                </div>
+                <div class="row jumbotron-padding">
+                    <label class="radio-inline"><input type="radio" name="{$next}[radioGroup]" value="1" checked="checked"> radio param #1</label>
+                    <label class="radio-inline"><input type="radio" name="{$next}[radioGroup]" value="2"> radio param #2</label>
+                </div>
+                <div class="row jumbotron-padding">
+                    <h4>Choose date</h4>
+                    <div class="col-sm-3"></div>
+                    <div class="col-sm-6 ">
+                        <div class="form-group">
+                            <div class='input-group date datetimepicker'>
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                                <input type='text' class="form-control" name="{$next}[birfday]" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3"></div>
+                </div>
+                <div class="row next hrcolor">
+                    <div class="form-group nextStep"><span>Next step</span><i class="glyphicon glyphicon-play-circle"></i></div>
+                </div>
+            </form>
+            <script type="text/javascript">
+                $(function () {
+                    $('.input-group.date.datetimepicker').datepicker('update', new Date());
+                });
+            </script>
+EOT;
+$page['GET']['body'][] = <<<EOT
+        </div>
+    </div>
+</div>
+<div class="alert alert-danger" style="display: none;">
+</div>
+
+<script type="text/javascript">
+(function ( $, window, undefined ) {
+'use strict';
+var ajaxProcess = false, owner = null;
+var template = Handlebars.compile($("#handlebars-alert").html());
+function flashMsg(data){
+    $('.alert.alert-danger').html(template(data)).show().delay(1000).fadeOut('slow');
+    return false;
+}
+$('.jumbotron.panel.panel-default').on('click', '.nextStep', function(e){
+if (!ajaxProcess) {
+    ajaxProcess = true;
+    owner = $(e.delegateTarget);
+    owner.fadeOut(function() {
+        var form = owner.find('form');
+        if (form.length) $.ajax({
+                url: form.attr('action'),
+                type: form.attr('method') || 'post',
+                dataType: form.attr('datatype') || 'html',
+                data: form.serialize(),
+            }).fail(function () {
+                flashMsg({result:'error', message:'Произошла ошибка передачи данных!'});
+                owner.fadeIn();
+                ajaxProcess = false;
+            }).done(function (data) {
+                ajaxProcess = false;
+                try {
+                    var json = JSON.parse(data);
+                } catch (e) {
+                    owner.html(data).fadeIn();
+                    return false;
+                }
+                flashMsg(json);
+                owner.fadeIn();
+            });
+    });
+}
+});
+}(jQuery, window));
+</script>
+</body>
+EOT;
+$page['GET']['footer'][] = <<<EOT
+</html>
+EOT;
+array_walk_recursive($page[$_SERVER['REQUEST_METHOD']], function($item){ echo $item; });
+?>

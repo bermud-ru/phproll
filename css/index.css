@@ -1,0 +1,68 @@
+html {
+    position: relative;
+    min-height: 100%;
+}
+.container {
+    height:100%;
+    text-align:center;
+    vertical-align:middle;
+}
+.jumbotron.panel.panel-default {
+    position: fixed;
+    width: 530px;
+    height: 380px;
+    margin-left: -265px;
+    margin-top: -190px;
+    top: 50%;
+    left: 50%;
+    text-align: center;
+}
+.jumbotron-padding {
+    padding: 2em 0;
+}
+.input-group.date.datetimepicker span {
+    color: orangered;
+    border: none;
+    background: none;
+}
+.input-group.date.datetimepicker .form-control {
+    border:0 solid transparent;
+    background:transparent;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+}
+.hrcolor {
+    border-top: 1px solid #CCC;
+    padding: 1.5em 0;
+    position: absolute;
+    bottom: 0;
+    height: 60px;
+}
+@media screen and (min-width: 768px) {
+    .hrcolor {
+        width: 82%;
+    }
+}
+@media screen and (max-width: 768px) {
+    .hrcolor {
+        width: 100%
+    }
+}
+
+.next {
+    line-height: 1em;
+    font-weight: bold;
+    vertical-align: top;
+}
+.next .glyphicon {
+    margin: 0 .5em -2px .5em;
+    font-size: 125%;
+    font-weight: normal;
+    vertical-align: bottom;
+    color: orangered;
+}
+.result {
+    font-weight: bold;
+    text-align: center;
+}

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# @category install script
+# @author Андрей Новиков <andrey@novikov.be>
+# @data 07/12/2015
+
+echo "Post-update scripting ..."
+cp ./vendor/bermud-ru/index.spa.php/index.php ./public/
+cp -n ./vendor/bermud-ru/index.spa.php/config.php ./
+cp -n ./vendor/bermud-ru/index.spa.php/css/* ./public/css/
+cp -n ./vendor/bermud-ru/index.spa.php/js/* ./public/js/
+cp -n ./vendor/bermud-ru/index.spa.php/view/* ./view/
