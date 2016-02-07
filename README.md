@@ -5,20 +5,20 @@
 {
     "repositories": [
     {
-	"url": "git@github.com:bermud-ru/index.spa.php.git",
+	"url": "git@github.com:bermud-ru/phproll.git",
 	"type": "git"
     }
     ],
     "require": {
-	"bermud-ru/index.spa.php":"*@dev"
+	"bermud-ru/phproll":"*@dev"
     },
 
     "scripts": {
 	"post-install-cmd": [
-	"./vendor/bermud-ru/index.spa.php/post-install"
+	"./vendor/bermud-ru/phproll/post-install"
 	],
 	"post-update-cmd": [
-	"./vendor/bermud-ru/index.spa.php/post-update"
+	"./vendor/bermud-ru/phproll/post-update"
 	]
     }
 }
@@ -39,11 +39,11 @@ always_populate_raw_post_data = -1
 ## Nginx virtual host config
 ```
 server {
-    access_log  /var/log/nginx/index.spa.php.access.log combined;
-    error_log  /var/log/nginx/index.spa.php.error.log warn;
+    access_log  /var/log/nginx/phproll.access.log combined;
+    error_log  /var/log/nginx/phproll.error.log warn;
 
-    server_name index.spa.php www.index.spa.php;
-    set $host_path "/srv/index.spa.php";
+    server_name phproll www.phproll;
+    set $host_path "/srv/phproll";
     root $host_path/public;
     set $app_bootstrap "index.php";
     index $app_bootstrap;

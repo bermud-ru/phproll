@@ -1,5 +1,5 @@
 {
-  "name": "bermud-ru/index.spa.php",
+  "name": "bermud-ru/phproll",
   "version": "0.1.0",
   "type": "project",
   "description": "Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend",
@@ -24,10 +24,10 @@
     {
       "type": "package",
       "package": {
-        "name": "bermud-ru/index.spa.php",
+        "name": "bermud-ru/phproll",
         "version": "dev-master",
         "source": {
-          "url": "git@github.com:bermud-ru/index.spa.php.git",
+          "url": "git@github.com:bermud-ru/phproll.git",
           "type": "git",
           "reference": "master"
         }
