@@ -43,7 +43,8 @@ class PHPRoll
         $path = (isset($this->config['view']) ? $this->config['view'] : '') . $pattern;
         if (!file_exists($path)) {
             $options['error'] = array('message'=> "File [$pattern] not found");
-            $path = (isset($this->config['view']) ? $this->config['view'] : '') . $this->config['pattern']();
+
+            $path = (isset($this->config['view']) ? $this->config['view'] : '') . ($this->config['pattern']());
         }
         extract($options); ob_start(); require($path);
         return ob_get_clean();

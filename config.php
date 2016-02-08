@@ -10,11 +10,11 @@
 namespace Application;
 
 return array(
-    'view' => '../view/',
+    'view' => '../Application/view/',
     'route' => function($params){
         return $params;
     },
-    'pattern'=> function($param,  $value = 'index.phtml') {
+    'pattern'=> function($param=null,  $value = 'index.phtml') {
         return ($param) ? $param . '.phtml' : $value;
     }
 );

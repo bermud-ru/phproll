@@ -16,7 +16,7 @@ namespace Application;
  * @return string
  */
 
-$loader = require_once __DIR__.'/../vendor/autoload.php';
+#$loader = require_once __DIR__.'/../vendor/autoload.php';
 spl_autoload_register(function($className)
 {
     //$namespace=str_replace("\\","/",__NAMESPACE__);

@@ -15,7 +15,7 @@ $page['GET']['header'][] = <<<EOT
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="description" content="git@github.com:bermud-ru/phproll.git"/>
     <meta name="author" content="Андрей Новиков <andrey@novikov.be>"/>
-    <script type="text/javascript" src="/js/jsroll.min.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="/js/jsroll.js" charset="UTF-8"></script>
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="/css/index.css" rel="stylesheet" />
     <title>Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend</title>
@@ -57,11 +57,6 @@ $page['POST']['body'][] = $page['GET']['body'][] = <<<EOT
                     <div class="form-group nextStep"><span>Next step</span><i class="glyphicon glyphicon-play-circle"></i></div>
                 </div>
             </form>
-            <script type="text/javascript">
-                $(function () {
-                    $('.input-group.date.datetimepicker').datepicker('update', new Date());
-                });
-            </script>
 EOT;
 $page['GET']['body'][] = <<<EOT
         </div>
@@ -71,44 +66,10 @@ $page['GET']['body'][] = <<<EOT
 </div>
 
 <script type="text/javascript">
-(function ( $, window, undefined ) {
+(function ( g, undefined ) {
 'use strict';
-var ajaxProcess = false, owner = null;
-var template = Handlebars.compile($("#handlebars-alert").html());
-function flashMsg(data){
-    $('.alert.alert-danger').html(template(data)).show().delay(1000).fadeOut('slow');
-    return false;
-}
-$('.jumbotron.panel.panel-default').on('click', '.nextStep', function(e){
-if (!ajaxProcess) {
-    ajaxProcess = true;
-    owner = $(e.delegateTarget);
-    owner.fadeOut(function() {
-        var form = owner.find('form');
-        if (form.length) $.ajax({
-                url: form.attr('action'),
-                type: form.attr('method') || 'post',
-                dataType: form.attr('datatype') || 'html',
-                data: form.serialize(),
-            }).fail(function () {
-                flashMsg({result:'error', message:'Произошла ошибка передачи данных!'});
-                owner.fadeIn();
-                ajaxProcess = false;
-            }).done(function (data) {
-                ajaxProcess = false;
-                try {
-                    var json = JSON.parse(data);
-                } catch (e) {
-                    owner.html(data).fadeIn();
-                    return false;
-                }
-                flashMsg(json);
-                owner.fadeIn();
-            });
-    });
-}
-});
-}(jQuery, window));
+    event.bind();
+}( window ));
 </script>
 </body>
 EOT;
