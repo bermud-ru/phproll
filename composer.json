@@ -38,11 +38,18 @@
       "package": {
         "name": "bermud-ru/phproll",
         "version": "dev-master",
-        "source": {
-          "url": "git@github.com:bermud-ru/phproll.git",
-          "type": "git",
-          "reference": "master"
-        }
+        "source": [
+          {
+            "url": "git@github.com:bermud-ru/jsroll.git",
+            "type": "git",
+            "reference": "master"
+          },
+          {
+            "url": "git@github.com:bermud-ru/phproll.git",
+            "type": "git",
+            "reference": "master"
+          }
+        ]
       }
     }
   ],
