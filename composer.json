@@ -61,5 +61,11 @@
     ]
   },
 
+  "autoload": {
+    "classmap" : [
+      "Application/PHPRoll.php"
+    ]
+  },
+
   "download": "https://github.com/bermud-ru/phproll/archive/master.zip"
 }
