@@ -15,6 +15,7 @@ namespace Application;
 
 class PHPRoll
 {
+    protected $parent = null;
     protected $config = [];
     protected $script = null;
     protected $route = null;
@@ -24,13 +25,19 @@ class PHPRoll
     /**
      * @param $config данные из файла конфигурации
      */
-    public function __construct(&$config)
+    public function __construct(&$params)
     {
-        $this->config = $config;
-        $this->script = pathinfo(__FILE__,PATHINFO_BASENAME);
-        $this->route = $config['route'](array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH),1))));
-        $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-        $this->params = array();
+        $this->script = pathinfo(__FILE__, PATHINFO_BASENAME);
+        if (is_array($params)) {
+            $this->config = $params;
+            $this->route = $params['route'](array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1))));
+            $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
+            $this->params = array();
+        }
+        elseif ($params instanceof \Application\PHPRoll)
+        {
+            $this->parent = $params;
+        }
     }
 
     /**
@@ -64,7 +71,9 @@ class PHPRoll
         return $headers;
     }
 
-    public function run(){
+    public function run(&$method=null, &$params=[]){
+        if ($method && method_exists($this, $method)) return call_user_func_array($this->{$method}, $params);
+
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
@@ -79,7 +88,7 @@ class PHPRoll
                 $pattern = $this->config['pattern'](current($this->route));
         }
 
-        if ($pattern) echo $this->contex($pattern, array(
+        if ($pattern) return $this->contex($pattern, array(
             'params' => $this->params,
             'header' => $this->header,
             'route' => $this->route,
