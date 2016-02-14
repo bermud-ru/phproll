@@ -24,6 +24,18 @@
     {
       "type": "package",
       "package": {
+        "name": "bermud-ru/jsroll",
+        "version": "dev-master",
+        "source": {
+          "url": "git@github.com:bermud-ru/jsroll.git",
+          "type": "git",
+          "reference": "master"
+        }
+      }
+    },
+    {
+      "type": "package",
+      "package": {
         "name": "bermud-ru/phproll",
         "version": "dev-master",
         "source": {
@@ -32,10 +44,6 @@
           "reference": "master"
         }
       }
-    },
-    {
-      "url": "git://github.com/bermud-ru/jsroll.git",
-      "type": "git"
     }
   ],
 
@@ -64,5 +72,7 @@
       "mkdir -p public/js",
       "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
     ]
-  }
+  },
+
+  "download": "https://github.com/bermud-ru/phproll/archive/master.zip"
 }
