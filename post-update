@@ -5,5 +5,5 @@
 # @data 07/12/2015
 
 echo "Post-update scripting ..."
-cp -n ./vendor/bermud-ru/phproll/css/* ./public/css/
+cp ./vendor/bermud-ru/phproll/public/index.php ./public/
 cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
