@@ -36,7 +36,6 @@
   ],
 
   "require": {
-    "bermud-ru/jsroll":"*@dev",
     "php": ">=5.6.0",
     "ext-curl": "*",
     "ext-dom": "*",
