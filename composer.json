@@ -22,10 +22,6 @@
 
   "repositories": [
     {
-      "url": "git@github.com:bermud-ru/jsroll.git",
-      "type": "git"
-    },
-    {
       "type": "package",
       "package": {
         "name": "bermud-ru/phproll",
