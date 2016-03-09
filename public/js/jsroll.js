@@ -42,6 +42,61 @@ var params = function(search) {
 g.location.params = params;
 
 /**
+ * @function fadeOut
+ * Функция плавного скрытия элемента - свойство opacity = 0
+ *
+ * @param el элемент DOM
+ * @param cb callback функция
+ */
+function fadeOut(el, cb){
+    var st = null;
+    el && (st = setInterval(function() {
+        el.style.opacity = el.style.opacity && el.style.opacity > 0 ? (parseFloat(el.style.opacity) - 0.1).toFixed(1) : '1';
+        if (parseFloat(el.style.opacity) <= 0){if (cb && typeof cb === 'function' && cb.call(el)) cb.call(el);el.style.display = 'none';clearInterval(st)}
+    }, typeof cb === 'number' ? cb : 25));
+}
+g.fadeOut = fadeOut;
+
+/**
+ * @function fadeIn
+ * Функция плавного отображения элемента - свойство opacity = 1
+ *
+ * @param el элемент DOM
+ * @param cb callback функция
+ */
+function fadeIn(el, cb){
+    var st = null;
+    if (el.style.display == 'none') el.style.display = 'inherit';
+    el && (st = setInterval(function() {
+        el.style.opacity = el.style.opacity && el.style.opacity < 1 ?  (parseFloat(el.style.opacity) + 0.1).toFixed(1) : '0';
+        if (parseFloat(el.style.opacity) >= 1) {if (cb && typeof cb === 'function' && cb.call(el)) cb.call(el);clearInterval(st)}
+    }, typeof cb === 'number' ? cb : 25));
+}
+g.fadeIn = fadeIn;
+
+/**
+ * @function form
+ * Хелпер сериализации формы
+ *
+ * @param f DOM элемент форма
+ * @param params
+ * @returns {result:Object, data: String}}
+ */
+
+function form(f, params) {
+    var opt = Object.assign({type:'none', validator:null}, params);
+    var res = {result: {}, data: opt.type == 'json' ? {} : []};
+    if (opt.validator == null || (typeof opt.validator === 'function' && opt.validator.call(f, res)))
+        for (var i =0; i < f.elements.length; i++){
+            if (opt.type == 'json') return res.data[f.elements[i].name || i] = encodeURIComponent(f.elements[i].value)
+            else res.data.push((f.elements[i].name || i) + '=' + encodeURIComponent(f.elements[i].value));
+        }
+    res.data = opt.type == 'json' ? JSON.stringify(res.data) :res.data.join('&');
+    return res;
+}
+g.JSON.form = form;
+
+/**
  * @function router
  * Хелпер Маршрутизатор SPA
  *
@@ -166,14 +221,16 @@ function xhr(){
     if (!x) return null;
     if (!x.hasOwnProperty('ref')) x.ref = {};
     x.request=function(params){
-        var id=''; for(var i in arguments) id += arguments[i].toString().replace(/(\.|\/|\-)/g,'_')
-        if (x.ref.hasOwnProperty(id) && !!x.ref[id].isLoad) return x.ref[id];
+        var opt = Object.assign({method:'GET', rs:{'Content-type':'application/x-www-form-urlencoded'}}, params);
+        var id = opt.method + '_' + (opt.url ? opt.url.replace(/(\.|:|\/|\-)/g,'_') : g.uuid());
+        //if (x.ref.hasOwnProperty(id) && !!x.ref[id].isLoad) return x.ref[id];
         var item = new xhr(); item.isLoad = false;
-        item.open(params.method || 'GET', params.url || undefined, params.async || true, params.username || undefined, params.password || undefined);
-        item.send(params.data || null);
+        item.open(opt.method || 'GET', opt.url || undefined, opt.async || true, opt.username || undefined, opt.password || undefined);
+        if (opt.rs) for(var m in opt.rs) item.setRequestHeader(m, opt.rs[m]);
+        item.send(opt.data || null);
         item.id = id;
-        params.result && (item.result = x.result(params.result));
-        params.process && (item.process = x.process(params.process));
+        opt.result && (item.result = x.result(opt.result));
+        opt.process && (item.process = x.process(opt.process));
         return x.ref[id] = item;
     };
     x.result=function(fn){
@@ -204,22 +261,24 @@ g.xhr = xhr();
  *
  * @result { String }
  */
-var load = function(url, id, async) {
+var load = function(url, id, params) {
+        var opt = Object.assign({method:'GET', async:false, rs:{'Content-type':'application/xml;charset=utf-8'}}, params);
         load.src[id] = new xmlHttpRequest();
-        load.src[id].overrideMimeType('text/javascript; charset=utf-8');
-        if (async) load.src[id].onload = function (e) {
+        if (opt.async) load.src[id].onload = function (e) {
             var fn = tmpl.cache[id] = func(this.responseText);
             for (var i in load.pool[id]) load.pool[id][i].cb.call(this, (load.pool[id][i].data ? fn(load.pool[id][i].data) : fn));
             load.pool[id] = undefined;
         }
-        load.src[id].open('GET', url, async); load.src[id].send(null);
-        if (!async) return (load.src[id].status != 200 ? '' : load.src[id].responseText);
+        load.src[id].open(opt.method, url, opt.async);
+        if (opt.rs) for(var m in opt.rs) load.src[id].setRequestHeader(m, opt.rs[m]);
+        load.src[id].send(null);
+        if (!opt.async) return (load.src[id].status != 200 ? '' : load.src[id].responseText);
         return '';
     },
     func = function(str) {
-        return new Function('_e',"var p=[],print=function(){p.push.apply(p,arguments);};with(_e){p.push('"+str
+        return new Function('_e',"var p=[], print=function(){ p.push.apply(p,arguments); };with(_e){p.push('"+str
                 .replace(/[\r\t\n]/g," ").split("{%").join("\t").replace(/((^|%})[^\t]*)'/g,"$1\r").replace(/\t=(.*?)%}/g,"',$1,'")
-                .split("\t").join("');").split("%}").join("p.push('").split("\r").join("\\'")+ "');}return p.join('');");
+                .split("\t").join("');").split("%}").join("p.push('").split("\r").join("\\'")+ "');} return p.join('');");
     },
 /**
  * @function load
@@ -239,7 +298,7 @@ var load = function(url, id, async) {
                 if (typeof cb === 'function') {
                     if (typeof load.pool[str] === 'undefined') {
                         load.pool[str] = [{data: data, cb: cb}];
-                        return load(m.input, str, true);
+                        return load(m.input, str, {async:cb});
                     } else {
                         var a = load.pool[str];a.push({data: data, cb: cb});
                         return '';
