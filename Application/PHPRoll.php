@@ -15,12 +15,13 @@ namespace Application;
 
 class PHPRoll
 {
+    public $config = [];
+    public $header = [];
+    public $params = [];
+    public $path = [];
+
     protected $parent = null;
-    protected $config = [];
     protected $script = null;
-    protected $route = null;
-    protected $header = [];
-    protected $params = [];
 
     /**
      * @param $config данные из файла конфигурации
@@ -30,14 +31,78 @@ class PHPRoll
         $this->script = pathinfo(__FILE__, PATHINFO_BASENAME);
         if (is_array($params)) {
             $this->config = $params;
-            $this->route = $params['route'](array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1))));
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            $this->params = array();
+            $this->params = $this->setParams();
+            $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
         elseif ($params instanceof \Application\PHPRoll)
         {
-            $this->parent = $params;
+            $this->setParent($params);
         }
+    }
+
+    /**
+     * Маршрутизатор
+     * @param $params
+     * @return mixed
+     */
+    protected function route($params)
+    {
+        $rt = isset($this->config['route']) && is_callable($this->config['route']) ? $this->config['route'] : function($params=null){return null;};
+        return $rt($params);
+    }
+
+    /**
+     * Наследуем родителя
+     * @param $parent
+     * @return mixed
+     */
+    protected function setParent(&$parent)
+    {
+        return $this->parent = $parent;
+    }
+
+    /**
+     * Получаем значение параменных в запросе
+     *
+     */
+    protected function setParams()
+    {
+        switch ($_SERVER['REQUEST_METHOD'])
+        {
+            case 'PUT':
+            case 'POST':
+                parse_str(file_get_contents('php://input'), $this->params);
+                break;
+            case 'GET':
+            case 'DELETE':
+            default:
+                parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $this->params);
+        }
+    }
+
+    /**
+     * Получаем название шаблона
+     * @return string
+     */
+    protected function getPattern()
+    {
+        $pattern = isset($params['pattern']) && is_callable($params['pattern'])  ? $params['pattern'] :
+            function($param=null,  $value = 'index.phtml') { return ($param) ? $param . '.phtml' : $value;};
+
+        $result = '';
+        switch ($_SERVER['REQUEST_METHOD'])
+        {
+            case 'PUT':
+            case 'POST':
+                $result = $pattern($name = key($this->params));
+                break;
+            case 'GET':
+            case 'DELETE':
+            default:
+                $result = $pattern(current($this->path));
+        }
+        return $result;
     }
 
     /**
@@ -53,6 +118,7 @@ class PHPRoll
 
             $path = (isset($this->config['view']) ? $this->config['view'] : '') . ($this->config['pattern']());
         }
+
         extract($options); ob_start(); require($path);
         return ob_get_clean();
     }
@@ -71,33 +137,74 @@ class PHPRoll
         return $headers;
     }
 
+    /**
+     * Генерация заголовка ответа и форматирование кода ответа
+     * @param $type
+     * @param $params
+     * @return int
+     */
+    public function responce($type,$params)
+    {
+        if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
+            header("Cache-Control: no-cache");
+            header("Pragma: no-cache");
+        } else {
+            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+            header("Pragma: public");
+        }
+        header('HTTP/1.1 206 Partial content');
+        header('Content-Encoding: utf-8');
+        header('Content-Transfer-Encoding: binary');
+
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+        header("Access-Control-Allow-Headers: Content-Type");
+        header('Expires: 0');
+
+        switch ($type)
+        {
+            case 'json':
+                header('Content-Description: json response');
+                header('Content-Type: Application/json; charset=utf-8');
+                header('Content-Disposition: attachment; filename=responce.json');
+                return json_encode($params);
+            case 'file':
+                header('Content-Description: downloading file');
+                header('Content-Transfer-Encoding: binary');
+                header('Content-Disposition: attachment; filename=upload.ext');
+                //DOTO: upload file code
+                break;
+            case 'view':
+            case 'error':
+                http_response_code(intval($params));
+                break;
+            default:
+                header('Content-Description: html view');
+                header('Content-Type: Application/xml; charset=utf-8');
+                header('Content-Disposition: attachment; filename=responce.html');
+                return $params;
+        }
+    }
+
     public function run(&$method=null, &$params=[]){
         if ($method && method_exists($this, $method)) return call_user_func_array($this->{$method}, $params);
 
-        switch ($_SERVER['REQUEST_METHOD'])
-        {
-            case 'PUT':
-            case 'POST':
-                parse_str(file_get_contents('php://input'), $this->params);
-                $pattern = $this->config['pattern']($name = key($this->params));
-                break;
-            case 'GET':
-            case 'DELETE':
-            default:
-                parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $this->params);
-                $pattern = $this->config['pattern'](current($this->route));
-        }
+        $content = $this->route(isset($this->path[0]) && $this->path[0] ? $this->path[0] : 'default');
+        if ($content && is_string($content)) return $content;
 
+        $pattern = $this->getPattern();
         if ($pattern) return $this->contex($pattern, array(
-            'params' => $this->params,
+            'params' => $params || $this->params,
             'header' => $this->header,
-            'route' => $this->route,
+            'route' => $this->path,
             'config' => $this->config,
-            'script' => '/'. (count($this->route) ? implode($this->route, '/') . (strtolower(end($this->route)) != $this->script ? $this->script : '') : $this->script),
+            'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
             'json' => function (array $params){
-                echo json_encode($params);
+                echo $this->responce('json', $params);
                 exit(1);
-            }));
+            }
+            )
+        );
     }
 }
 ?>
