@@ -26,13 +26,13 @@ class PHPRoll
     /**
      * @param $config данные из файла конфигурации
      */
-    public function __construct(&$params)
+    public function __construct($params)
     {
         $this->script = pathinfo(__FILE__, PATHINFO_BASENAME);
         if (is_array($params)) {
             $this->config = $params;
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            $this->params = $this->setParams();
+            $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
         elseif ($params instanceof \Application\PHPRoll)
@@ -48,8 +48,7 @@ class PHPRoll
      */
     protected function route($params)
     {
-        $rt = isset($this->config['route']) && is_callable($this->config['route']) ? $this->config['route'] : function($params=null){return null;};
-        return $rt($params);
+        return isset($this->config['route']) && is_callable($this->config['route']) ? $this->config['route']($this, $params) : null;
     }
 
     /**
@@ -66,13 +65,13 @@ class PHPRoll
      * Получаем значение параменных в запросе
      *
      */
-    protected function setParams()
+    protected function initParams()
     {
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
             case 'POST':
-                parse_str(file_get_contents('php://input'), $this->params);
+                parse_str(file_get_contents('php://input'), $this->params );
                 break;
             case 'GET':
             case 'DELETE':
@@ -88,14 +87,14 @@ class PHPRoll
     protected function getPattern()
     {
         $pattern = isset($params['pattern']) && is_callable($params['pattern'])  ? $params['pattern'] :
-            function($param=null,  $value = 'index.phtml') { return ($param) ? $param . '.phtml' : $value;};
+            function($param=null, $value = 'index.phtml') { return ($param) ? $param . '.phtml' : $value; };
 
         $result = '';
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
             case 'POST':
-                $result = $pattern($name = key($this->params));
+                $result = $pattern(key($this->params));
                 break;
             case 'GET':
             case 'DELETE':
@@ -113,9 +112,9 @@ class PHPRoll
     public function contex($pattern, array $options = array())
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : '') . $pattern;
-        if (!file_exists($path)) {
+        if (!file_exists($path))
+        {
             $options['error'] = array('message'=> "File [$pattern] not found");
-
             $path = (isset($this->config['view']) ? $this->config['view'] : '') . ($this->config['pattern']());
         }
 
@@ -143,15 +142,19 @@ class PHPRoll
      * @param $params
      * @return int
      */
-    public function responce($type,$params)
+    public function responce($type, $params)
     {
-        if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
+        if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false)
+        {
             header("Cache-Control: no-cache");
             header("Pragma: no-cache");
-        } else {
+        }
+        else
+        {
             header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
             header("Pragma: public");
         }
+
         header('HTTP/1.1 206 Partial content');
         header('Content-Encoding: utf-8');
         header('Content-Transfer-Encoding: binary');
@@ -175,8 +178,10 @@ class PHPRoll
                 //DOTO: upload file code
                 break;
             case 'view':
+                break;
             case 'error':
                 http_response_code(intval($params));
+                return json_encode(array('result'=>'error','code'=>$params));
                 break;
             default:
                 header('Content-Description: html view');
@@ -186,7 +191,8 @@ class PHPRoll
         }
     }
 
-    public function run(&$method=null, &$params=[]){
+    public function run(&$method=null, &$params=[])
+    {
         if ($method && method_exists($this, $method)) return call_user_func_array($this->{$method}, $params);
 
         $content = $this->route(isset($this->path[0]) && $this->path[0] ? $this->path[0] : 'default');
@@ -194,15 +200,15 @@ class PHPRoll
 
         $pattern = $this->getPattern();
         if ($pattern) return $this->contex($pattern, array(
-            'params' => $params || $this->params,
-            'header' => $this->header,
-            'route' => $this->path,
-            'config' => $this->config,
-            'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
-            'json' => function (array $params){
-                echo $this->responce('json', $params);
-                exit(1);
-            }
+                'params' => $params || $this->params,
+                'header' => $this->header,
+                'route' => $this->path,
+                'config' => $this->config,
+                'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
+                'json' => function (array $params){
+                    echo $this->responce('json', $params);
+                    exit(1);
+                }
             )
         );
     }
