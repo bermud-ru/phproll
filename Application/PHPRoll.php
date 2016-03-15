@@ -143,34 +143,37 @@ class PHPRoll
      * @return int
      */
     public function responce($type, $params)
-    {
-        if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false)
-        {
-            header("Cache-Control: no-cache");
-            header("Pragma: no-cache");
-        }
-        else
-        {
-            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-            header("Pragma: public");
-        }
-
-        header('HTTP/1.1 206 Partial content');
-        header('Content-Encoding: utf-8');
-        header('Content-Transfer-Encoding: binary');
-
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-        header("Access-Control-Allow-Headers: Content-Type");
-        header('Expires: 0');
-
+    {//TODO: Разобраться с заголовками каждого типа ответа
         switch ($type)
         {
             case 'json':
+                if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false)
+                {
+                    header("Cache-Control: no-cache");
+                    header("Pragma: no-cache");
+                }
+                else
+                {
+                    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+                    header("Pragma: public");
+                }
+
+                header('HTTP/1.1 206 Partial content');
+                header('Content-Encoding: utf-8');
+                header('Content-Transfer-Encoding: binary');
+
+                header("Access-Control-Allow-Origin: *");
+                header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+                header("Access-Control-Allow-Headers: Content-Type");
+                header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
                 header('Content-Disposition: attachment; filename=responce.json');
                 return json_encode($params);
+            case 'error':
+                http_response_code(intval($params));
+                return json_encode(array('result'=>'error','code'=>$params, 'message' => $params));
+                break;
             case 'file':
                 header('Content-Description: downloading file');
                 header('Content-Transfer-Encoding: binary');
@@ -178,11 +181,21 @@ class PHPRoll
                 //DOTO: upload file code
                 break;
             case 'view':
+
+                if ($params) return $this->contex($params, array(
+                        'params' => $params || $this->params,
+                        'header' => $this->header,
+                        'route' => $this->path,
+                        'config' => $this->config,
+                        'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
+                        'json' => function (array $params){
+                            echo $this->responce('json', $params);
+                            exit(1);
+                        }
+                    )
+                );
                 break;
-            case 'error':
-                http_response_code(intval($params));
-                return json_encode(array('result'=>'error','code'=>$params));
-                break;
+
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
@@ -198,19 +211,8 @@ class PHPRoll
         $content = $this->route(isset($this->path[0]) && $this->path[0] ? $this->path[0] : 'default');
         if ($content && is_string($content)) return $content;
 
-        $pattern = $this->getPattern();
-        if ($pattern) return $this->contex($pattern, array(
-                'params' => $params || $this->params,
-                'header' => $this->header,
-                'route' => $this->path,
-                'config' => $this->config,
-                'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
-                'json' => function (array $params){
-                    echo $this->responce('json', $params);
-                    exit(1);
-                }
-            )
-        );
+        return $this->responce('view', $this->getPattern());
+
     }
 }
 ?>
