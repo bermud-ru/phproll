@@ -69,6 +69,7 @@ class PHPRoll
     {
         switch ($_SERVER['REQUEST_METHOD'])
         {
+
             case 'PUT':
             case 'POST':
                 parse_str(file_get_contents('php://input'), $this->params );
@@ -92,10 +93,10 @@ class PHPRoll
         $result = '';
         switch ($_SERVER['REQUEST_METHOD'])
         {
-            case 'PUT':
             case 'POST':
                 $result = $pattern(key($this->params));
                 break;
+            case 'PUT':
             case 'GET':
             case 'DELETE':
             default:
