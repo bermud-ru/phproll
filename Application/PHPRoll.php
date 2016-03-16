@@ -144,16 +144,12 @@ class PHPRoll
      */
     public function responce($type, $params)
     {//TODO: Разобраться с заголовками каждого типа ответа
-        switch ($type)
-        {
+        switch ($type) {
             case 'json':
-                if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false)
-                {
+                if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
                     header("Cache-Control: no-cache");
                     header("Pragma: no-cache");
-                }
-                else
-                {
+                } else {
                     header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
                     header("Pragma: public");
                 }
@@ -171,8 +167,8 @@ class PHPRoll
                 header('Content-Disposition: attachment; filename=responce.json');
                 return json_encode($params);
             case 'error':
-                http_response_code(intval($params));
-                return json_encode(array('result'=>'error','code'=>$params, 'message' => $params));
+                http_response_code(intval($params['code'] ?? 500));
+                return json_encode(array('result' => 'error', 'code' => $params['code'] ?? 500, 'message' => $params['message'] ?? null));
                 break;
             case 'file':
                 header('Content-Description: downloading file');
@@ -181,21 +177,22 @@ class PHPRoll
                 //DOTO: upload file code
                 break;
             case 'view':
-
-                if ($params) return $this->contex($params, array(
-                        'params' => $params || $this->params,
-                        'header' => $this->header,
-                        'route' => $this->path,
-                        'config' => $this->config,
-                        'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
-                        'json' => function (array $params){
-                            echo $this->responce('json', $params);
-                            exit(1);
-                        }
-                    )
-                );
-                break;
-
+                if ($params['pattern']) {
+                    return $this->contex($params['pattern'], array(
+                            'params' => $params || $this->params,
+                            'header' => $this->header,
+                            'route' => $this->path,
+                            'config' => $this->config,
+                            'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
+                            'json' => function (array $params) {
+                                echo $this->responce('json', $params);
+                                exit(1);
+                            }
+                        )
+                    );
+                    break;
+                }
+                http_response_code(404);
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
