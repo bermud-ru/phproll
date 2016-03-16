@@ -144,30 +144,29 @@ class PHPRoll
      */
     public function responce($type, $params)
     {//TODO: Разобраться с заголовками каждого типа ответа
+        if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
+            header("Cache-Control: no-cache");
+            header("Pragma: no-cache");
+        } else {
+            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+            header("Pragma: public");
+        }
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+        header("Access-Control-Allow-Headers: Content-Type");
+        header('Content-Encoding: utf-8');
+        header('Content-Transfer-Encoding: binary');
         switch ($type) {
             case 'json':
-                if (strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
-                    header("Cache-Control: no-cache");
-                    header("Pragma: no-cache");
-                } else {
-                    header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-                    header("Pragma: public");
-                }
-
+                if (isset($params['code'])) http_response_code(intval($params['code']) ?? 206);
                 header('HTTP/1.1 206 Partial content');
-                header('Content-Encoding: utf-8');
-                header('Content-Transfer-Encoding: binary');
-
-                header("Access-Control-Allow-Origin: *");
-                header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-                header("Access-Control-Allow-Headers: Content-Type");
                 header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
                 header('Content-Disposition: attachment; filename=responce.json');
                 return json_encode($params);
             case 'error':
-                http_response_code(intval($params['code'] ?? 500));
+                http_response_code(intval($params['code']) ?? 500);
                 return json_encode(array('result' => 'error', 'code' => $params['code'] ?? 500, 'message' => $params['message'] ?? null));
                 break;
             case 'file':
@@ -177,6 +176,8 @@ class PHPRoll
                 //DOTO: upload file code
                 break;
             case 'view':
+                header('Content-Type: text/html; charset=utf-8');
+                if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
                 if ($params['pattern']) {
                     return $this->contex($params['pattern'], array(
                             'params' => $params || $this->params,
