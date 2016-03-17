@@ -3,7 +3,7 @@
  * Db.php
  *
  * @category Intermedia class database
- * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend 
+ * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
  * @data 07/12/2015
  *

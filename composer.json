@@ -36,16 +36,9 @@
   ],
 
   "require": {
-    "php": ">=5.4.0",
-    "ext-curl": "*",
-    "ext-fileinfo": "*",
-    "ext-iconv": "*",
+    "php": ">=7.0.0",
     "ext-json": "*",
-    "ext-libxml": "*",
-    "ext-pcre": "*",
     "ext-PDO": "*",
-    "ext-SimpleXML": "*",
-    "ext-xml": "*",
     "ext-mbstring": "*"
   },
 
