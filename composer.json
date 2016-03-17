@@ -56,7 +56,7 @@
   "autoload": {
     "classmap" : [
       "Application/PHPRoll.php",
-      "Application/DB.php"
+      "Application/Db.php"
     ]
   },
 
