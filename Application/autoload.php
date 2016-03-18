@@ -15,7 +15,8 @@ spl_autoload_register(function($className)
     //$namespace=str_replace("\\","/",__NAMESPACE__);
     $className=str_replace("\\","/",$className);
     $class=__DIR__ . "/../{$className}.php";
-    error_log(var_dump($class));
+    if (!file_exists($class)) $class = __DIR__ ."/../vendor/bermud-ru/phproll/{$className}.php";
+
     if (is_readable($class)) require_once $class;
 });
 
