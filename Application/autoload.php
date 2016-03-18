@@ -15,7 +15,7 @@ spl_autoload_register(function($className)
     //$namespace=str_replace("\\","/",__NAMESPACE__);
     $className=str_replace("\\","/",$className);
     $class=__DIR__ . "/../{$className}.php";
-
+var_dump($class);
     if (is_readable($class)) require_once $class;
 });
 
