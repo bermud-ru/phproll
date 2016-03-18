@@ -18,14 +18,6 @@ namespace Application;
 
 $loader = require_once __DIR__.'/../vendor/autoload.php';
 
-spl_autoload_register(function($className)
-{
-    //$namespace=str_replace("\\","/",__NAMESPACE__);
-    $className=str_replace("\\","/",$className);
-    $class=__DIR__ . "/../{$className}.php";
-    if (is_readable($class)) require_once $class;
-});
-
 echo (new \Application\PHPRoll(require('../config.php')))->run();
 
 exit(1);

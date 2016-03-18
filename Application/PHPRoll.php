@@ -2,7 +2,7 @@
 /**
  * PHPRoll.php
  *
- * @category RIA (Rich Internet Application) / SPA (Single-page Application)
+ * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
  * @data 07/12/2015
  *
