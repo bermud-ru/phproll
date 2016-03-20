@@ -85,8 +85,10 @@ class Db
      */
     public function select(string $sql, array $params=[], array $opt=[]): \PDOStatement
     {
-        $stmt = $this->prepare($sql, $opt);
-        return $stmt->execute($params);
+        preg_match_all('/:[a-zA-Z0-9_]+/',$sql,$vars);
+        var_dump($vars);
+        //$stmt = $this->prepare($sql, $opt);
+        //return $stmt->execute($params);
     }
 
 }
