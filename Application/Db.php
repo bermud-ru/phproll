@@ -21,6 +21,7 @@ class Db
     );
 
     public $index = null;
+    public $status = false;
 
     /**
      * Db constructor.
@@ -57,7 +58,7 @@ class Db
     public function insert(string $table, array $fields): \PDOStatement
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
-        $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
+        $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
         return $stmt;
     }
 
@@ -73,7 +74,7 @@ class Db
     {
         $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $fields,  array_keys($fields))) .
             (is_array($where) ? " WHERE " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $where,  array_keys($where))) : $where));
-        $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
+        $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
         return $stmt;
     }
 
@@ -92,11 +93,11 @@ class Db
         $v =  isset($vars[0]) ? array_map( function ($v) { return str_replace(':', '', $v); }, $vars[0]) : null;
         if ($v) {
             $data = isset($params) ? $params : ($this->index ? $this->parent->params[$this->index] : $this->parent->params);
-            $stmt->execute($data);
+            $this->status = $stmt->execute($data);
         }
         else
         {
-            $stmt->execute();
+            $this->status = $stmt->execute();
         }
         return $stmt;
     }
