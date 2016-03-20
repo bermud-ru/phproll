@@ -79,14 +79,14 @@ class Db
     }
 
     /**
-     * PDO select helper
+     * PDO stmt helper
      *
      * @param string $sql
      * @param array $params
      * @param array $opt
      * @return \PDOStatement
      */
-    public function select(string $sql, array $params=null, array $opt=[]): \PDOStatement
+    public function stmt(string $sql, array $params=null, array $opt=[]): \PDOStatement
     {
         $stmt = $this->prepare($sql, $opt);
         preg_match_all('/:[a-zA-Z0-9_]+/',$sql,$vars);
