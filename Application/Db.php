@@ -75,6 +75,14 @@ class Db
         return $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
     }
 
+    /**
+     * PDO select helper
+     *
+     * @param string $sql
+     * @param array $params
+     * @param array $opt
+     * @return \PDOStatement
+     */
     public function select(string $sql, array $params=[], array $opt=[]): \PDOStatement
     {
         $stmt = $this->prepare($sql, $opt);
