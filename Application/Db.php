@@ -52,12 +52,13 @@ class Db
      *
      * @param string $table
      * @param array $fields
-     * @return bool
+     * @return \PDOStatement
      */
-    public function insert(string $table, array $fields): bool
+    public function insert(string $table, array $fields): \PDOStatement
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
-        return $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
+        $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
+        return $stmt;
     }
 
     /**
@@ -66,13 +67,14 @@ class Db
      * @param string $table
      * @param array $fields
      * @param string $where
-     * @return bool
+     * @return \PDOStatement
      */
-    public function update(string $table, array $fields, $where = ''): bool
+    public function update(string $table, array $fields, $where = ''): \PDOStatement
     {
         $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $fields,  array_keys($fields))) .
             (is_array($where) ? " WHERE " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $where,  array_keys($where))) : $where));
-        return $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
+        $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
+        return $stmt;
     }
 
     /**
@@ -83,12 +85,20 @@ class Db
      * @param array $opt
      * @return \PDOStatement
      */
-    public function select(string $sql, array $params=[], array $opt=[]): \PDOStatement
+    public function select(string $sql, array $params=null, array $opt=[]): \PDOStatement
     {
+        $stmt = $this->prepare($sql, $opt);
         preg_match_all('/:[a-zA-Z0-9_]+/',$sql,$vars);
-        var_dump($vars);
-        //$stmt = $this->prepare($sql, $opt);
-        //return $stmt->execute($params);
+        $v =  isset($vars[0]) ? array_map( function ($v) { return str_replace(':', '', $v); }, $vars[0]) : null;
+        if ($v) {
+            $data = isset($params) ? $params : ($this->index ? $this->parent->params[$this->index] : $this->parent->params);
+            $stmt->execute($data);
+        }
+        else
+        {
+            $stmt->execute();
+        }
+        return $stmt;
     }
 
 }

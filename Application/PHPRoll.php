@@ -160,7 +160,6 @@ class PHPRoll
         header('Content-Transfer-Encoding: binary');
         switch ($type) {
             case 'json':
-                if (isset($params['code'])) http_response_code(intval($params['code']) ?? 206);
                 header('HTTP/1.1 206 Partial content');
                 header('Expires: 0');
                 header('Content-Description: json response');
@@ -168,9 +167,12 @@ class PHPRoll
                 header('Content-Disposition: attachment; filename=responce.json');
                 return json_encode($params);
             case 'error':
-                http_response_code(intval($params['code']) ?? 500);
+                header('HTTP/1.1 206 Partial content');
+                header('Expires: 0');
+                header('Content-Description: json response');
+                header('Content-Type: Application/json; charset=utf-8');
+                header('Content-Disposition: attachment; filename=responce.json');
                 return json_encode(array('result' => 'error', 'code' => $params['code'] ?? 500, 'message' => $params['message'] ?? null));
-                break;
             case 'file':
                 header('Content-Description: downloading file');
                 header('Content-Transfer-Encoding: binary');
@@ -195,7 +197,6 @@ class PHPRoll
                     );
                     break;
                 }
-                http_response_code(404);
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
