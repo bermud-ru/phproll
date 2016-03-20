@@ -1,76 +1,20 @@
 {
-  "name": "bermud-ru/phproll",
-  "version": "0.1.0",
-  "type": "project",
-  "description": "Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend",
-  "keywords": [
-    "simple", "PHP",
-    "rest", "application",
-    "ria", "spa",
-    "javascript", "framework"
-  ],
-  "homepage": "http://novikov.be/",
-  "license": "BSD-3-Clause",
-  "authors": [
-    {
-      "name": "Andrew Novikoff",
-      "email": "andrey@novikov.be",
-      "homepage": "http://novikov.be/",
-      "role": "Founder and project lead"
-    }
-  ],
-
   "repositories": [
     {
-      "type": "package",
-      "package": {
-        "name": "bermud-ru/phproll",
-        "version": "dev-master",
-        "source": {
-            "url": "git@github.com:bermud-ru/phproll.git",
-            "type": "git",
-            "reference": "master"
-        }
-      }
-    },
-    {
-      "type": "package",
-      "package": {
-        "name": "bermud-ru/jsroll",
-        "version": "dev-master",
-        "source": {
-          "url": "git@github.com:bermud-ru/jsroll.git",
-          "type": "git",
-          "reference": "master"
-        }
-      }
+      "url": "git@github.com:bermud-ru/jsroll.git",
+      "type": "git"
     }
   ],
-
   "require": {
-    "php": ">=5.0.0",
-    "ext-json": "*",
-    "ext-PDO": "*",
-    "ext-mbstring": "*"
+    "bermud-ru/jsroll":"*@dev"
   },
 
   "scripts": {
     "post-install-cmd": [
-      "mkdir -p public/js",
-      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
+      "./vendor/bermud-ru/jsroll/post-install"
     ],
     "post-update-cmd": [
-      "mkdir -p public/js",
-      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
+      "./vendor/bermud-ru/jsroll/post-update"
     ]
-  },
-
-  "autoload": {
-    "classmap" : [
-      "Application/PHPRoll.php",
-      "Application/Db.php"
-    ]
-  },
-
-  "download": "https://github.com/bermud-ru/phproll/archive/master.zip"
+  }
 }
