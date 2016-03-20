@@ -32,6 +32,18 @@
             "reference": "master"
         }
       }
+    },
+    {
+      "type": "package",
+      "package": {
+        "name": "bermud-ru/jsroll",
+        "version": "dev-master",
+        "source": {
+          "url": "git@github.com:bermud-ru/jsroll.git",
+          "type": "git",
+          "reference": "master"
+        }
+      }
     }
   ],
 
