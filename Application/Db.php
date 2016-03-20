@@ -54,7 +54,7 @@ class Db
      * @param array $fields
      * @return bool
      */
-    function insert(string $table, array $fields): bool
+    public function insert(string $table, array $fields): bool
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
         return $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
@@ -68,12 +68,19 @@ class Db
      * @param string $where
      * @return bool
      */
-    function update(string $table, array $fields, $where = ''): bool
+    public function update(string $table, array $fields, $where = ''): bool
     {
         $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $fields,  array_keys($fields))) .
             (is_array($where) ? " WHERE " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $where,  array_keys($where))) : $where));
         return $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
     }
+
+    public function select(string $sql, array $params=[], array $opt=[]): \PDOStatement
+    {
+        $stmt = $this->prepare($sql, $opt);
+        return $stmt->execute($params);
+    }
+
 }
 
 ?>
