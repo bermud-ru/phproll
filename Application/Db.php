@@ -55,11 +55,10 @@ class Db
      * @param array $fields
      * @return \PDOStatement
      */
-    public function insert(string $table, array $fields): \PDOStatement
+    public function insert(string $table, array $fields): bool
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
-        $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
-        return $stmt;
+        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
     }
 
     /**
@@ -70,12 +69,11 @@ class Db
      * @param string $where
      * @return \PDOStatement
      */
-    public function update(string $table, array $fields, $where = ''): \PDOStatement
+    public function update(string $table, array $fields, $where = ''): bool
     {
         $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $fields,  array_keys($fields))) .
             (is_array($where) ? " WHERE " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $where,  array_keys($where))) : $where));
-        $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
-        return $stmt;
+        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
     }
 
     /**
