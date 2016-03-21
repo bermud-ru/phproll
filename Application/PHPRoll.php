@@ -209,7 +209,7 @@ class PHPRoll
     {
         if ($method && method_exists($this, $method)) return call_user_func_array($this->{$method}, $params);
 
-        $content = $this->route(isset($this->path[0]) && $this->path[0] ? $this->path[0] : 'default');
+        $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
         return $this->responce('view', $this->getPattern());
