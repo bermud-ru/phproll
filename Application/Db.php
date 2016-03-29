@@ -55,10 +55,11 @@ class Db
      * @param array $fields
      * @return \PDOStatement
      */
-    public function insert(string $table, array $fields): bool
+    public function insert(string $table, array $fields, $keys = true): bool
     {
-        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
-        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values($fields))));
+        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
+
+        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
     }
 
     /**
@@ -69,24 +70,32 @@ class Db
      * @param string $where
      * @return \PDOStatement
      */
-    public function update(string $table, array $fields, $where = ''): bool
+    public function update(string $table, $fields = false, $where = ''): bool
     {
-        $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $fields,  array_keys($fields))) .
-            (is_array($where) ? " WHERE " . implode(', ', array_map( function ($v, $k) { return $k . ' = :' . $v; }, $where,  array_keys($where))) : $where));
-        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
-    }
+        if ($fields && is_array($fields)) {
+            $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map(function ($v, $k) {
+                    return $k . ' = :' . $v;
+                }, $fields, array_keys($fields))) .
+                (is_array($where) ? " WHERE " . implode(', ', array_map(function ($v, $k) {
+                        return $k . ' = :' . $v;
+                    }, $where, array_keys($where))) : $where));
+            return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] :
+                $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
+        }
+        else
+        {
+            $fields = array_diff_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), $where);
 
-    //TODO: https://wiki.postgresql.org/wiki/What's_new_in_PostgreSQL_9.5#INSERT_..._ON_CONFLICT_DO_NOTHING.2FUPDATE_.28.22UPSERT.22.29
-    //
-    // INSERT INTO user_logins (username, logins)
-    // VALUES ('Naomi',1),('James',1)
-    // ON CONFLICT (username)
-    // DO UPDATE SET logins = user_logins.logins + EXCLUDED.logins;
-//    public function upsert(string $table, array $fields, $where = ''): bool
-//    {
-//        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, array_values($fields))) . ')');
-//
-//    }
+            $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map(function ($v) {
+                    return $v . ' = :' . $v;
+                }, array_keys($fields))) .
+                " WHERE " . implode(', ', array_map(function ($v) {
+                    return $v . ' = :' . $v;
+                }, $where)));
+            return $this->status = $stmt->execute($this->index ? $this->parent->params[$this->index] : $this->parent->params);
+        }
+
+    }
 
     /**
      * PDO stmt helper
@@ -111,7 +120,6 @@ class Db
         }
         return $stmt;
     }
-
 
 }
 
