@@ -29,10 +29,6 @@ return array(
             }
         }
         return $result;
-    },
-    'pattern'=> function($param=null,  $value = 'index.phtml')
-    {
-        return ($param) ? $param . '.phtml' : $value;
     }
 );
 ?>
