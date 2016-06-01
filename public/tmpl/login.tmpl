@@ -1,0 +1,33 @@
+{% var opt = {title:'Авторизация', submit: 'Войти'}; for (i in arguments) opt = Object.assign(opt, arguments[i]); %}
+        <?php //echo 'Немного PHP' ?>
+<div class="modal-content login-form">
+    <!-- Modal Header -->
+    <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">{%= opt.title %}</h4>
+    </div>
+    <!-- Modal Body -->
+    <div class="modal-body">
+        <form action="login" method="GET" id="login" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="col-xs-4 control-label" for="login-field">Логин</label>
+                <div class="col-xs-6">
+                    <input type="email" class="form-control" name="login[email]" id="login-field" value="{%= (opt.email || '') %}" placeholder="Email пользователя" tabindex="1" required />
+                    <span class="help-block">Должен быть электронный адрес</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-xs-4 control-label" for="passwd-field">Пароль</label>
+                <div class="col-xs-6">
+                    <input type="password" pattern=".{6,}" class="form-control" name="login[passwd]" id="passwd-field" value="{%= (opt.email || '') %}" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" tabindex="2" required />
+                    <span class="help-block">Неверный пароль</span>
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" role="login-submit">
+            {%= opt.submit %}
+        </button>
+    </div>
+</div>

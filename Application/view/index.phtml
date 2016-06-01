@@ -4,7 +4,8 @@ namespace Application;
 if (in_array($_SERVER['REQUEST_METHOD'], array('POST'))) {
     if ($error) $json(array('result'=>'error', 'message'=> $error['message']));
 }
-$next = 'index';
+
+$title = 'Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend';
 $page['GET']['header'][] = <<<EOT
 <!DOCTYPE html>
 <html lang="ru">
@@ -15,62 +16,26 @@ $page['GET']['header'][] = <<<EOT
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="description" content="git@github.com:bermud-ru/phproll.git"/>
     <meta name="author" content="Андрей Новиков <andrey@novikov.be>"/>
-    <script type="text/javascript" src="/js/jsroll.min.js" charset="UTF-8"></script>
     <link href="http://netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="/css/index.css" rel="stylesheet" />
-    <title>Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend</title>
+    <title>{$title}</title>
     <script id="handlebars-alert" type="text/x-template">
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    <span class="result">{%error%}</span> <span class="message">{%message%}</span>
+    <span class="result">{%=error %}</span> <span class="message">{%=message %}</span>
     </script>
 </head>
 EOT;
 $page['GET']['body'][] = <<<EOT
 <body>
 <div id="app" role="application">
-    <div class="container" role="workspace">
-        <div class="jumbotron panel panel-default">
-EOT;
-$page['POST']['body'][] = $page['GET']['body'][] = <<<EOT
-            <form action="{$script}" method="post" datatype="html">
-                <div class="row">
-                    <h5>Caption SPA frame</h5>
-                </div>
-                <div class="row jumbotron-padding">
-                    <label class="radio-inline"><input type="radio" name="{$next}[radioGroup]" value="1" checked="checked"> radio param #1</label>
-                    <label class="radio-inline"><input type="radio" name="{$next}[radioGroup]" value="2"> radio param #2</label>
-                </div>
-                <div class="row jumbotron-padding">
-                    <h4>Choose date</h4>
-                    <div class="col-sm-3"></div>
-                    <div class="col-sm-6 ">
-                        <div class="form-group">
-                            <div class='input-group date datetimepicker'>
-                                <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-                                <input type='text' class="form-control" name="{$next}[birfday]" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3"></div>
-                </div>
-                <div class="row next hrcolor">
-                    <div class="form-group nextStep"><span>Next step</span><i class="glyphicon glyphicon-play-circle"></i></div>
-                </div>
-            </form>
-EOT;
-$page['GET']['body'][] = <<<EOT
-        </div>
-    </div>
+    <div class="container" role="workspace"></div>
 </div>
-<div class="alert alert-danger" style="display: none;">
+<div class="alert alert-danger message" style="display: none;"></div>
+<div class="b-popup" style="display: none;">
+    <div class="b-popup-content"></div>
 </div>
-
-<script type="text/javascript">
-(function ( g, undefined ) {
-'use strict';
-    event.bind();
-}( window ));
-</script>
+<div class="locker spinner" style="display: none;"></div>
+<script type="text/javascript" src="/js/jsroll.min.js" charset="UTF-8"></script>
 </body>
 EOT;
 $page['GET']['footer'][] = <<<EOT
