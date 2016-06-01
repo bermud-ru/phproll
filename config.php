@@ -11,9 +11,6 @@ namespace Application;
 
 return array(
     'view' => '../Application/view/',
-    'route' => function($params){
-        return $params;
-    },
     'pattern'=> function($param=null,  $value = 'index.phtml') {
         return ($param) ? $param . '.phtml' : $value;
     },
