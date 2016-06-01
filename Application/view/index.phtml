@@ -20,8 +20,9 @@ $page['GET']['header'][] = <<<EOT
     <link href="/css/index.css" rel="stylesheet" />
     <title>{$title}</title>
     <script id="handlebars-alert" type="text/x-template">
+    {% var opt = {error:'ОШИБКА', message: 'spa приложения!'}; for (i in arguments) opt = Object.assign(opt, arguments[i]); %}
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    <span class="result">{%=error %}</span> <span class="message">{%=message %}</span>
+    <span class="result">{%=opt.error %}</span> <span class="message">{%=opt.message %}</span>
     </script>
 </head>
 EOT;

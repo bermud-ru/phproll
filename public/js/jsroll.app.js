@@ -10,28 +10,27 @@
  */
 
 (function ( g, undefined ) {
-    'use strict';
+'use strict';
 
 // demo: popup && template
-    tmpl('/tmpl/login.tmpl', null, function (content) {
-        popup.show({
-            content: content,
-            event: [
-                function(){
-                    g.spa.el('[role="login-submit"]').spa.on('click',function(e){
-                        spinner.run = true;
-                        g.JSON.form(g.spa.el('#login')).release({fn:function(responce){
-                            if (responce.result == 'ok') {
-                                popup.hide();
-                                msg.show({error: 'Добро пожаловать!', message: 'в SPA приложение [' +JSON.stringify(responce.data)+']'}, true);
-                            }
-                            spinner.run = false;
-                        }});
-
-                    })
-                }
-            ]
-        });
+tmpl('/tmpl/login.tmpl', null, function (content) {
+    popup.show({
+        content: content,
+        event: [
+            function(){
+                spa.el('[role="login-submit"]').spa.on('click',function(e){
+                    spinner.run = true;
+                    JSON.form(spa.el('#login')).release({fn:function(responce){
+                        if (responce.result == 'ok') {
+                            popup.hide();
+                            msg.show({error: 'Добро пожаловать!', message: 'в SPA приложение [' +JSON.stringify(responce.data)+']'}, true);
+                        }
+                        spinner.run = false;
+                    }});
+                })
+            }
+        ]
     });
+});
 
 }( window ));
