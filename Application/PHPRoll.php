@@ -183,7 +183,7 @@ class PHPRoll
             case 'view':
                 header('Content-Type: text/html; charset=utf-8');
                 if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
-                if ($params['pattern']) {
+                if (isset($params['pattern']) && $params['pattern']) {
                     return $this->contex($params['pattern'], array(
                             'params' => $params || $this->params,
                             'header' => $this->header,
