@@ -112,7 +112,7 @@ class Db
         $v =  isset($vars[0]) ? array_map( function ($v) { return str_replace(':', '', $v); }, $vars[0]) : null;
         if ($v) {
             $data = isset($params) ? $params : ($this->index ? $this->parent->params[$this->index] : $this->parent->params);
-            $this->status = $stmt->execute($data);
+            $this->status = $stmt->execute(array_intersect($v, $data));
         }
         else
         {
