@@ -113,14 +113,16 @@ class PHPRoll
      */
     public function contex($pattern, array $options = array())
     {
-        $path = (isset($this->config['view']) ? $this->config['view'] : '') . $pattern;
-        if (!file_exists($path))
+        $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
+        if (strpos($pattern, DIRECTORY_SEPARATOR) === false) $pattern = $path. $pattern;
+
+        if (!file_exists($pattern))
         {
             $options['error'] = array('message'=> "File [$pattern] not found");
-            $path = (isset($this->config['view']) ? $this->config['view'] : '') . ($this->config['pattern']());
+            $pattern = $path . $this->config['pattern']();
         }
 
-        extract($options); ob_start(); require($path);
+        extract($options); ob_start(); require($pattern);
         return ob_get_clean();
     }
 
