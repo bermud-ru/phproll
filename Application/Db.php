@@ -26,14 +26,30 @@ class Db
     /**
      * Db constructor.
      *
-     * @param PHPRoll $parent
+     * @param PHPRoll $parent | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
      * @param array|null $opt
+     * @param boolean|null $attach if true \Application\Db obeject will be attated to paretn object.
      */
-    public function __construct( \Application\PHPRoll &$parent, array $opt = null)
+    public function __construct(&$parent, array $opt = null, $attach = false)
     {
-        $this->parent = $parent;
-        if (!isset($parent->config['db'])) throw new \Exception('PHPRoll ERROR: DATABASE not defined.');
-        $this->pdo = new \PDO($parent->config['db'], null, null, $opt ?? $this->opt);
+        if (empty($parent)) throw new \Exception('\PHPRoll\Db - необходимо указать параметры подключения!');
+
+        $db =  null;
+        $pdo = null;
+        if (is_array($parent)){
+            $this->parent = null;
+            $db = $parent['db'] ?? null;
+        } elseif ($parent instanceof \Application\PHPRoll) {
+            $this->parent = $parent;
+            $db = $parent->config['db'] ?? null;
+            if ($attach) {
+                $parent->db = $this;
+                if (!empty($parent->db) && $parent->db->pdo instanceof \PDO) $pdo = $this->parent->pdo;
+            }
+        }
+
+        if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
+        $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
     }
 
     /**

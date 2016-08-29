@@ -114,15 +114,16 @@ class PHPRoll
     public function contex($pattern, array $options = array())
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
-        if (strpos($pattern, DIRECTORY_SEPARATOR) === false) $pattern = $path. $pattern;
-
-        if (!file_exists($pattern))
+        $file = (strpos($pattern, DIRECTORY_SEPARATOR) === false)  ? $path . $pattern : $pattern;
+        if ($pattern == 'permission-denied.pthml') {var_dump([$file] );die;}
+        if (!file_exists($file))
         {
             $options['error'] = array('message'=> "File [$pattern] not found");
-            $pattern = $path . $this->config['pattern']();
+            $file = $path . $this->config['pattern']();
         }
 
-        extract($options); ob_start(); require($pattern);
+        extract($options); ob_start(); require($file);
+
         return ob_get_clean();
     }
 
