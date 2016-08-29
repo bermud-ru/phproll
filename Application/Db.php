@@ -49,7 +49,11 @@ class Db
         }
 
         if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
-        $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
+        try {
+            $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
+        } catch (\Exception $e) {
+            $this->pdo = null;
+        }
     }
 
     /**
@@ -61,7 +65,8 @@ class Db
      */
     public function __call($name, $arguments)
     {
-        if (method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        if ($this->pdo && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        return new \PDOStatement();
     }
 
     /**
