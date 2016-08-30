@@ -210,9 +210,9 @@ class PHPRoll
         }
     }
 
-    public function run(&$method=null, &$params=[])
+    public function run(array $opt=[])
     {
-        if ($method && method_exists($this, $method)) return call_user_func_array($this->{$method}, $params);
+        if (isset($opt['method']) && method_exists($this, $opt['method'])) return call_user_func_array([$this,$opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
