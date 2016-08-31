@@ -11,5 +11,9 @@ mkdir -p ./Application/view
 cp ./vendor/bermud-ru/phproll/public/index.php ./public/
 cp -n ./vendor/bermud-ru/phproll/config.php ./
 cp -n ./vendor/bermud-ru/phproll/public/css/* ./public/css/
-cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
+#cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
+for js in ./vendor/bermud-ru/phproll/public/js/*
+do
+ [ -f $js ] && cp -n $js ./public/js/
+done
 cp -n ./vendor/bermud-ru/phproll/Application/view/* ./Application/view/
