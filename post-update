@@ -7,7 +7,7 @@
 echo "Post-update scripting ..."
 #cp ./vendor/bermud-ru/phproll/public/index.php ./public/
 #cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
-for js in ./vendor/bermud-ru/phproll/public/js/*
-do
- [ -f $js ] && cp -n $js ./public/js/
-done
+#for js in ./vendor/bermud-ru/phproll/public/js/*
+#do
+# [ -f $js ] && cp -n $js ./public/js/
+#done
