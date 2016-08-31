@@ -26,14 +26,34 @@ class Db
     /**
      * Db constructor.
      *
-     * @param PHPRoll $parent
+     * @param PHPRoll $parent | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
      * @param array|null $opt
+     * @param boolean|null $attach if true \Application\Db obeject will be attated to paretn object.
      */
-    public function __construct( \Application\PHPRoll &$parent, array $opt = null)
+    public function __construct(&$parent, array $opt = null, $attach = false)
     {
-        $this->parent = $parent;
-        if (!isset($parent->config['db'])) throw new \Exception('PHPRoll ERROR: DATABASE not defined.');
-        $this->pdo = new \PDO($parent->config['db'], null, null, $opt ?? $this->opt);
+        if (empty($parent)) throw new \Exception('\PHPRoll\Db - необходимо указать параметры подключения!');
+
+        $db =  null;
+        $pdo = null;
+        if (is_array($parent)){
+            $this->parent = null;
+            $db = $parent['db'] ?? null;
+        } elseif ($parent instanceof \Application\PHPRoll) {
+            $this->parent = $parent;
+            $db = $parent->config['db'] ?? null;
+            if ($attach) {
+                $parent->db = $this;
+                if (!empty($parent->db) && $parent->db->pdo instanceof \PDO) $pdo = $this->parent->pdo;
+            }
+        }
+
+        if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
+        try {
+            $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
+        } catch (\Exception $e) {
+            $this->pdo = null;
+        }
     }
 
     /**
@@ -45,7 +65,8 @@ class Db
      */
     public function __call($name, $arguments)
     {
-        if (method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        if ($this->pdo && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        return new \PDOStatement();
     }
 
     /**
@@ -58,8 +79,7 @@ class Db
     public function insert(string $table, array $fields, $keys = true): bool
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
-
-        return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
+        return$this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
     }
 
     /**

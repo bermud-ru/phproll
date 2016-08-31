@@ -10,7 +10,8 @@
 namespace Application;
 
 return array(
-    'view' => '../Application/view/',
+    'basedir' => __DIR__,
+    'view' => __DIR__.'/Application/view/',
     'pattern'=> function($param=null,  $value = 'index.phtml') {
         return ($param) ? $param . '.phtml' : $value;
     },
