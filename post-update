@@ -6,4 +6,4 @@
 
 echo "Post-update scripting ..."
 #cp ./vendor/bermud-ru/phproll/public/index.php ./public/
-cp -Ln ./vendor/bermud-ru/phproll/public/js/* ./public/js/
+cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
