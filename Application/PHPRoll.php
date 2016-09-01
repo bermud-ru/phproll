@@ -33,13 +33,6 @@ class PHPRoll
         if (is_array($params)) {
             $this->config = $params;
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
-                isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-                $this->header['protocol'] = 'https://';
-            }
-            else {
-                $this->header['protocol'] = 'http://';
-            }
             $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
