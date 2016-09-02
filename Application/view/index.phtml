@@ -26,10 +26,52 @@ $page['GET']['header'][] = <<<EOT
     </script>
 </head>
 EOT;
+$date = date('Y');
+$inc = '';
+if (!empty($include)) array_walk_recursive($include, function($cnx, $tpl) use (&$inc) { $inc .= $cnx;});
 $page['GET']['body'][] = <<<EOT
 <body>
 <div id="app" role="application">
-    <div class="container" role="workspace"></div>
+    <div class="container" role="workspace">
+  
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed">
+                    <span class="sr-only">Toggle navigation</span>
+                </button>
+                <a class="navbar-brand" href="//{$header['Host']}" ><span class="glyphicon glyphicon-list-alt"></span >&nbsp; PHPRoll framework</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-right">
+                <ul class="nav navbar-nav">
+                    <!-- li><a href="#help">Справка</a></li -->
+                    <li class="dropdown"><a class="dropdown-toggle" href="#">
+                        <span class="glyphicon glyphicon glyphicon-log-in"></span>&nbsp; Авторизоваться <span class="caret"></span></a>
+                        <ul class="dropdown-menu"><?php /*
+                            <!--<li class="disabled"><a href="#section41">Настройки</a></li>-->
+                            <!--<li class="disabled"><a href="#section41">Сменить пароль</a></li>--> */ ?>
+                            <li><a href="#" role="logout">Выход</a></li><?php /*
+                            <!--<li role="separator" class="divider"></li>-->
+                            <!--<li role="help" data-href="{$config['root']}/help.html"><a target="_blank">Справка</a></li>-->
+                            <!--<li class="disabled"><a href="#section41">Сообщить о проблеме</a></li>--> */ ?>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    $inc
+    
+    <div class="navbar-fixed-bottom row-fluid">
+        <div class="navbar-inner">
+            <div class="container">
+                <div class="copyright">&copy; Все права, Андрей Новиков $date</div>
+            </div>
+        </div>
+    </div>
+    
+</div>
 </div>
 <div class="alert alert-danger message" style="display: none;"></div>
 <div class="b-popup" style="display: none;">

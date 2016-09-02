@@ -33,15 +33,9 @@ class PHPRoll
         if (is_array($params)) {
             $this->config = $params;
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
-                isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-                $this->header['protocol'] = 'https://';
-            }
-            else {
-                $this->header['protocol'] = 'http://';
-            }
             $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
+            if (isset($params['tpl']) && is_callable($params['tpl'])) $this->tpl = $params['tpl'];
         }
         elseif ($params instanceof \Application\PHPRoll)
         {
@@ -89,48 +83,89 @@ class PHPRoll
     }
 
     /**
+     *
+     * @param array|string $param
+     * @param array $opt
+     * @return array|string
+     */
+    protected function tpl($param, array    $opt) {
+        $ext = $opt['ext'] ?? '.phtml';
+        $inc = $opt['inc'] ?? false;
+        $prefix = '';
+        $name = $param;
+
+        if (is_array($param)) {
+            if (!$inc || count($param) == 1) {
+                $name = array_pop($param);
+            } else {
+                $name = [];
+                foreach ($param as $k => $v) {
+                    $name[] = $prefix . $v . $ext;
+                    $prefix .= $v . DIRECTORY_SEPARATOR;
+                }
+                return $name;
+            }
+            if (count($param)) $prefix = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR;
+        }
+
+        return $prefix . $name . $ext;
+    }
+
+    /**
      * Получаем название шаблона
+     * @param $inc boolean шаблон в шаблоне
      * @return string
      */
-    protected function getPattern()
+    public function getPattern($opt)
     {
-        $pattern = isset($params['pattern']) && is_callable($params['pattern'])  ? $params['pattern'] :
-            function($param=null, $value = 'index.phtml') { return ($param) ? $param . '.phtml' : $value; };
-
         $result = '';
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
             case 'POST':
-                $result = $pattern(key($this->params));
+                $result = $this->tpl(key($this->params), $opt);
                 break;
             case 'GET':
             case 'DELETE':
             default:
-                $result = $pattern(current($this->path));
+                $result = $this->tpl($this->path, $opt);
         }
+
         return $result;
     }
 
     /**
+     * Герерация html котента
      * @param $pattern
      * @param array $options
      * @return string
      */
-    public function contex($pattern, array $options = array())
+    public function context($pattern, array $options = array())
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
-        $file = (strpos($pattern, DIRECTORY_SEPARATOR) === false)  ? $path . $pattern : $pattern;
-        if ($pattern == 'permission-denied.pthml') {var_dump([$file] );die;}
-        if (!file_exists($file))
-        {
-            $options['error'] = array('message'=> "File [$pattern] not found");
-            $file = $path . $this->config['pattern']();
+        $is_set = is_array($pattern);
+        $p = array_reverse($is_set ? $pattern : [$pattern]);
+        $count = count($p) - 1;
+
+        foreach ($p as $k => $f) {
+            $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
+            if (!file_exists($file)) {
+                $file = ($is_set) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index');
+            }
+            $context = null;
+            if ($file) {
+                extract($options); ob_start(); require($file);
+                $context = ob_get_clean();
+            }
+
+            if ($is_set &&  $k < $count) {
+                if (!isset($options['include'])) $options['include'] = [];
+                $options['include'][$f] = $context;
+            }
+            else {
+                return $context;
+            }
         }
-
-        extract($options); ob_start(); require($file);
-
-        return ob_get_clean();
     }
 
     /**
@@ -143,7 +178,8 @@ class PHPRoll
         $headers = array();
         foreach ($_SERVER as $name => $value)
             if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH'))
-                $headers[str_replace(array(' ', 'Http'), array('-', 'HTTP'), ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                $headers[str_replace(array(' ', 'Http'), array('-', 'HTTP'),
+                ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
         return $headers;
     }
 
@@ -193,8 +229,9 @@ class PHPRoll
                 header('Content-Type: text/html; charset=utf-8');
                 if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
                 $pattern = $params['pattern'] ?? $params;
+
                 if ( $pattern ) {
-                    return $this->contex($pattern, array(
+                    return $this->context($pattern, array(
                             'params' => is_array($params) ? $params : $this->params,
                             'header' => $this->header,
                             'route' => $this->path,
@@ -218,12 +255,13 @@ class PHPRoll
 
     public function run(array $opt=[])
     {
-        if (isset($opt['method']) && method_exists($this, $opt['method'])) return call_user_func_array([$this,$opt['method']], [$opt['params'] ?? []]);
+        if (isset($opt['method']) && method_exists($this, $opt['method']))
+            return call_user_func_array([$this,$opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', $this->getPattern());
+        return $this->responce('view', $this->getPattern($opt['tpl'] ?? ['inc'=>false, 'ext'=>'.phtml']));
 
     }
 }
