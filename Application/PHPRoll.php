@@ -147,9 +147,10 @@ class PHPRoll
         $count = count($p) - 1;
 
         foreach ($p as $k => $f) {
+            $notFound = false;
             $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
             if (!file_exists($file)) {
-                $file = ($is_set) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index');
+                $file = ($is_set) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index.phtml');
             }
             $context = null;
             if ($file) {
