@@ -93,7 +93,6 @@ class PHPRoll
         $inc = $opt['inc'] ?? false;
         $prefix = '';
         $name = $param;
-
         if (is_array($param)) {
             if (!$inc || count($param) == 1) {
                 $name = array_pop($param);
@@ -108,7 +107,7 @@ class PHPRoll
             if (count($param)) $prefix = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR;
         }
 
-        return $prefix . $name . $ext;
+        return empty($name) ? null : $prefix . $name . $ext;
     }
 
     /**
@@ -180,6 +179,7 @@ class PHPRoll
             if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH'))
                 $headers[str_replace(array(' ', 'Http'), array('-', 'HTTP'),
                 ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+
         return $headers;
     }
 
@@ -261,7 +261,6 @@ class PHPRoll
         if ($content && is_string($content)) return $content;
 
         return $this->responce('view', ['pattern'=>$this->getPattern($opt['tpl'] ?? ['inc'=>false, 'ext'=>'.phtml'])]);
-
     }
 }
 ?>
