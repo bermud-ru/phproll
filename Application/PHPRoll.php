@@ -88,7 +88,7 @@ class PHPRoll
      * @param array $opt
      * @return array|string
      */
-    protected function tpl($param, array    $opt) {
+    protected function tpl($param, array $opt) {
         $ext = $opt['ext'] ?? '.phtml';
         $inc = $opt['inc'] ?? false;
         $prefix = '';
@@ -228,8 +228,7 @@ class PHPRoll
             case 'view':
                 header('Content-Type: text/html; charset=utf-8');
                 if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
-                $pattern = $params['pattern'] ?? $params;
-
+                $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     return $this->context($pattern, array(
                             'params' => is_array($params) ? $params : $this->params,
@@ -261,7 +260,7 @@ class PHPRoll
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', $this->getPattern($opt['tpl'] ?? ['inc'=>false, 'ext'=>'.phtml']));
+        return $this->responce('view', ['pattern'=>$this->getPattern($opt['tpl'] ?? ['inc'=>false, 'ext'=>'.phtml'])]);
 
     }
 }
