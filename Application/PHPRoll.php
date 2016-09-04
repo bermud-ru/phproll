@@ -35,7 +35,6 @@ class PHPRoll
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
             $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
-            if (isset($params['tpl']) && is_callable($params['tpl'])) $this->tpl = $params['tpl'];
         }
         elseif ($params instanceof \Application\PHPRoll)
         {
@@ -148,7 +147,7 @@ class PHPRoll
      * @param array $options
      * @return string
      */
-    protected function context($pattern, array $options = array())
+    public function context($pattern, array $options = array())
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
