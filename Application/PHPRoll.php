@@ -263,7 +263,7 @@ class PHPRoll
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['ext'=>'.phtml'], $opt['tpl'] ?? []))]);
+        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
 }
 ?>
