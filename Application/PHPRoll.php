@@ -90,18 +90,20 @@ class PHPRoll
      */
     protected function tpl($param, array $opt) {
         $ext = $opt['ext'] ?? '.phtml';
-        $inc = $opt['inc'] ?? false;
-        $prefix = '';
-        $name = $param;
-        if (is_array($param)) {
-            if (!$inc || count($param) == 1) {
+        $script = $opt['script'] ?? false;
+        $prefix = ''; $name = null;
+var_dump($param, $script);
+        if (is_array($param) || ($script && $script != $param)) {
+            if (count($param) == 1 && ((!$script) || ($script && in_array($script, $param)))) {
                 $name = array_pop($param);
             } else {
-                $name = [];
+                $param = is_array($param) ? $param : [$param];
                 foreach ($param as $k => $v) {
                     $name[] = $prefix . $v . $ext;
                     $prefix .= $v . DIRECTORY_SEPARATOR;
                 }
+                if ($script && !in_array($script, $param)) array_unshift($name, $script . $ext);
+
                 return $name;
             }
             if (count($param)) $prefix = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR;
@@ -139,7 +141,7 @@ class PHPRoll
      * @param array $options
      * @return string
      */
-    public function context($pattern, array $options = array())
+    protected function context($pattern, array $options = array())
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
@@ -150,7 +152,7 @@ class PHPRoll
             $notFound = false;
             $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
             if (!file_exists($file)) {
-                $file = ($is_set) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index.phtml');
+                $file = ($is_set) && ($k != $count) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index.phtml');
             }
             $context = null;
             if ($file) {
@@ -261,7 +263,7 @@ class PHPRoll
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', ['pattern'=>$this->getPattern($opt['tpl'] ?? ['inc'=>false, 'ext'=>'.phtml'])]);
+        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['script'=>false, 'ext'=>'.phtml'],$opt['tpl'] ?? []))]);
     }
 }
 ?>
