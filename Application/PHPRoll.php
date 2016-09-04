@@ -106,7 +106,7 @@ class PHPRoll
                     $name[] = $prefix . $v . $ext;
                     $prefix .= $v . DIRECTORY_SEPARATOR;
                 }
-                if ($script && !in_array($script, $param)) array_unshift($name, $script . $ext);
+                if (count($name) && $script && !in_array($script, $param)) array_unshift($name, $script . $ext);
 
                 return $name;
             }
@@ -155,7 +155,6 @@ class PHPRoll
         $count = count($p) - 1;
 
         foreach ($p as $k => $f) {
-            $notFound = false;
             $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
             if (!file_exists($file)) {
                 $file = ($is_set) && ($k != $count) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index.phtml');
@@ -169,8 +168,7 @@ class PHPRoll
             if ($is_set &&  $k < $count) {
                 if (!isset($options['include'])) $options['include'] = [];
                 $options['include'][$f] = $context;
-            }
-            else {
+            } else {
                 return $context;
             }
         }
