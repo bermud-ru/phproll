@@ -90,11 +90,11 @@ class PHPRoll
      */
     protected function tpl($param, array $opt) {
         $ext = $opt['ext'] ?? '.phtml';
-        $script = $opt['script'] ?? false;
+        $script = $opt['script'] ?? null;
         $prefix = ''; $name = null;
-var_dump($param, $script);
+
         if (is_array($param) || ($script && $script != $param)) {
-            if (count($param) == 1 && ((!$script) || ($script && in_array($script, $param)))) {
+            if (($script === false) || count($param) == 1 && (($script === false) || ($script && in_array($script, $param)))) {
                 $name = array_pop($param);
             } else {
                 $param = is_array($param) ? $param : [$param];
@@ -263,7 +263,7 @@ var_dump($param, $script);
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['script'=>false, 'ext'=>'.phtml'],$opt['tpl'] ?? []))]);
+        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
 }
 ?>
