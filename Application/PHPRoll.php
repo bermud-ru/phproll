@@ -22,14 +22,14 @@ class PHPRoll
     public $path = [];
 
     protected $parent = null;
-    protected $script = null;
+    protected $file = null;
 
     /**
      * @param $config данные из файла конфигурации
      */
     public function __construct($params)
     {
-        $this->script = pathinfo(__FILE__, PATHINFO_BASENAME);
+        $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
         if (is_array($params)) {
             $this->config = $params;
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
@@ -54,7 +54,9 @@ class PHPRoll
     }
 
     /**
-     * Наследуем родителя
+     * Наследуем родителя для использования его свойств в сложных
+     * ветвлениях при выполнении сценария
+     *
      * @param $parent
      * @return mixed
      */
@@ -83,6 +85,9 @@ class PHPRoll
     }
 
     /**
+     * Алгоритм формирования последовательносит шаблонов,
+     * использование скрипта мастера $script
+     * или если передана строка использовать как название скрипта
      *
      * @param array|string $param
      * @param array $opt
@@ -113,7 +118,8 @@ class PHPRoll
     }
 
     /**
-     * Получаем название шаблона
+     * Получаем название шаблона | последовательности вложенных вдруг в друга шаблонов
+     *
      * @param $inc boolean шаблон в шаблоне
      * @return string
      */
@@ -137,6 +143,7 @@ class PHPRoll
 
     /**
      * Герерация html котента
+     *
      * @param $pattern
      * @param array $options
      * @return string
@@ -238,7 +245,7 @@ class PHPRoll
                             'header' => $this->header,
                             'route' => $this->path,
                             'config' => $this->config,
-                            'script' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->script ? $this->script : '') : $this->script),
+                            'file' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->file ? $this->file : '') : $this->file),
                             'json' => function (array $params) {
                                 echo $this->responce('json', $params);
                                 exit(1);
