@@ -240,11 +240,7 @@ class PHPRoll
                 $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     return $this->context($pattern, array(
-                            'params' => is_array($params) ? $params : $this->params,
-                            'header' => $this->header,
-                            'route' => $this->path,
-                            'config' => $this->config,
-                            'file' => '/' . (count($this->path) ? implode($this->path, '/') . (strtolower(end($this->path)) != $this->file ? $this->file : '') : $this->file),
+                            'self' => &$this,
                             'json' => function (array $params) {
                                 echo $this->responce('json', $params);
                                 exit(1);

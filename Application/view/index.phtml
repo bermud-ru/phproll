@@ -1,7 +1,7 @@
 <?php
 
 namespace Application;
-if (in_array($_SERVER['REQUEST_METHOD'], array('POST'))) {
+if (in_array($_SERVER['REQUEST_METHOD'], array('POST','PUT'))) {
     if ($error) $json(array('result'=>'error', 'message'=> $error['message']));
 }
 
@@ -40,7 +40,7 @@ $page['GET']['body'][] = <<<EOT
                 <button type="button" class="navbar-toggle collapsed">
                     <span class="sr-only">Toggle navigation</span>
                 </button>
-                <a class="navbar-brand" href="//{$header['Host']}" ><span class="glyphicon glyphicon-list-alt"></span >&nbsp; PHPRoll framework</a>
+                <a class="navbar-brand" href="//{$self->header['Host']}" ><span class="glyphicon glyphicon-list-alt"></span >&nbsp; PHPRoll framework</a>
             </div>
             <div class="collapse navbar-collapse navbar-right">
                 <ul class="nav navbar-nav">
@@ -52,7 +52,7 @@ $page['GET']['body'][] = <<<EOT
                             <!--<li class="disabled"><a href="#section41">Сменить пароль</a></li>--> */ ?>
                             <li><a href="#" role="logout">Выход</a></li><?php /*
                             <!--<li role="separator" class="divider"></li>-->
-                            <!--<li role="help" data-href="{$config['root']}/help.html"><a target="_blank">Справка</a></li>-->
+                            <!--<li role="help" data-href="{$self->config['root']}/help.html"><a target="_blank">Справка</a></li>-->
                             <!--<li class="disabled"><a href="#section41">Сообщить о проблеме</a></li>--> */ ?>
                         </ul>
                     </li>
