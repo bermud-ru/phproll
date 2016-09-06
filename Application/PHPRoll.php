@@ -238,7 +238,7 @@ class PHPRoll
      * @return int
      */
     public function response($type, $params)
-    {//TODO: Разобраться с заголовками каждого типа ответа
+    {
         if (isset($_SERVER["HTTP_USER_AGENT"]) && strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
             header("Cache-Control: no-cache");
             header("Pragma: no-cache");
