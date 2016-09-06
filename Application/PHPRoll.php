@@ -53,6 +53,47 @@ class PHPRoll
     }
 
     /**
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function __get ( $name ) {
+        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
+            return $this->parent->{$name};
+        } else {
+            throw new \Exception(__CLASS__."::$name property not foudnd!");
+        }
+    }
+
+    /**
+     * @param $name
+     * @param array $arguments
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function __call ( $name , array $arguments ) {
+        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
+            return call_user_func_array([$this->parent, $name], $arguments);
+        } else {
+            throw new \Exception(__CLASS__."::$name(...) method not foudnd");
+        }
+    }
+
+    /**
+     * @param $name
+     * @param array $arguments
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function __callStatic ( $name , array $arguments ) {
+        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
+            return call_user_func_array([$this->parent, $name], $arguments);
+        } else {
+            throw new \Exception(__CLASS__."::$name(...) method not foudnd");
+        }
+    }
+
+    /**
      * Наследуем родителя для использования его свойств в сложных
      * ветвлениях при выполнении сценария
      *
@@ -196,7 +237,7 @@ class PHPRoll
      * @param $params
      * @return int
      */
-    public function responce($type, $params)
+    public function response($type, $params)
     {//TODO: Разобраться с заголовками каждого типа ответа
         if (isset($_SERVER["HTTP_USER_AGENT"]) && strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
             header("Cache-Control: no-cache");
@@ -216,14 +257,14 @@ class PHPRoll
                 header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
-                header('Content-Disposition: attachment; filename=responce.json');
+                header('Content-Disposition: attachment; filename=response.json');
                 return json_encode($params);
             case 'error':
                 header('HTTP/1.1 206 Partial content');
                 header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
-                header('Content-Disposition: attachment; filename=responce.json');
+                header('Content-Disposition: attachment; filename=response.json');
                 $params['result'] = 'error'; $params['code'] = $params['code'] ?? 500;$params['message'] = $params['message'] ?? null;
                 return json_encode($params);
             case 'file':
@@ -240,7 +281,7 @@ class PHPRoll
                     return $this->context($pattern, array(
                             'self' => &$this,
                             'json' => function (array $params) {
-                                echo $this->responce('json', $params);
+                                echo $this->response('json', $params);
                                 exit(1);
                             }
                         )
@@ -250,7 +291,7 @@ class PHPRoll
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
-                header('Content-Disposition: attachment; filename=responce.html');
+                header('Content-Disposition: attachment; filename=response.html');
                 return $params;
         }
     }
@@ -263,7 +304,7 @@ class PHPRoll
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
 
-        return $this->responce('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
+        return $this->response('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
 }
 ?>
