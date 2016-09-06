@@ -258,15 +258,21 @@ class PHPRoll
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
                 header('Content-Disposition: attachment; filename=response.json');
-                return json_encode($params);
+                return json_encode($params ?? []);
             case 'error':
                 header('HTTP/1.1 206 Partial content');
                 header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
                 header('Content-Disposition: attachment; filename=response.json');
-                $params['result'] = 'error'; $params['code'] = $params['code'] ?? 500;$params['message'] = $params['message'] ?? null;
-                return json_encode($params);
+                if (is_array($params)) {
+                    $params['result'] = 'error';
+                    $params['code'] = $params['code'] ?? 500;
+                    $params['message'] = $params['message'] ?? null;
+                    return json_encode($params);
+                } else {
+                    return $params;
+                }
             case 'file':
                 header('Content-Description: downloading file');
                 header('Content-Transfer-Encoding: binary');
