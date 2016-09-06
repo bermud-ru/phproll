@@ -106,6 +106,17 @@ class PHPRoll
     }
 
     /**
+     * Helper get type of array
+     *
+     * @param array $a
+     * @return bool
+     */
+    public static function is_assoc(array $a): bool
+    {
+        return array_keys($a) !== range(0, count($a) - 1);
+    }
+
+    /**
      * Получаем значение параменных в запросе
      *
      */
@@ -122,6 +133,8 @@ class PHPRoll
             default:
                 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $this->params);
         }
+
+        return $this->params;
     }
 
     /**

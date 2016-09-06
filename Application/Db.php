@@ -105,8 +105,10 @@ class Db
      */
     public function insert(string $table, array $fields, $keys = true): bool
     {
-        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields)).') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
-        return$this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
+        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields))
+            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
+        return$this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] :
+            $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
     }
 
     /**
