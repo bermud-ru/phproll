@@ -12,7 +12,7 @@ namespace Application;
 
 class Db
 {
-    protected $parent = null;
+    protected $owner = null;
     protected $pdo = null;
     protected $opt = array(
         \PDO::ATTR_PERSISTENT => true,
@@ -26,25 +26,25 @@ class Db
     /**
      * Db constructor.
      *
-     * @param PHPRoll $parent | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
+     * @param PHPRoll $owner | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
      * @param array|null $opt
      * @param boolean|null $attach if true \Application\Db obeject will be attated to paretn object.
      */
-    public function __construct(&$parent, array $opt = null, $attach = false)
+    public function __construct(&$owner, $attach = false, array $opt = null)
     {
-        if (empty($parent)) throw new \Exception('\PHPRoll\Db - необходимо указать параметры подключения!');
+        if (empty($owner)) throw new \Exception('\PHPRoll\Db - необходимо указать параметры подключения!');
 
         $db =  null;
         $pdo = null;
-        if (is_array($parent)){
+        if (is_array($owner)){
             $this->parent = null;
-            $db = $parent['db'] ?? null;
-        } elseif ($parent instanceof \Application\PHPRoll) {
-            $this->parent = $parent;
-            $db = $parent->config['db'] ?? null;
+            $db = $owner['db'] ?? null;
+        } elseif ($owner instanceof \Application\PHPRoll) {
+            $this->parent = $owner;
+            $db = $owner->config['db'] ?? null;
             if ($attach) {
-                $parent->db = $this;
-                if (!empty($parent->db) && $parent->db->pdo instanceof \PDO) $pdo = $this->parent->pdo;
+                $owner->db = $this;
+                if (!empty($owner->db) && $owner->db->pdo instanceof \PDO) $pdo = $this->parent->pdo;
             }
         }
 
@@ -57,7 +57,21 @@ class Db
     }
 
     /**
-     * PDO Native
+     * PDO Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function __get ( $name ) {
+        if ($this->pdo instanceof \PDO && property_exists($this->pdo, $name)) {
+            return $this->pdo->{$name};
+        }
+        throw new \Exception(__CLASS__."::$name property not foudnd!");
+    }
+
+    /**
+     * PDO Native method
      *
      * @param $name
      * @param $arguments
@@ -65,7 +79,20 @@ class Db
      */
     public function __call($name, $arguments)
     {
-        if ($this->pdo && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        return new \PDOStatement();
+    }
+
+    /**
+     * PDO Native static method
+     *
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public function __callStatic($name, $arguments)
+    {
+        if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
         return new \PDOStatement();
     }
 
