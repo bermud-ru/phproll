@@ -66,7 +66,7 @@ class Db
         if ($this->pdo instanceof \PDO && property_exists($this->pdo, $name)) {
             return $this->pdo->{$name};
         }
-        throw new \Exception(__CLASS__."::$name property not foudnd!");
+        throw new \Exception(__CLASS__."->$name property not foudnd!");
     }
 
     /**
@@ -79,7 +79,7 @@ class Db
     public function __call($name, $arguments)
     {
         if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
-        return new \PDOStatement();
+        throw new \Exception(__CLASS__."->$name(...) method not foudnd");
     }
 
     /**
@@ -89,12 +89,12 @@ class Db
      * @param $arguments
      * @return mixed
      */
-    public function __callStatic($name, $arguments)
+    public static function __callStatic($name, $arguments)
     {
-        if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
-        return new \PDOStatement();
+        if (method_exists(\PDO, $name)) return call_user_func_array(array(\PDO, $name), $arguments);
+        throw new \Exception(__CLASS__."::$name(...) method not foudnd");
     }
-    
+
     /**
      * PDO stmt helper
      *
@@ -108,11 +108,10 @@ class Db
         $stmt = $this->prepare($sql, $opt);
         preg_match_all('/:([a-zA-Z0-9_]+)/', $sql, $v);
         if (isset($v[1])) {
-            $data = $opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) ? $this->owner->params;
+            $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
+                ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
             $this->status = $stmt->execute( count($data) ?  array_intersect_key($data, array_flip($v[1])) : null );
-        }
-        else
-        {
+        } else {
             $this->status = $stmt->execute();
         }
         return $stmt;
@@ -173,7 +172,6 @@ class Db
         }
 
         $stmt = $this->prepare("UPDATE $table SET $f WHERE $w");
-
         return $this->status = $stmt->execute(array_intersect_key($data, array_flip(array_merge($f_values, $w_values))));
     }
 
