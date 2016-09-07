@@ -106,7 +106,7 @@ class Db
     public function stmt(string $sql, array $params=null, array $opt = ['normolize'=>true]): \PDOStatement
     {
         $stmt = $this->prepare($sql, $opt);
-        preg_match_all('/:([a-zA-Z0-9_]+)/', $sql, $v);
+        preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
         if (isset($v[1])) {
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
                 ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
@@ -167,7 +167,7 @@ class Db
             }
             $w = implode(' AND ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $w_values, $w_keys));
         } else {
-            preg_match_all('/:([a-zA-Z0-9_]+)/', $where, $vars);
+            preg_match_all('/:([a-zA-Z0-9\._]+)/', $where, $vars);
             $w_values = $vars[1] ?? [];
         }
 
