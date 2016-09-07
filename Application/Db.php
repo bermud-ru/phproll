@@ -94,53 +94,7 @@ class Db
         if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
         return new \PDOStatement();
     }
-
-    /**
-     * PDO insert helper
-     *
-     * @param string $table
-     * @param array $fields
-     * @return \PDOStatement
-     */
-    public function insert(string $table, array $fields, $keys = true): bool
-    {
-        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields))
-            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
-        return$this->status = $stmt->execute(array_intersect_key($this->owner->params, ($keys ? $fields : array_flip(array_values($fields)))));
-    }
-
-    /**
-     * PDO update helper
-     *
-     * @param string $table
-     * @param array $fields
-     * @param string $where
-     * @return \PDOStatement
-     */
-    public function update(string $table, $fields = false, $where = ''): bool
-    {
-        if ($fields && is_array($fields)) {
-            $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map(function ($v, $k) {
-                    return $k . ' = :' . $v;
-                }, $fields, array_keys($fields))) .
-                (is_array($where) ? " WHERE " . implode(', ', array_map(function ($v, $k) {
-                        return $k . ' = :' . $v;
-                    }, $where, array_keys($where))) : $where));
-            return $this->status = $stmt->execute(array_intersect_key($this->owner->params, array_flip(array_values(array_merge($fields, $where)))));
-        } else {
-            $fields = array_diff_key($this->owner->params, $where);
-
-            $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map(function ($v) {
-                    return $v . ' = :' . $v;
-                }, array_keys($fields))) .
-                " WHERE " . implode(', ', array_map(function ($v) {
-                    return $v . ' = :' . $v;
-                }, $where)));
-            return $this->status = $stmt->execute($this->owner->params);
-        }
-
-    }
-
+    
     /**
      * PDO stmt helper
      *
@@ -149,20 +103,78 @@ class Db
      * @param array $opt
      * @return \PDOStatement
      */
-    public function stmt(string $sql, array $params=null, array $opt=[]): \PDOStatement
+    public function stmt(string $sql, array $params=null, array $opt = ['normolize'=>true]): \PDOStatement
     {
         $stmt = $this->prepare($sql, $opt);
-        preg_match_all('/:[a-zA-Z0-9_]+/',$sql,$vars);
-        $v =  isset($vars[0]) ? array_map( function ($v) { return str_replace(':', '', $v); }, $vars[0]) : null;
-        if ($v) {
-            $data = []; foreach ((isset($params) ? $params : $this->owner->params) as $k=>$v) $data[end(explode('~', $k))] = $v;
-            $this->status = $stmt->execute(is_null($data) ? null : array_intersect_key($data, array_flip($v)));
+        preg_match_all('/:([a-zA-Z0-9_]+)/', $sql, $v);
+        if (isset($v[1])) {
+            $data = $opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) ? $this->owner->params;
+            $this->status = $stmt->execute( count($data) ?  array_intersect_key($data, array_flip($v[1])) : null );
         }
         else
         {
             $this->status = $stmt->execute();
         }
         return $stmt;
+    }
+
+    /**
+     *  PDO insert helper
+     *
+     * @param string $table
+     * @param array $fields
+     * @param bool $normolize
+     * @return bool
+     */
+    public function insert(string $table, array $fields, bool $normolize = true): bool
+    {
+        $is_assoc = \Application\PHPRoll::is_assoc($fields);
+        $data = $normolize ? \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params;
+        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields).') VALUES ('
+            . implode(', ', array_map(function($v){return ':'.$v;}, ($is_assoc ? array_values($fields) : $fields))) . ')');
+        return$this->status = $stmt->execute(array_intersect_key($data, ($is_assoc ? array_values($fields) : array_flip($fields))));
+    }
+
+    /**
+     * PDO update helper
+     *
+     * @param string $table
+     * @param array $fields
+     * @param $where
+     * @param bool $normolize
+     * @return bool
+     */
+    public function update(string $table, array $fields, $where, bool $normolize = true): bool
+    {
+        $is_assoc = \Application\PHPRoll::is_assoc($fields);
+        $data = $normolize ? \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params;
+        if ($is_assoc) {
+            $f_keys = array_keys($fields);
+            $f_values = array_values($fields);
+        } else {
+            $f_keys = $fields;
+            $f_values = $fields;
+        }
+        $f = implode(', ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $f_values, $f_keys));
+
+        if (is_array($where)) {
+            $is_assoc = \Application\PHPRoll::is_assoc($where);
+            if ($is_assoc) {
+                $w_keys = array_keys($where);
+                $w_values = array_values($where);
+            } else {
+                $w_keys = $where;
+                $w_values = $where;
+            }
+            $w = implode(' AND ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $w_values, $w_keys));
+        } else {
+            preg_match_all('/:([a-zA-Z0-9_]+)/', $where, $vars);
+            $w_values = $vars[1] ?? [];
+        }
+
+        $stmt = $this->prepare("UPDATE $table SET $f WHERE $w");
+
+        return $this->status = $stmt->execute(array_intersect_key($data, array_flip(array_merge($f_values, $w_values))));
     }
 
 }

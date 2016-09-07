@@ -16,6 +16,8 @@ namespace Application;
 
 class PHPRoll
 {
+    const KEY_SEPARATOR = '.';
+
     public $config = [];
     public $header = [];
     public $params = [];
@@ -53,47 +55,6 @@ class PHPRoll
     }
 
     /**
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function __get ( $name ) {
-        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
-            return $this->parent->{$name};
-        } else {
-            throw new \Exception(__CLASS__."::$name property not foudnd!");
-        }
-    }
-
-    /**
-     * @param $name
-     * @param array $arguments
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function __call ( $name , array $arguments ) {
-        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
-            return call_user_func_array([$this->parent, $name], $arguments);
-        } else {
-            throw new \Exception(__CLASS__."::$name(...) method not foudnd");
-        }
-    }
-
-    /**
-     * @param $name
-     * @param array $arguments
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function __callStatic ( $name , array $arguments ) {
-        if ($this->parent instanceof \Application\PHPRoll && property_exists($this->parent, $name)) {
-            return call_user_func_array([$this->parent, $name], $arguments);
-        } else {
-            throw new \Exception(__CLASS__."::$name(...) method not foudnd");
-        }
-    }
-
-    /**
      * Наследуем родителя для использования его свойств в сложных
      * ветвлениях при выполнении сценария
      *
@@ -116,6 +77,13 @@ class PHPRoll
         return array_keys($a) !== range(0, count($a) - 1);
     }
 
+    public static function array_keys_normalization(array $a)
+    {
+        $data = [];
+        foreach ($a as $k=>$v) $data[end(explode(\Application\PHPRoll::KEY_SEPARATOR, $k))] = $v;
+        return $data;
+    }
+
     /**
      * Получаем значение параменных в запросе
      *
@@ -135,8 +103,12 @@ class PHPRoll
                 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
         }
 
-        function rebuild(array $a, &$r, $path = null) {
-            foreach ($a as $k => $v) if (!is_array($v)) $r[$path ? $path.'~'.$k : $k] = $v; else rebuild($v, $r, $path ? $path.'~'.$k : $k);
+        function rebuild(array $a, &$r, $key = null) {
+            foreach ($a as $k => $v)
+                if (!is_array($v))
+                    $r[$key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k] = $v;
+                else
+                    rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
         };
 
         return $this->params;
