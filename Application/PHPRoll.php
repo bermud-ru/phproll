@@ -122,17 +122,22 @@ class PHPRoll
      */
     protected function initParams()
     {
+        $params = [];
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
             case 'POST':
-                parse_str(file_get_contents('php://input'), $this->params );
+                parse_str(file_get_contents('php://input'), $params );
                 break;
             case 'GET':
             case 'DELETE':
             default:
-                parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $this->params);
+                parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
         }
+
+        function rebuild(array $a, &$r, $path = null) {
+            foreach ($a as $k => $v) if (!is_array($v)) $r[$path ? $path.'~'.$k : $k] = $v; else rebuild($v, $r, $path ? $path.'~'.$k : $k);
+        };
 
         return $this->params;
     }

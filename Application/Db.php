@@ -20,7 +20,6 @@ class Db
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
     );
 
-    public $index = null;
     public $status = false;
 
     /**
@@ -37,14 +36,14 @@ class Db
         $db =  null;
         $pdo = null;
         if (is_array($owner)){
-            $this->parent = null;
+            $this->owner = null;
             $db = $owner['db'] ?? null;
         } elseif ($owner instanceof \Application\PHPRoll) {
-            $this->parent = $owner;
+            $this->owner = $owner;
             $db = $owner->config['db'] ?? null;
             if ($attach) {
                 $owner->db = $this;
-                if (!empty($owner->db) && $owner->db->pdo instanceof \PDO) $pdo = $this->parent->pdo;
+                if (!empty($owner->db) && $owner->db->pdo instanceof \PDO) $pdo = $this->owner->pdo;
             }
         }
 
@@ -107,8 +106,7 @@ class Db
     {
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', array_keys($fields))
             .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, ($keys ? array_keys($fields) : array_values($fields)))) . ')');
-        return$this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] :
-            $this->parent->params), ($keys ? $fields : array_flip(array_values($fields)))));
+        return$this->status = $stmt->execute(array_intersect_key($this->owner->params, ($keys ? $fields : array_flip(array_values($fields)))));
     }
 
     /**
@@ -128,12 +126,9 @@ class Db
                 (is_array($where) ? " WHERE " . implode(', ', array_map(function ($v, $k) {
                         return $k . ' = :' . $v;
                     }, $where, array_keys($where))) : $where));
-            return $this->status = $stmt->execute(array_intersect_key(($this->index ? $this->parent->params[$this->index] :
-                $this->parent->params), array_flip(array_values(array_merge($fields, $where)))));
-        }
-        else
-        {
-            $fields = array_diff_key(($this->index ? $this->parent->params[$this->index] : $this->parent->params), $where);
+            return $this->status = $stmt->execute(array_intersect_key($this->owner->params, array_flip(array_values(array_merge($fields, $where)))));
+        } else {
+            $fields = array_diff_key($this->owner->params, $where);
 
             $stmt = $this->prepare("UPDATE $table SET " . implode(', ', array_map(function ($v) {
                     return $v . ' = :' . $v;
@@ -141,7 +136,7 @@ class Db
                 " WHERE " . implode(', ', array_map(function ($v) {
                     return $v . ' = :' . $v;
                 }, $where)));
-            return $this->status = $stmt->execute($this->index ? $this->parent->params[$this->index] : $this->parent->params);
+            return $this->status = $stmt->execute($this->owner->params);
         }
 
     }
@@ -160,7 +155,7 @@ class Db
         preg_match_all('/:[a-zA-Z0-9_]+/',$sql,$vars);
         $v =  isset($vars[0]) ? array_map( function ($v) { return str_replace(':', '', $v); }, $vars[0]) : null;
         if ($v) {
-            $data = isset($params) ? $params : ($this->index ? $this->parent->params[$this->index] : $this->parent->params);
+            $data = []; foreach ((isset($params) ? $params : $this->owner->params) as $k=>$v) $data[end(explode('~', $k))] = $v;
             $this->status = $stmt->execute(is_null($data) ? null : array_intersect_key($data, array_flip($v)));
         }
         else
