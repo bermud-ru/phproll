@@ -23,7 +23,7 @@ class Db
     public $status = false;
 
     /**
-     * Db constructor.
+     * Db constructor
      *
      * @param PHPRoll $owner | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
      * @param array|null $opt

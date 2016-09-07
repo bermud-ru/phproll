@@ -27,6 +27,8 @@ class PHPRoll
     protected $file = null;
 
     /**
+     * Конструктор
+     *
      * @param $config данные из файла конфигурации
      */
     public function __construct($params)
@@ -45,7 +47,8 @@ class PHPRoll
     }
 
     /**
-     * Маршрутизатор
+     * Маршрутизатор позволяет переопределить обработку урлов
+     *
      * @param $params
      * @return mixed
      */
@@ -67,7 +70,7 @@ class PHPRoll
     }
 
     /**
-     * Helper get type of array
+     * Проверяем является массив ассоциативным
      *
      * @param array $a
      * @return bool
@@ -77,6 +80,12 @@ class PHPRoll
         return array_keys($a) !== range(0, count($a) - 1);
     }
 
+    /**
+     * Приводим ключи массива к нормализованному виду
+     *
+     * @param array $a
+     * @return array
+     */
     public static function array_keys_normalization(array $a)
     {
         $data = [];
@@ -292,6 +301,12 @@ class PHPRoll
         }
     }
 
+    /**
+     * Сборка и генерация контента
+     * 
+     * @param array $opt
+     * @return int|mixed
+     */
     public function run(array $opt=[])
     {
         if (isset($opt['method']) && method_exists($this, $opt['method']))
