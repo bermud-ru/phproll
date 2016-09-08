@@ -89,7 +89,10 @@ class PHPRoll
     public static function array_keys_normalization(array $a)
     {
         $data = [];
-        foreach ($a as $k=>$v) $data[end(explode(\Application\PHPRoll::KEY_SEPARATOR, $k))] = $v;
+        foreach ($a as $k=>$v) {
+            $keys = explode(\Application\PHPRoll::KEY_SEPARATOR, $k);
+            $data[end($keys)] = $v;
+        }
         return $data;
     }
 
@@ -120,7 +123,7 @@ class PHPRoll
                     rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
         };
 
-        return $this->params;
+        rebuild($params, $this->params);
     }
 
     /**
@@ -303,7 +306,7 @@ class PHPRoll
 
     /**
      * Сборка и генерация контента
-     * 
+     *
      * @param array $opt
      * @return int|mixed
      */

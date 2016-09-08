@@ -12,6 +12,8 @@ namespace Application;
 
 class Db
 {
+    const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
+
     protected $owner = null;
     protected $pdo = null;
     protected $opt = array(
@@ -115,6 +117,45 @@ class Db
             $this->status = $stmt->execute();
         }
         return $stmt;
+    }
+
+    /**
+     *  PDO select helper with paggination, limit and etc
+     *
+     * @param string $sql
+     * @param array $params
+     * @param array $opt
+     * @return \PDOStatement
+     */
+    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true]): \PDOStatement
+    {
+        if (count($params)) {
+            $params = array_merge(\Application\Db::FILTER_DEFAULT, $params);
+        } else {
+            $params = array_merge(\Application\Db::FILTER_DEFAULT, $opt['normolize'] ?
+                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
+        }
+
+        preg_match('/^select.+?(offset.+)?(limit.+)$/iu', $sql, $ltd);
+        $limit = ''; $offset = '';
+        if (!isset($ltd[1]) && strval($params['page']) != 0) {
+            $offest = ' offset ' . (strval($params['page']) * strval($params['limit']));
+        }
+        unset($params['page']);
+
+        if (!isset($ltd[2])) { $limit = " limit ${params['limit']}"; unset($params['limit']);}
+
+        preg_match('/^select.+?(where.+)$/iu', $sql, $wh);
+        $where = !isset($wh[1]) && count($params) ? ' where ': ' ';
+
+        if (count($params)) {
+            $where .= implode(' AND ', array_map(function ($v, $k) {
+                if (preg_match('/.*(\%)+.*/iu',$v)) return $k . ' ilike :' . $k;
+                return $k . ' = :' . $k;
+            }, $params, array_keys($params)));
+        }
+
+        return $this->stmt( $sql . $where . $offset . $limit, $params, $opt );
     }
 
     /**
