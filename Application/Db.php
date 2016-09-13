@@ -53,7 +53,7 @@ class Db
         try {
             $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
         } catch (\Exception $e) {
-            $this->pdo = null;
+            throw new \Exception(__CLASS__.": ".$e->getMessage());
         }
     }
 
@@ -64,7 +64,7 @@ class Db
      * @return mixed
      * @throws \Exception
      */
-    protected function __get ( $name ) {
+    public function __get ( $name ) {
         if ($this->pdo instanceof \PDO && property_exists($this->pdo, $name)) {
             return $this->pdo->{$name};
         }
