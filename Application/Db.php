@@ -52,6 +52,7 @@ class Db
         if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
         try {
             $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
+            $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING, \PDO::NULL_NATURAL);
         } catch (\Exception $e) {
             throw new \Exception(__CLASS__.": ".$e->getMessage());
         }
@@ -116,6 +117,7 @@ class Db
         } else {
             $this->status = $stmt->execute();
         }
+
         return $stmt;
     }
 
@@ -173,7 +175,8 @@ class Db
                 \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields).') VALUES ('
             . implode(', ', array_map(function($v){return ':'.$v;}, ($is_assoc ? array_values($fields) : $fields))) . ')');
-        return$this->status = $stmt->execute(array_intersect_key($data, ($is_assoc ? array_values($fields) : array_flip($fields))));
+
+        return$this->status = $stmt->execute(array_intersect_key($data, array_flip($is_assoc ? array_values($fields) : $fields)));
     }
 
     /**
@@ -215,6 +218,7 @@ class Db
         }
 
         $stmt = $this->prepare("UPDATE $table SET $f WHERE $w");
+
         return $this->status = $stmt->execute(array_intersect_key($data, array_flip(array_merge($f_values, $w_values))));
     }
 
