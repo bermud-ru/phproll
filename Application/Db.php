@@ -163,13 +163,14 @@ class Db
      *
      * @param string $table
      * @param array $fields
-     * @param bool $normolize
+     * @param array $opt
      * @return bool
      */
-    public function insert(string $table, array $fields, bool $normolize = true): bool
+    public function insert(string $table, array $fields, array $opt = ['normolize'=>true]): bool
     {
         $is_assoc = \Application\PHPRoll::is_assoc($fields);
-        $data = $normolize ? \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params;
+        $data = $opt['params'] ?? (!isset($opt['normolize']) || $opt['normolize'] === true ?
+                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields).') VALUES ('
             . implode(', ', array_map(function($v){return ':'.$v;}, ($is_assoc ? array_values($fields) : $fields))) . ')');
         return$this->status = $stmt->execute(array_intersect_key($data, ($is_assoc ? array_values($fields) : array_flip($fields))));
@@ -181,13 +182,14 @@ class Db
      * @param string $table
      * @param array $fields
      * @param $where
-     * @param bool $normolize
+     * @param array $opt
      * @return bool
      */
-    public function update(string $table, array $fields, $where, bool $normolize = true): bool
+    public function update(string $table, array $fields, $where, array $opt = ['normolize'=>true]): bool
     {
         $is_assoc = \Application\PHPRoll::is_assoc($fields);
-        $data = $normolize ? \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params;
+        $data = $opt['params'] ?? (!isset($opt['normolize']) || $opt['normolize'] === true ?
+                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         if ($is_assoc) {
             $f_keys = array_keys($fields);
             $f_values = array_values($fields);
