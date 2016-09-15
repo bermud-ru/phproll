@@ -17,7 +17,7 @@ class Db
     protected $owner = null;
     protected $pdo = null;
     protected $opt = array(
-        \PDO::ATTR_PERSISTENT => true,
+        //\PDO::ATTR_PERSISTENT => true,
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
     );
@@ -52,7 +52,7 @@ class Db
         if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
         try {
             $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
-            $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING, \PDO::NULL_NATURAL);
+           // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING);
         } catch (\Exception $e) {
             throw new \Exception(__CLASS__.": ".$e->getMessage());
         }
@@ -112,11 +112,11 @@ class Db
         preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
         if (isset($v[1])) {
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
-                ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
-            $this->status = $stmt->execute( count($data) ?  array_intersect_key($data, array_flip($v[1])) : null );
-        } else {
-            $this->status = $stmt->execute();
+            ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
+            if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v)
+                $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
         }
+        $this->status = $stmt->execute();
 
         return $stmt;
     }
@@ -141,7 +141,7 @@ class Db
         preg_match('/^select.+?(offset.+)?(limit.+)$/iu', $sql, $ltd);
         $limit = ''; $offset = '';
         if (!isset($ltd[1]) && strval($params['page']) != 0) {
-            $offest = ' offset ' . (strval($params['page']) * strval($params['limit']));
+            $offset = ' offset ' . (strval($params['page']) * strval($params['limit']));
         }
         unset($params['page']);
 
@@ -173,10 +173,15 @@ class Db
         $is_assoc = \Application\PHPRoll::is_assoc($fields);
         $data = $opt['params'] ?? (!isset($opt['normolize']) || $opt['normolize'] === true ?
                 \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
-        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields).') VALUES ('
-            . implode(', ', array_map(function($v){return ':'.$v;}, ($is_assoc ? array_values($fields) : $fields))) . ')');
+        $values = array_intersect_key($data, array_flip($is_assoc ? array_values($fields) : $fields));
+        $f = $is_assoc ? array_values($fields) : $fields;
+        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields)
+                            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')');
+        array_map(function($v) use($stmt, $values) {
+             return $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
+        }, $f);
 
-        return$this->status = $stmt->execute(array_intersect_key($data, array_flip($is_assoc ? array_values($fields) : $fields)));
+        return$this->status = $stmt->execute();
     }
 
     /**
@@ -218,8 +223,10 @@ class Db
         }
 
         $stmt = $this->prepare("UPDATE $table SET $f WHERE $w");
+        if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
+            $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
 
-        return $this->status = $stmt->execute(array_intersect_key($data, array_flip(array_merge($f_values, $w_values))));
+        return $this->status = $stmt->execute();
     }
 
 }
