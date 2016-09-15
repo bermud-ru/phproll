@@ -14,7 +14,7 @@ class Db
 {
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
-    protected $owner = null;
+    public $owner = null;
     protected $pdo = null;
     protected $opt = array(
         //\PDO::ATTR_PERSISTENT => true,
