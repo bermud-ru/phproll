@@ -108,7 +108,7 @@ class Db
      */
     public function stmt(string $sql, array $params=null, array $opt = ['normolize'=>true]): \PDOStatement
     {
-        $stmt = $this->prepare($sql, $opt);
+        $stmt = $this->prepare($sql, $opt['PDO'] ?? []);
         preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
         if (isset($v[1])) {
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
@@ -176,10 +176,8 @@ class Db
         $values = array_intersect_key($data, array_flip($is_assoc ? array_values($fields) : $fields));
         $f = $is_assoc ? array_values($fields) : $fields;
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields)
-                            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')');
-        array_map(function($v) use($stmt, $values) {
-             return $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
-        }, $f);
+                            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')', $opt['PDO'] ?? []);
+        foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
 
         return$this->status = $stmt->execute();
     }
@@ -222,7 +220,7 @@ class Db
             $w_values = $vars[1] ?? [];
         }
 
-        $stmt = $this->prepare("UPDATE $table SET $f WHERE $w");
+        $stmt = $this->prepare("UPDATE $table SET $f WHERE $w", $opt['PDO'] ?? []);
         if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
             $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
 
