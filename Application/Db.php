@@ -138,16 +138,18 @@ class Db
                 \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         }
 
-        preg_match('/^select.+?(offset.+)?(limit.+)$/iu', $sql, $ltd);
+        preg_match('/^select.+?(offset.+)?(limit.+)?(offset.+)$/iu', $sql, $ltd);
         $limit = ''; $offset = '';
-        if (!isset($ltd[1]) && strval($params['page']) != 0) {
+        if ((!isset($ltd[1]) || !isset($ltd[3])) && strval($params['page']) != 0) {
             $offset = ' offset ' . (strval($params['page']) * strval($params['limit']));
         }
         unset($params['page']);
 
         if (!isset($ltd[2])) { $limit = " limit ${params['limit']}"; unset($params['limit']);}
+        //preg_match('/order[^$|limit|offset]+/', $sql, $or);
 
         preg_match('/^select.+?(where.+)$/iu', $sql, $wh);
+
         $where = !isset($wh[1]) && count($params) ? ' where ': ' ';
 
         if (count($params)) {
@@ -157,7 +159,7 @@ class Db
             }, $params, array_keys($params)));
         }
 
-        return $this->stmt( $sql . $where . $offset . $limit, $params, $opt );
+        return $this->stmt( $sql . $where . ($opt['order'] ?? '') . $offset . $limit, $params, $opt );
     }
 
     /**
