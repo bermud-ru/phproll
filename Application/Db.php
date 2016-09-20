@@ -153,12 +153,14 @@ class Db
         $where = !isset($wh[1]) && count($params) ? ' where ': ' ';
 
         if (count($params)) {
-            $where .= implode(' AND ', array_map(function ($v, $k) {
-                if (preg_match('/.*(\%)+.*/iu',$v)) return $k . ' ilike :' . $k;
-                return $k . ' = :' . $k;
+            $where .= implode(' AND ', array_map(function ($v, $k) use($opt) {
+                $v = $k;
+                if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $k = $opt['prefix'][$k] . $k;
+                if (isset($opt['operator'][$k]) && !empty($opt['operator'][$k])) return $k . " {$opt['operator'][$k]} :" . $v;
+                return $k . ' = :' . $v;
             }, $params, array_keys($params)));
         }
-
+//var_dump($sql . $where . ($opt['order'] ?? '') . $offset . $limit);exit;
         return $this->stmt( $sql . $where . ($opt['order'] ?? '') . $offset . $limit, $params, $opt );
     }
 
