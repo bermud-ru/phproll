@@ -256,12 +256,16 @@ class PHPRoll
         switch ($type) {
             case 'json':
                 header('HTTP/1.1 206 Partial content');
+                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+                header('Pragma: no-cache');
                 header('Expires: 0');
                 header('Content-Description: json response');
                 header('Content-Type: Application/json; charset=utf-8');
                 header('Content-Disposition: attachment; filename=response.json');
                 return json_encode($params ?? []);
             case 'error':
+                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+                header('Pragma: no-cache');
                 header('HTTP/1.1 206 Partial content');
                 header('Expires: 0');
                 header('Content-Description: json response');
