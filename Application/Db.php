@@ -162,7 +162,7 @@ class Db
             }, $params, array_keys($params)));
         }
 //var_dump($sql . $where . ($opt['order'] ?? '') . $offset . $limit);exit;
-        return $this->stmt( $sql . $where . ($opt['order'] ?? '') . $offset . $limit, $params, $opt );
+        return $this->stmt( $sql . $where . (isset($opt['order']) ? ' '.$opt['order'].' ':'') . (isset($opt['group']) ? ' '.$opt['group'].' ':'') .  (isset($opt['having']) ? ' '.$opt['having'].' ':'') . $offset . $limit, $params, $opt );
     }
 
     /**
