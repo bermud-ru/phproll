@@ -65,7 +65,8 @@ class Db
      * @return mixed
      * @throws \Exception
      */
-    public function __get ( $name ) {
+    public function __get ( $name ) 
+    {
         if ($this->pdo instanceof \PDO && property_exists($this->pdo, $name)) {
             return $this->pdo->{$name};
         }
