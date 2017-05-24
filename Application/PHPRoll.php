@@ -248,29 +248,41 @@ class PHPRoll
             header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
             header("Pragma: public");
         }
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-        header("Access-Control-Allow-Headers: Content-Type");
-        header('Content-Encoding: utf-8');
-        header('Content-Transfer-Encoding: binary');
+
+        if ( in_array(($type = strtolower($type)),['json','error']) ) {
+            header("Access-Control-Allow-Origin: *");
+            //header("Access-Control-Allow-Credentials: true");
+            header("Access-Control-Allow-Methods: GET, POST, PUT, HEAD, OPTIONS, DELETE");
+            header("Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version");
+            header('Content-Encoding: utf-8');
+           // header('Content-Transfer-Encoding: binary');
+            header('HTTP/1.1 206 Partial content');
+            // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+            // header('Pragma: no-cache');
+            header('Expires: 0');
+            header('Content-Description: json');
+            header('Content-Type: Application/json; charset=utf-8');
+            // header('Content-Disposition: attachment; filename=response.json');
+        }
+
         switch ($type) {
             case 'json':
-                header('HTTP/1.1 206 Partial content');
-                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-                header('Pragma: no-cache');
-                header('Expires: 0');
-                header('Content-Description: json response');
-                header('Content-Type: Application/json; charset=utf-8');
-                header('Content-Disposition: attachment; filename=response.json');
+//                header('HTTP/1.1 206 Partial content');
+//               // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+//               // header('Pragma: no-cache');
+//                header('Expires: 0');
+//                header('Content-Description: json response');
+//                header('Content-Type: Application/json; charset=utf-8');
+//               // header('Content-Disposition: attachment; filename=response.json');
                 return json_encode($params ?? []);
             case 'error':
-                header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-                header('Pragma: no-cache');
-                header('HTTP/1.1 206 Partial content');
-                header('Expires: 0');
-                header('Content-Description: json response');
-                header('Content-Type: Application/json; charset=utf-8');
-                header('Content-Disposition: attachment; filename=response.json');
+//              //  header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+//              //  header('Pragma: no-cache');
+//                header('HTTP/1.1 206 Partial content');
+//                header('Expires: 0');
+//                header('Content-Description: json response');
+//                header('Content-Type: Application/json; charset=utf-8');
+//               // header('Content-Disposition: attachment; filename=response.json');
                 if (is_array($params)) {
                     $params['result'] = 'error';
                     $params['code'] = $params['code'] ?? 500;
@@ -280,10 +292,33 @@ class PHPRoll
                     return $params;
                 }
             case 'file':
-                header('Content-Description: downloading file');
+                header('Content-Description: File Transfer');
+                header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
+                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.ext').'";');
                 header('Content-Transfer-Encoding: binary');
-                header('Content-Disposition: attachment; filename=upload.ext');
+                header('Connection: Keep-Alive');
                 //DOTO: upload file code
+                // if (!is_resource($params['file'])) {
+                //      fseek($params['file'], 0);
+                //      fpassthru($params['file']);
+                // }
+//                function array_to_csv_download($array, $filename = "export.csv", $delimiter=";") {
+//                    // open raw memory as file so no temp files needed, you might run out of memory though
+//                    $f = fopen('php://memory', 'w');
+//                    // loop over the input array
+//                    foreach ($array as $line) {
+//                        // generate csv lines from the inner arrays
+//                        fputcsv($f, $line, $delimiter);
+//                    }
+//                    // reset the file pointer to the start of the file
+//                    fseek($f, 0);
+//                    // tell the browser it's going to be a csv file
+//                    header('Content-Type: application/csv');
+//                    // tell the browser we want to save it instead of displaying it
+//                    header('Content-Disposition: attachment; filename="'.$filename.'";');
+//                    // make php send the generated csv lines to the browser
+//                    fpassthru($f);
+//                }
                 break;
             case 'view':
                 header('Content-Type: text/html; charset=utf-8');
@@ -303,7 +338,7 @@ class PHPRoll
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
-                header('Content-Disposition: attachment; filename=response.html');
+               // header('Content-Disposition: attachment; filename=response.html');
                 return $params;
         }
     }
@@ -312,7 +347,7 @@ class PHPRoll
      * Сборка и генерация контента
      *
      * @param array $opt
-     * @return int|mixed
+     * @return mixed
      */
     public function run(array $opt=[])
     {
