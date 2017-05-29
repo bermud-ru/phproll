@@ -159,6 +159,7 @@ class Db
                 if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $k = $opt['prefix'][$k] . $k;
                 if (isset($opt['operator'][$k]) && !empty($opt['operator'][$k])) return $k . " {$opt['operator'][$k]} :" . $v;
                 if (isset($opt['singl'][$k]) && !empty($opt['singl'][$k])) return $k . " {$opt['singl'][$k]} ";
+                if (isset($opt['bundle'][$k]) && !empty($opt['bundle'][$k])) return " {$opt['bundle'][$k]} ";
                 return $k . ' = :' . $v;
             }, $params, array_keys($params)));
         }
