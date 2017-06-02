@@ -279,9 +279,11 @@ class PHPRoll
             case 'file':
                 header('Content-Description: File Transfer');
                 header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
-                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.ext').'";');
+                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
                 header('Content-Transfer-Encoding: binary');
                 header('Connection: Keep-Alive');
+                header('Cache-control: private');
+                if (isset($params['size'])) header("Content-length: " . $params['size']);
 
                 if ( !is_resource($params['file']) ) {
                     fseek($params['file'], 0);
