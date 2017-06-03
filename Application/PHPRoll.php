@@ -258,8 +258,6 @@ class PHPRoll
             header('Content-Encoding: utf-8');
            // header('Content-Transfer-Encoding: binary');
             header('HTTP/1.1 206 Partial content');
-            // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            // header('Pragma: no-cache');
             header('Expires: 0');
             header('Content-Description: json');
             header('Content-Type: Application/json; charset=utf-8');
