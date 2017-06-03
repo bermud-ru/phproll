@@ -267,29 +267,31 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
+                if (isset($params['error'])) {
+                    return $this->response('error', $params);
+                }
                 return json_encode($params ?? []);
             case 'error':
-                if (is_array($params)) {
-                    $params['result'] = 'error';
-                    $params['code'] = $params['code'] ?? 500;
-                    $params['message'] = $params['message'] ?? null;
-                    return json_encode($params);
-                }
-                return $params;
+                $res['error'] = $params;
+                $res['result'] = 'error';
+                $res['code'] = $params['code'] ?? 500;
+                $res['message'] = $params['message'] ?? null;
+                return json_encode($res);
             case 'file':
+                header("HTTP/1.1 200 OK");
                 header('Content-Description: File Transfer');
                 header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
                 header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
                 header('Content-Transfer-Encoding: binary');
+                header('Expires: 0');
                 header('Connection: Keep-Alive');
-                header('Cache-control: private');
+                header('Cache-Control: must-revalidate');
                 if (isset($params['size'])) header("Content-length: " . $params['size']);
 
-                if ( !is_resource($params['file']) ) {
+                if ( is_resource($params['file']) ) {
                     fseek($params['file'], 0);
                     fpassthru($params['file']);
                 }
-
                 break;
             case 'view':
                 header('Content-Type: text/html; charset=utf-8');
@@ -310,8 +312,9 @@ class PHPRoll
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
                // header('Content-Disposition: attachment; filename=response.html');
-                return $params;
         }
+
+        return $params;
     }
 
     /**
