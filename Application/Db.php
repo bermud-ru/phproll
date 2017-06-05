@@ -151,19 +151,32 @@ class Db
 
         preg_match('/^select.+?(where.+)$/iu', $sql, $wh);
 
-        $where = !isset($wh[1]) && count($params) ? ' where ': ' ';
-
+        $p = [];
         if (count($params)) {
-            $where .= implode(' AND ', array_map(function ($v, $k) use($opt) {
+            $p = array_map(function ($k) use($opt) {
+                if (isset($opt['exclude']) && in_array($k, $opt['exclude'])) return '';
                 $v = $k;
-                if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $k = $opt['prefix'][$k] . $k;
-                if (isset($opt['operator'][$k]) && !empty($opt['operator'][$k])) return $k . " {$opt['operator'][$k]} :" . $v;
-                if (isset($opt['singl'][$k]) && !empty($opt['singl'][$k])) return $k . " {$opt['singl'][$k]} ";
-                if (isset($opt['bundle'][$k]) && !empty($opt['bundle'][$k])) return " {$opt['bundle'][$k]} ";
-                return $k . ' = :' . $v;
-            }, $params, array_keys($params)));
+                if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $v = $opt['prefix'][$k] . $k;
+                if (isset($opt['operator'][$k]) && !empty($opt['operator'][$k])) return "$v {$opt['operator'][$k]} :$k";
+                return "$v = :$k";
+            }, array_keys($params));
         }
-//var_dump($sql . $where . ($opt['order'] ?? '') . $offset . $limit);exit;
+        if (isset($opt['singl']) && count($opt['singl'])) {
+            $is_assoc = \Application\PHPRoll::is_assoc($opt['singl']);
+            $p = array_merge($p, array_map(function ($v, $k) use($is_assoc) {
+                if ($is_assoc) {
+                    if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $k = $opt['prefix'][$k] . $k;
+                    return "$k $v";
+                }
+                return $v;
+            }, $opt['singl'], array_keys($opt['singl'])));
+        }
+        if (isset($opt['bundle']) && count($opt['bundle'])) {
+            $p = array_merge($p, $opt['bundle']);
+        }
+        $where = !isset($wh[1]) && count($p) ? ' where ' : ' ';
+        $where .= implode(' AND ', $p);
+
         return $this->stmt( $sql . $where . (isset($opt['order']) ? ' '.$opt['order'].' ':'') . (isset($opt['group']) ? ' '.$opt['group'].' ':'') .  (isset($opt['having']) ? ' '.$opt['having'].' ':'') . $offset . $limit, $params, $opt );
     }
 
