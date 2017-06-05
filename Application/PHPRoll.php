@@ -258,23 +258,26 @@ class PHPRoll
             header('Content-Encoding: utf-8');
            // header('Content-Transfer-Encoding: binary');
             header('HTTP/1.1 206 Partial content');
+            // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+            // header('Pragma: no-cache');
             header('Expires: 0');
             header('Content-Description: json');
             header('Content-Type: Application/json; charset=utf-8');
         }
+        if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
 
         switch ($type) {
             case 'json':
-                if (isset($params['error'])) {
-                    return $this->response('error', $params);
-                }
+//                if (isset($params['error'])) {
+//                    return $this->response('error', $params);
+//                }
                 return json_encode($params ?? []);
             case 'error':
-                $res['error'] = $params;
-                $res['result'] = 'error';
-                $res['code'] = $params['code'] ?? 500;
-                $res['message'] = $params['message'] ?? null;
-                return json_encode($res);
+               // $res['error'] = $params;
+                $params['result'] = 'error';
+                //$params['code'] = $params['code'] ?? 500;
+                //$params['message'] = $params['message'] ?? null;
+                return json_encode($params);
             case 'file':
                 header("HTTP/1.1 200 OK");
                 header('Content-Description: File Transfer');
@@ -293,7 +296,6 @@ class PHPRoll
                 break;
             case 'view':
                 header('Content-Type: text/html; charset=utf-8');
-                if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
                 $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     return $this->context($pattern, array(
