@@ -4,16 +4,168 @@
 # @author Андрей Новиков <andrey@novikov.be>
 # @data 07/12/2015
 
+vendor=vendor/bermud-ru/phproll
 echo "Post-install scripting ..."
 mkdir -p ./public/css
 mkdir -p ./public/js
 mkdir -p ./Application/view
-cp ./vendor/bermud-ru/phproll/public/index.php ./public/
-cp -n ./vendor/bermud-ru/phproll/config.php ./
-cp -n ./vendor/bermud-ru/phproll/public/css/* ./public/css/
-#cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
-for js in ./vendor/bermud-ru/phproll/public/js/*
+mkdir -p ./setup/nginx
+mkdir -p ./setup/SSL
+cp -rf ./$vendor/public/401.html ./public/
+cp -rf ./$vendor/public/500.html ./public/
+cp -rf ./$vendor/public/favicon.ico ./public/
+cp -rf ./$vendor/public/index.php ./public/
+cp -rf ./$vendor/public/robots.txt ./public/
+cp -rf ./$vendor/config.php ./
+cp -rf ./$vendor/.gitignore ./
+cp -rf ./$vendor/.hgignore ./
+cp -n ./$vendor/public/css/* ./public/css/
+#cp -rf ./$vendor/public/js/* ./public/js/
+for js in ./$vendor/public/js/*
 do
- [ -f $js ] && cp -n $js ./public/js/
+ [ -f $js ] && cp -rf $js ./public/js/
 done
-cp -n ./vendor/bermud-ru/phproll/Application/view/* ./Application/view/
+cp -rf ./$vendor/Application/view/* ./Application/view/
+
+project="phproll.server"
+SSL_path=$(pwd)/setup/SSL
+
+cat << EOF > ./setup/nginx/$project.conf
+server {
+    # access_log /var/log/nginx/$project.access.log combined;
+    # error_log /var/log/nginx/$project.error.log warn;
+
+    server_name $project.server www.$project.server;
+
+    listen 80;
+    return 302 https://\$server_name\$request_uri;
+}
+
+server {
+    access_log /var/log/nginx/$project.access.log combined;
+    error_log /var/log/nginx/$project.error.log warn;
+
+    server_name $project www.$project;
+    set \$host_path /srv/\$project;
+    root \$host_path/public;
+    set \$app_bootstrap \"index.php\";
+    index \$app_bootstrap;
+
+    charset utf-8;
+
+    listen 443 ssl;
+    ssl_certificate     $SSL_path/nginx.crt;
+    ssl_certificate_key $SSL_path/nginx.key;
+    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    set \$appenv dev;
+
+    location / {
+        try_files \$uri \$uri/ /\$app_bootstrap?\$args;
+    }
+
+    location ~ ^/(protected|application|framework|themes/\w+/views) {
+        deny  all;
+    }
+
+    location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)\$ {
+        try_files \$uri =404;
+    }
+
+    location ~ \.(php|tmpl|wsdl|ws)\$ {
+        set \$fsn /\$app_bootstrap;
+        fastcgi_param appenv \"dev\";
+        fastcgi_index \$app_botstrap;
+        fastcgi_split_path_info ^(.+\.php|.+\.tmpl|.+\.wsdl|.+\.ws)(.*)\$;
+        #fastcgi_pass  unix:/tmp/php-fpm.sock;
+        #fastcgi_pass unix:/var/run/php5-fpm.sock;
+        #fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+        fastcgi_pass unix:/run/php-fpm/php7.0-fpm.sock;
+
+        if (-f \$document_root\$fastcgi_script_name){
+            set \$fsn \$fastcgi_script_name;
+        }
+
+        try_files \$uri =404;
+        fastcgi_param HTTPS on;
+        include fastcgi_params;
+        fastcgi_param  SCRIPT_FILENAME  \$document_root\$fsn;
+
+        fastcgi_param  PATH_INFO        \$fastcgi_path_info;
+        fastcgi_param  PATH_TRANSLATED  \$document_root\$fsn;
+    }
+
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}
+EOF
+
+mkdir -p ./setup/SSL
+mkdir -p /etc/pki/tls
+if [ ! -f /etc/pki/tls/openssl.cnf ]; then
+touch /etc/pki/tls/openssl.cnf
+fi
+
+#sudo openssl req -nodes -x509 -newkey rsa:2048 -keyout ./setup/SSL/nginx.key -out ./setup/SSL/nginx.crt -days 365 \
+#  -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email" \
+#  -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf <(printf "[SAN]\nsubjectAltName=IP:127.0.0.1,DNS:phprest.server"))
+
+cat << EOF > ./setup/SSL/sertificat.cnf
+[ req ]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+req_extensions     = req_ext
+[ req_distinguished_name ]
+#countryName                 = Country Name (2 letter code)
+countryName                 = BM
+#stateOrProvinceName         = State or Province Name (full name)
+stateOrProvinceName         = Bermudian
+#localityName                = Locality Name (eg, city)
+localityName                = Bermudian
+#organizationName            = Organization Name (eg, company)
+organizationName            = IT
+#commonName                  = Common Name (e.g. server FQDN or YOUR name)
+commonName                  = test@$DOMAIN
+[ req_ext ]
+subjectAltName = @alt_names
+[alt_names]
+DNS.1   = phprest.com
+DNS.2   = phprest1.com
+DNS.3   = phprest2.com
+EOF
+cat << EOF > ./setup/SSL/make
+#!/usr/bin/env bash
+#
+# Make sure only root can run our script
+if [ "\$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+######## CONFIG ########################################################################################################
+#Country Name (2 letter code) [XX]:
+country=BM
+#State or Province Name (full name) []:
+state=Bermudian
+#Locality Name (eg, city) [Default City]:
+locality=Bermudian
+#Organization Name (eg, company) [Default Company Ltd]:
+organization=None
+#Organization unit (eg, dept.) [Default IT]:
+organizationalunit=IT
+#Common Name (eg, your name or your server's hostname) []:
+commonname=DMZ
+#Email Address []:
+email=test@$DOMAIN
+########################################################################################################################
+openssl req -nodes -x509 -newkey rsa:2048 -keyout ./nginx.key -out ./nginx.crt -days 365 \
+  -subj "/C=\$country/ST=\$state/L=\$locality/O=\$organization/OU=\$organizationalunit/CN=\$commonname/emailAddress=\$email" \
+  -config ./sertificat.cnf
+exit
+EOF
+chmod +x ./setup/SSL/make
+sudo ./setup/SSL/make
+exit
