@@ -123,14 +123,38 @@ class Db
     }
 
     /**
-     *  PDO select helper with paggination, limit and etc
+     * SQL builder - return complite SQL query string
+     *
+     * @param string $sql
+     * @param array|null $params
+     * @param array $opt
+     * @return string
+     */
+    public function query(string $sql, array $params=null, array $opt = ['normolize'=>true]): string
+    {
+        $query = $sql;
+        preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
+        if (isset($v[1])) {
+            $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
+                ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
+            if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v) {
+                $value = strval($v);
+                $query = str_replace(":$k", empty($v) ? 'NULL' : is_string($value) ? "'$value'": $value, $query);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Prepare filter SQL query string
      *
      * @param string $sql
      * @param array $params
      * @param array $opt
-     * @return \PDOStatement
+     * @return string
      */
-    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true]): \PDOStatement
+    private  function filtration(string &$sql, array &$params = [], array &$opt = ['normolize'=>true]): string
     {
         if (count($params)) {
             $params = array_merge(\Application\Db::FILTER_DEFAULT, $params);
@@ -177,7 +201,33 @@ class Db
         $where = !isset($wh[1]) && count($p) ? ' where ' : ' ';
         $where .= implode(' AND ', $p);
 
-        return $this->stmt( $sql . $where . (isset($opt['order']) ? ' '.$opt['order'].' ':'') . (isset($opt['group']) ? ' '.$opt['group'].' ':'') .  (isset($opt['having']) ? ' '.$opt['having'].' ':'') . $offset . $limit, $params, $opt );
+        return $sql . $where . (isset($opt['order']) ? ' '.$opt['order'].' ':'') . (isset($opt['group']) ? ' '.$opt['group'].' ':'') .  (isset($opt['having']) ? ' '.$opt['having'].' ':'') . $offset . $limit;
+    }
+
+    /**
+     * SQL filter builder - return complite SQL query string
+     *
+     * @param string $sql
+     * @param array $params
+     * @param array $opt
+     * @return string
+     */
+    public function filter_query(string $sql, array $params = [], array $opt = ['normolize'=>true]): string
+    {
+        return $this->query( $this->filtration( $sql, $params, $opt ), $params, $opt );
+    }
+
+    /**
+     *  PDO select helper with paggination, limit and etc
+     *
+     * @param string $sql
+     * @param array $params
+     * @param array $opt
+     * @return \PDOStatement
+     */
+    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true]): \PDOStatement
+    {
+        return $this->stmt( $this->filtration( $sql, $params, $opt ), $params, $opt );
     }
 
     /**

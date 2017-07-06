@@ -333,5 +333,53 @@ class PHPRoll
 
         return $this->response('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
+
+// TODO: config integrate to app
+    /**
+     * Config property get
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __get ( $name )
+    {
+        if (!empty($this->config) && isset($this->config[$name])) {
+            return $this->config[$name];
+        }
+        throw new \Exception(__CLASS__."::config->$name property not foudnd!");
+    }
+
+    /**
+     * Config property set
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+
+    public function __set ( $name, $value )
+    {
+        try {
+            $this->{$name} = $value;
+        } catch (\Exception $e) {
+            return $this->response('error', ['code' => '400', 'message'=> __CLASS__."::config->$name can't set value = $value"]);
+        }
+
+    }
+
+    /**
+     * Config method
+     *
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (!empty($this->config) && isset($this->config[$name]) && is_callable($this->config[$name])) return call_user_func_array($this->config[$name], $arguments);
+        throw new \Exception(__CLASS__."::config->$name(...) method not foudnd");
+    }
+
 }
 ?>
