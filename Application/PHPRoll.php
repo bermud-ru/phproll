@@ -4,7 +4,10 @@
  *
  * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
- * @data 07/12/2015
+ * @data 24/07/2017
+ * @status beta
+ * @version 0.1.2
+ * @revision $Id: PHPRoll.php 0004 2017-07-24 23:44:01Z $
  *
  */
 
@@ -37,7 +40,7 @@ class PHPRoll
         if (is_array($params)) {
             $this->config = $params;
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            $this->initParams();
+            $this->params = $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
         elseif ($params instanceof \Application\PHPRoll)
@@ -70,6 +73,31 @@ class PHPRoll
     }
 
     /**
+     * Форматированный вывод значений в строку
+     * formatter("Текст %(<имя переменной>)s",['<имя переменной>' => <значение>]);
+     *
+     * @param string $pattern
+     * @param array $properties
+     * @return bool|mixed
+     */
+    public static function formatter($pattern, array $properties)
+    {
+        if ($pattern && count($properties)) {
+            $keys = array_keys($properties);
+            $keysmap = array_flip($keys);
+            $values = array_values($properties);
+            while (preg_match('/%\(([a-zA-Z0-9_ -]+)\)/', $pattern, $m)) {
+                if (!isset($keysmap[$m[1]]))  $pattern = str_replace($m[0], '% - $', $pattern);
+                else $pattern = str_replace($m[0], '%' . ($keysmap[$m[1]] + 1) . '$', $pattern);
+            }
+            array_unshift($values, $pattern);
+            return call_user_func_array('sprintf', $values);
+        } else {
+            return $pattern;
+        }
+    }
+
+    /**
      * Проверяем является массив ассоциативным
      *
      * @param array $a
@@ -97,6 +125,30 @@ class PHPRoll
     }
 
     /**
+     * Дерево прараметров в запросе разворачивает в массив ключ-значение,
+     * создавая идекс вложенности
+     *
+     * @param array $a
+     * @param $r
+     * @param null $key
+     * @return array
+     */
+    static function rebuildParams(array $a, &$r, $key = null):array
+    {
+        function rebuild(array $a, &$r, $key = null)
+        {
+            foreach ($a as $k => $v)
+                if (!is_array($v))
+                    $r[$key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k] = $v;
+                else
+                    rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
+        }
+        rebuild($a, $r, $key); //rebuild($params, $this->params);
+
+        return $r;
+    }
+
+    /**
      * Получаем значение параменных в запросе
      *
      */
@@ -115,15 +167,7 @@ class PHPRoll
                 parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
         }
 
-        function rebuild(array $a, &$r, $key = null) {
-            foreach ($a as $k => $v)
-                if (!is_array($v))
-                    $r[$key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k] = $v;
-                else
-                    rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
-        };
-
-        rebuild($params, $this->params);
+        return $params;
     }
 
     /**
@@ -229,7 +273,7 @@ class PHPRoll
         foreach ($_SERVER as $name => $value)
             if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH'))
                 $headers[str_replace(array(' ', 'Http'), array('-', 'HTTP'),
-                ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                    ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
 
         return $headers;
     }
@@ -256,7 +300,7 @@ class PHPRoll
             header("Access-Control-Allow-Methods: GET, POST, PUT, HEAD, OPTIONS, DELETE");
             header("Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version");
             header('Content-Encoding: utf-8');
-           // header('Content-Transfer-Encoding: binary');
+            // header('Content-Transfer-Encoding: binary');
             header('HTTP/1.1 206 Partial content');
             // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             // header('Pragma: no-cache');
@@ -268,15 +312,10 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
-//                if (isset($params['error'])) {
-//                    return $this->response('error', $params);
-//                }
                 return json_encode($params ?? []);
             case 'error':
-               // $res['error'] = $params;
                 $params['result'] = 'error';
-                //$params['code'] = $params['code'] ?? 500;
-                //$params['message'] = $params['message'] ?? null;
+                $params['code'] = $params['code'] ?? 400;
                 return json_encode($params);
             case 'file':
                 header("HTTP/1.1 200 OK");
@@ -311,7 +350,6 @@ class PHPRoll
             default:
                 header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
-               // header('Content-Disposition: attachment; filename=response.html');
         }
 
         return $params;
@@ -333,53 +371,5 @@ class PHPRoll
 
         return $this->response('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
-
-// TODO: config integrate to app
-    /**
-     * Config property get
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-    public function __get ( $name )
-    {
-        if (!empty($this->config) && isset($this->config[$name])) {
-            return $this->config[$name];
-        }
-        throw new \Exception(__CLASS__."::config->$name property not foudnd!");
-    }
-
-    /**
-     * Config property set
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-
-    public function __set ( $name, $value )
-    {
-        try {
-            $this->{$name} = $value;
-        } catch (\Exception $e) {
-            return $this->response('error', ['code' => '400', 'message'=> __CLASS__."::config->$name can't set value = $value"]);
-        }
-
-    }
-
-    /**
-     * Config method
-     *
-     * @param $name
-     * @param $arguments
-     * @return mixed
-     */
-    public function __call($name, $arguments)
-    {
-        if (!empty($this->config) && isset($this->config[$name]) && is_callable($this->config[$name])) return call_user_func_array($this->config[$name], $arguments);
-        throw new \Exception(__CLASS__."::config->$name(...) method not foudnd");
-    }
-
 }
 ?>

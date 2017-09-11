@@ -5,7 +5,10 @@
  * @category Intermedia class database
  * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
- * @data 07/12/2015
+ * @data 24/07/2017
+ * @status beta
+ * @version 0.1.2
+ * @revision $Id: Db.php 0004 2017-07-24 23:44:01Z $
  *
  */
 namespace Application;
@@ -15,14 +18,14 @@ class Db
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
     public $owner = null;
+    public $status = false;
+
     protected $pdo = null;
     protected $opt = array(
         //\PDO::ATTR_PERSISTENT => true,
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
     );
-
-    public $status = false;
 
     /**
      * Db constructor
@@ -100,6 +103,105 @@ class Db
     }
 
     /**
+     *
+     * @param $key
+     * @return string
+     */
+    final static function field(&$key): string
+    {
+        preg_match('/([a-zA-Z0-9\._-]+)/', $key, $v);
+        if ($v) return $v[1];
+        return $key;
+    }
+
+    /**
+     * Helper - where
+     *
+     * @param $where
+     * @param $vlues
+     * @return string
+     */
+    static function where($where, &$vlues=null):string
+    {
+        if (is_array($where)) {
+
+            $is_assoc = \Application\PHPRoll::is_assoc($where);
+            if ($is_assoc) {
+                if ($vlues !== null) $vlues = array_values($where);
+                $keys = array_keys($where); $vals = $where;
+            } else {
+                if ($vlues !== null) $vlues = $where;
+                $keys = $where; $vals = [];
+            }
+
+            return array_reduce($keys, function ($c, $k) use (&$vals) {
+                $key = self::field($k);
+                $exp = explode($key, $k);
+                $glue = '';
+                if (!empty($c)) switch (trim($exp[0])) {
+                    case '|': $glue = 'OR'; break;
+                    case '&':
+                    default: $glue = 'AND';
+                }
+
+                if (empty($vals)) {
+                    $val = ":$key" ;
+                } else {
+                    if (gettype($vals[$k]) == 'object') $val = $vals[$k]->value;
+                    else $val = $vals[$k];
+
+                    switch (gettype($val)) {
+                        case 'array':
+//                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v:printf("'%s'",$v) ; }, $val));
+                            $a = implode(',', array_map(function ($v) { return "'$v'"; }, $val));
+                            return "$c $glue $key IN ($a})";
+                        case 'NULL':
+                            return "$c $glue $key IS NULL";
+                            break;
+                        case 'string': case 'integer':
+                        default:
+//                            $val = is_numeric($val) ? $val : "'{$vals[$k]}'";
+                        $val = "'{$vals[$k]}'";
+                    }
+                }
+
+                switch ( trim($exp[1]) ) {
+                    case '[]': ;
+                        return "$c $glue $key IN ($val)";
+                        break;
+                    case '!^': ;
+                        return "$c $glue $key IS NOT NULL";
+                        break;
+                    case '^': ;
+                        return "$c $glue $key IS NULL";
+                        break;
+                    case '!~': ;
+                        return "$c $glue $key NOT ILIKE $val";
+                        break;
+                    case '~': ;
+                        return "$c $glue $key ILIKE $val";
+                        break;
+                    case '>': case '>=': case '<': case '=<': case '=': case '!=':
+                        return "$c $glue $key {$exp[1]} $val";
+                        break;
+                    default:
+                        ;
+                }
+
+                return "$c $glue $key = $val";
+
+                }, ''
+            );
+
+        } else {
+            preg_match_all('/:([a-zA-Z0-9\._]+)/', $where, $vars);
+            if ($vlues !== null) $vlues = $vars[1] ?? [];
+        }
+
+        return $where;
+    }
+
+    /**
      * PDO stmt helper
      *
      * @param string $sql
@@ -139,7 +241,7 @@ class Db
                 ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
             if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v) {
                 $value = strval($v);
-                $query = str_replace(":$k", empty($v) ? 'NULL' : is_string($value) ? "'$value'": $value, $query);
+                $query = str_replace(":$k", is_numeric($value) ? $value : "'$value'", $query);
             }
         }
 
@@ -154,8 +256,10 @@ class Db
      * @param array $opt
      * @return string
      */
-    private  function filtration(string &$sql, array &$params = [], array &$opt = ['normolize'=>true]): string
+    private  function filtration(string &$sql, array &$params = [], array &$opt = ['normolize'=>true, 'wrap'=> false]): string
     {
+        //$opt = array_merge(['normolize'=>true, 'wrap'=> true], $opt);
+
         if (count($params)) {
             $params = array_merge(\Application\Db::FILTER_DEFAULT, $params);
         } else {
@@ -163,45 +267,37 @@ class Db
                 \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         }
 
-        preg_match('/^select.+?(offset.+)?(limit.+)?(offset.+)$/iu', $sql, $ltd);
-        $limit = ''; $offset = '';
-        if ((!isset($ltd[1]) || !isset($ltd[3])) && strval($params['page']) != 0) {
-            $offset = ' offset ' . (strval($params['page']) * strval($params['limit']));
+        if (isset($opt['wrap']) && $opt['wrap']) {
+            $f = is_string($opt['wrap']) ? $opt['wrap'] : '*';
+            $sql = "WITH raw_query_sql as ($sql) SELECT $f FROM raw_query_sql";
         }
-        unset($params['page']);
 
-        if (!isset($ltd[2])) { $limit = " limit ${params['limit']}"; unset($params['limit']);}
-        //preg_match('/order[^$|limit|offset]+/', $sql, $or);
-
-        preg_match('/^select.+?(where.+)$/iu', $sql, $wh);
-
-        $p = [];
-        if (count($params)) {
-            $p = array_map(function ($k) use($opt) {
-                if (isset($opt['exclude']) && in_array($k, $opt['exclude'])) return '';
-                $v = $k;
-                if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $v = $opt['prefix'][$k] . $k;
-                if (isset($opt['operator'][$k]) && !empty($opt['operator'][$k])) return "$v {$opt['operator'][$k]} :$k";
-                return "$v = :$k";
-            }, array_keys($params));
+        $offset = '';
+        $limit = '';
+        $ltd = 0;
+        if (isset($params['limit'])) {
+            $ltd = intval(strval($params['limit']));
+//        $limit = " limit $ltd";
+            $limit = "FETCH NEXT $ltd ROWS ONLY";
+            unset($params['limit']);
         }
-        if (isset($opt['singl']) && count($opt['singl'])) {
-            $is_assoc = \Application\PHPRoll::is_assoc($opt['singl']);
-            $p = array_merge($p, array_map(function ($v, $k) use($is_assoc) {
-                if ($is_assoc) {
-                    if (isset($opt['prefix'][$k]) && !empty($opt['prefix'][$k])) $k = $opt['prefix'][$k] . $k;
-                    return "$k $v";
-                }
-                return $v;
-            }, $opt['singl'], array_keys($opt['singl'])));
-        }
-        if (isset($opt['bundle']) && count($opt['bundle'])) {
-            $p = array_merge($p, $opt['bundle']);
-        }
-        $where = !isset($wh[1]) && count($p) ? ' where ' : ' ';
-        $where .= implode(' AND ', $p);
 
-        return $sql . $where . (isset($opt['order']) ? ' '.$opt['order'].' ':'') . (isset($opt['group']) ? ' '.$opt['group'].' ':'') .  (isset($opt['having']) ? ' '.$opt['having'].' ':'') . $offset . $limit;
+        if (isset($params['offset'])) {
+            $offset = ' OFFSET ' . (strval($params['offset'])) . ' ROWS ';
+            unset($params['offset']);
+            if (isset($params['page'])) unset($params['page']);
+        } elseif (isset($params['page'])) {
+            $offset = ' OFFSET ' . (strval($params['page']) * $ltd) . ' ROWS ';
+//        $offset = ' offset ' . (strval($params['page']) * $ltd);
+            unset($params['page']);
+        }
+
+
+
+        $w = $this->where($params);
+        $where = empty($w) ? '' : " WHERE $w";
+//        var_dump($where);exit;
+        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
     }
 
     /**
@@ -212,7 +308,7 @@ class Db
      * @param array $opt
      * @return string
      */
-    public function filter_query(string $sql, array $params = [], array $opt = ['normolize'=>true]): string
+    public function filter_query(string $sql, array $params = [], array $opt = ['normolize'=>true, 'wrap'=> false]): string
     {
         return $this->query( $this->filtration( $sql, $params, $opt ), $params, $opt );
     }
@@ -225,7 +321,7 @@ class Db
      * @param array $opt
      * @return \PDOStatement
      */
-    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true]): \PDOStatement
+    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true, 'wrap'=> false]): \PDOStatement
     {
         return $this->stmt( $this->filtration( $sql, $params, $opt ), $params, $opt );
     }
@@ -275,22 +371,11 @@ class Db
         }
         $f = implode(', ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $f_values, $f_keys));
 
-        if (is_array($where)) {
-            $is_assoc = \Application\PHPRoll::is_assoc($where);
-            if ($is_assoc) {
-                $w_keys = array_keys($where);
-                $w_values = array_values($where);
-            } else {
-                $w_keys = $where;
-                $w_values = $where;
-            }
-            $w = implode(' AND ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $w_values, $w_keys));
-        } else {
-            preg_match_all('/:([a-zA-Z0-9\._]+)/', $where, $vars);
-            $w_values = $vars[1] ?? [];
-        }
-
-        $stmt = $this->prepare("UPDATE $table SET $f WHERE $w", $opt['PDO'] ?? []);
+        $w_values = [];
+        $__were = $this->where($where, $w_values);
+        $w = empty( $__were) ? '' : "WHERE  $__were";
+//var_dump([$w,$w_values]);exit;
+        $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? []);
         if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
             $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
 
