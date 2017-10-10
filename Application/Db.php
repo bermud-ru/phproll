@@ -181,6 +181,9 @@ class Db
                     case '~': ;
                         return "$c $glue $key ILIKE $val";
                         break;
+                    case '@@': ;
+                        return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery($val)";
+                        break;
                     case '>': case '>=': case '<': case '=<': case '=': case '!=':
                         return "$c $glue $key {$exp[1]} $val";
                         break;
