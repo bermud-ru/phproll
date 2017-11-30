@@ -172,6 +172,8 @@ class Db
                     case '!^': ;
                         return "$c $glue $key IS NOT NULL";
                         break;
+                    case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
+                        if (!empty($val)) break;
                     case '^': ;
                         return "$c $glue $key IS NULL";
                         break;
