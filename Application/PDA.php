@@ -36,7 +36,7 @@ class PDA
      */
     public function __construct(&$owner, $attach = false, array $opt = null)
     {
-        if (empty($owner)) throw new \Exception('\PHPRoll\PDA - необходимо указать параметры подключения!');
+        if (empty($owner)) throw new \Exception('\Application\PDA - необходимо указать параметры подключения!');
 
         $db =  null;
         $pdo = null;
@@ -52,7 +52,7 @@ class PDA
             }
         }
 
-        if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\PDA ERROR: DATABASE not defined.');
+        if (empty($db) && empty($pdo)) throw new \Exception('\Application\PDA ERROR: DATABASE not defined.');
         try {
             $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
            // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING);
