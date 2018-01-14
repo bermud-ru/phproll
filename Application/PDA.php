@@ -1,19 +1,19 @@
 <?php
 /**
- * Db.php
+ * PDA.php
  *
- * @category Intermedia class database
+ * @category Intermedia class database PostgresSQL Data Access (PDA)
  * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
  * @data 24/07/2017
  * @status beta
  * @version 0.1.2
- * @revision $Id: Db.php 0004 2017-07-24 23:44:01Z $
+ * @revision $Id: PDA.php 0004 2017-07-24 23:44:01Z $
  *
  */
 namespace Application;
 
-class Db
+class PDA
 {
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
@@ -28,15 +28,15 @@ class Db
     );
 
     /**
-     * Db constructor
+     * PDA constructor
      *
      * @param PHPRoll $owner | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
      * @param array|null $opt
-     * @param boolean|null $attach if true \Application\Db obeject will be attated to paretn object.
+     * @param boolean|null $attach if true \Application\PDA obeject will be attated to paretn object.
      */
     public function __construct(&$owner, $attach = false, array $opt = null)
     {
-        if (empty($owner)) throw new \Exception('\PHPRoll\Db - необходимо указать параметры подключения!');
+        if (empty($owner)) throw new \Exception('\PHPRoll\PDA - необходимо указать параметры подключения!');
 
         $db =  null;
         $pdo = null;
@@ -52,7 +52,7 @@ class Db
             }
         }
 
-        if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\Db ERROR: DATABASE not defined.');
+        if (empty($db) && empty($pdo)) throw new \Exception('\PHPRoll\PDA ERROR: DATABASE not defined.');
         try {
             $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
            // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING);
@@ -266,9 +266,9 @@ class Db
         //$opt = array_merge(['normolize'=>true, 'wrap'=> true], $opt);
 
         if (count($params)) {
-            $params = array_merge(\Application\Db::FILTER_DEFAULT, $params);
+            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
         } else {
-            $params = array_merge(\Application\Db::FILTER_DEFAULT, $opt['normolize'] ?
+            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $opt['normolize'] ?
                 \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
         }
 
