@@ -138,7 +138,7 @@ class PDA
                 $key = self::field($k);
                 $exp = explode($key, $k);
                 $glue = '';
-                if (!empty($c)) switch (trim($exp[0])) {
+                if (!empty($c)) switch (trim($exp[0])) { //TODO OR engin
                     case '|': $glue = 'OR'; break;
                     case '&':
                     default: $glue = 'AND';
@@ -151,21 +151,29 @@ class PDA
                     else $val = $vals[$k];
 
                     switch (gettype($val)) {
+//                        case 'object':  //TODO: JSON filter
+//                            $val = strval($val);
+//                            break;
                         case 'array':
 //                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v:printf("'%s'",$v) ; }, $val));
-                            $a = implode(',', array_map(function ($v) { return "'$v'"; }, $val));
+                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v : "'$v'"; }, $val));
                             return "$c $glue $key IN ($a})";
                         case 'NULL':
-                            return "$c $glue $key IS NULL";
+                            if (empty($exp[1])) $exp[1] = '$^';
                             break;
-                        case 'string': case 'integer':
+                        case 'integer':
+                            break;
+                        case 'string':
                         default:
-//                            $val = is_numeric($val) ? $val : "'{$vals[$k]}'";
-                        $val = "'{$vals[$k]}'";
+                            $val = is_numeric($val) ? $val : "'{$val}'";
+//                        $val = "'{$vals[$k]}'";
                     }
                 }
 
                 switch ( trim($exp[1]) ) {
+//                    case '{}': ;  //TODO: JSON filter
+//                        return "$c $glue $key IN ($val)";
+//                        break;
                     case '[]': ;
                         return "$c $glue $key IN ($val)";
                         break;
