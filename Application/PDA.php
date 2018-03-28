@@ -165,8 +165,8 @@ class PDA
                             break;
                         case 'string':
                         default:
-                            $val = is_numeric($val) ? $val : "'{$val}'";
-//                        $val = "'{$vals[$k]}'";
+//                            $val = is_numeric($val) ? $val : "'{$val}'";
+                        $val = "'{$vals[$k]}'";
                     }
                 }
 

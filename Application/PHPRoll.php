@@ -312,7 +312,7 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
-                return json_encode($params ?? []);
+                return json_encode($params ?? [], JSON_UNESCAPED_UNICODE);
             case 'error':
                 $params['result'] = 'error';
                 $params['code'] = $params['code'] ?? 400;
