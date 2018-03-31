@@ -151,9 +151,9 @@ class PDA
                     else $val = $vals[$k];
 
                     switch (gettype($val)) {
-//                        case 'object':  //TODO: JSON filter
-//                            $val = strval($val);
-//                            break;
+                        case 'object':  //TODO: JSON filter
+                            $val = json_encode($vals[$k], JSON_FORCE_OBJECT);
+                            break;
                         case 'array':
 //                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v:printf("'%s'",$v) ; }, $val));
                             $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v : "'$v'"; }, $val));
@@ -162,11 +162,12 @@ class PDA
                             if (empty($exp[1])) $exp[1] = '$^';
                             break;
                         case 'integer':
+                            $val = "{$vals[$k]}";
                             break;
                         case 'string':
                         default:
 //                            $val = is_numeric($val) ? $val : "'{$val}'";
-                        $val = "'{$vals[$k]}'";
+                            $val = "'{$vals[$k]}'";
                     }
                 }
 
