@@ -115,6 +115,47 @@ class PDA
     }
 
     /**
+     * parameterize
+     *
+     * @param $param
+     * @return float|int|null|string
+     */
+    public static function parameterize ($param)
+    {
+        switch (gettype($param)) {
+            case 'array':
+                $a = implode(',', array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param));
+                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                break;
+            case 'NULL':
+                $val = null;
+                break;
+            case 'boolean':
+                $val = $param ? 1 : 0;
+                break;
+            case 'double':
+                $val =  floatval($param);
+                break;
+            case 'integer':
+                $val = intval($param);
+                break;
+            case 'object':
+//                $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
+//                break;
+                $param = strval($param);
+            case 'string':
+                if ( is_numeric($param) ) {
+                    $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
+                } else $val = strval($param);
+                break;
+            default:
+                $val = strval($param);
+        }
+
+        return $val;
+    }
+
+    /**
      * Helper - where
      *
      * @param $where
@@ -231,7 +272,7 @@ class PDA
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
             ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
             if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v)
-                $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
+                $stmt->bindValue(":".$k, $v === '' ? null : \Application\PDA::parameterize($v), \PDO::NULL_EMPTY_STRING);
         }
         $this->status = $stmt->execute();
 
