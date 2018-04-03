@@ -272,7 +272,7 @@ class PDA
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
             ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
             if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v)
-                $stmt->bindValue(":".$k, $v === '' ? null : \Application\PDA::parameterize($v), \PDO::NULL_EMPTY_STRING);
+                $stmt->bindValue(":".$k, \Application\PDA::parameterize($v), \PDO::NULL_EMPTY_STRING);
         }
         $this->status = $stmt->execute();
 
@@ -398,6 +398,7 @@ class PDA
         $f = $is_assoc ? array_values($fields) : $fields;
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields)
                             .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')', $opt['PDO'] ?? []);
+//        foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
         foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
 
         return$this->status = $stmt->execute();
