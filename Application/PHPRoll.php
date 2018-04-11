@@ -159,12 +159,42 @@ class PHPRoll
         {
             case 'PUT':
             case 'POST':
-                parse_str(file_get_contents('php://input'), $params );
+                if ('multipart/form-data' !== strtolower($_SERVER['CONTENT_TYPE'])) {
+                    mb_parse_str(file_get_contents('php://input'), $params );
+                } else {
+                    $input = file_get_contents('php://input');
+                    // grab multipart boundary from content type header
+                    if (preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches)){
+                        $boundary = $matches[1];
+                        // split content by boundary and get rid of last -- element
+                        $a_blocks = preg_split("/-+$boundary/", $input);
+                    } elseif (preg_match('/^(-+[0-9a-zA-Z]+)\s+/', $input, $matches)) {
+                        $boundary = $matches[1];
+                        $a_blocks = preg_split("/$boundary/", $input);
+                    }
+                    array_pop($a_blocks);
+
+                    // loop data blocks
+                    foreach ($a_blocks as $id => $block) {
+                        if (empty($block)) continue;
+                        // you'll have to var_dump $block to understand this and maybe replace \n or \r with a visibile char
+                        // parse uploaded files
+                        if (strpos($block, 'application/octet-stream') !== FALSE) {
+                            // match "name", then everything after "stream" (optional) except for prepending newlines
+                            preg_match("/name=\"([^\"]*)\".*stream[\n|\r]+([^\n\r].*)?\r$/s", $block, $matches);
+                        } // parse all other fields
+                        else {
+                            // match "name" and optional value in between newline sequences
+                            preg_match('/name=\"([^\"]*)\"[\n|\r]+([^\n\r].*)?\r$/s', $block, $matches);
+                        }
+                        $params[$matches[1]] = $matches[2];
+                    }
+                }
                 break;
             case 'GET':
             case 'DELETE':
             default:
-                parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
+                mb_parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
         }
 
         return $params;
