@@ -347,11 +347,10 @@ class PDA
             unset($params['page']);
         }
 
-
-
         $w = $this->where($params);
-        $where = empty($w) ? '' : " WHERE $w";
-//        var_dump($where);exit;
+        $where = empty($w)  ? '' : " WHERE $w";
+        if (isset($opt['where'])) $where .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
+
         return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
     }
 
