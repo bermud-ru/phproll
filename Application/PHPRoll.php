@@ -159,7 +159,7 @@ class PHPRoll
         {
             case 'PUT':
 //                if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) {
-//                  http://php.net/manual/ru/features.file-upload.put-method.php
+//                //  http://php.net/manual/ru/features.file-upload.put-method.php
 //                $CHUNK = 8192;
 //
 //                try {
@@ -386,6 +386,36 @@ class PHPRoll
 
     /**
      * Генерация заголовка ответа и форматирование кода ответа
+     * HTTP STATUS CODES
+     *     Popular ones are:
+     *
+     *     Successful
+     *     200 OK
+     *     201 Created
+     *     202 Accepted
+     *     Redirection
+     *     300 Multiple Choices
+     *     301 Moved Permanently
+     *     304 Not Modified
+     *     Client Error
+     *     400 Bad Request
+     *     401 Unauthorized
+     *     402 Payment Required
+     *     403 Forbidden
+     *     404 Not Found
+     *     405 Method Not Allowed
+     *     406 Not Acceptable
+     *     408 Request Timeout
+     *     409 Conflict
+     *     410 Gone
+     *     416 Requested Range Not Satisfiable
+     *     423 Locked
+     *     Server Error
+     *     500 Internal Server Error
+     *     501 Not Implemented
+     *     503 Service Unavailable
+     *     507 Insufficient Storage
+     *
      * @param $type
      * @param $params
      * @return int
@@ -403,11 +433,11 @@ class PHPRoll
         if ( in_array(($type = strtolower($type)),['json','error']) ) {
             header("Access-Control-Allow-Origin: *");
             //header("Access-Control-Allow-Credentials: true");
-            header("Access-Control-Allow-Methods: GET, POST, PUT, HEAD, OPTIONS, DELETE");
+            header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE");
             header("Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version");
             header('Content-Encoding: utf-8');
             // header('Content-Transfer-Encoding: binary');
-            header('HTTP/1.1 206 Partial content');
+            header('HTTP/1.1 200 OK');
             // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
             // header('Pragma: no-cache');
             header('Expires: 0');
