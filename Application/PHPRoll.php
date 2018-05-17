@@ -4,10 +4,10 @@
  *
  * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
- * @data 24/07/2017
+ * @data 16/05/2018
  * @status beta
- * @version 0.1.2
- * @revision $Id: PHPRoll.php 0004 2017-07-24 23:44:01Z $
+ * @version 0.1.3
+ * @revision $Id: PHPRoll.php 0013 2018-05-16 1:04:01Z $
  *
  */
 
@@ -20,6 +20,18 @@ namespace Application;
 class PHPRoll
 {
     const KEY_SEPARATOR = '.';
+
+    // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
+    const HTTP_RESPONSE_CODE = [
+        100 => 'Continue', 101 => 'Switching Protocol', 102 => 'Processing',
+        200 => 'OK', 201 => 'Created', 202 => 'Accepted', 203 => 'Non-Authoritative Information', 204 => 'No Content', 205 => 'Reset Content', 206 => 'Partial Content',
+        300 => 'Multiple Choice', 301 => 'Moved Permanently', 302 => 'Found', 303 => 'See Other', 304 => 'Not Modified', 305 => 'Use Proxy', 306 => 'Switch Proxy', 307 => 'Temporary Redirect', 308 => 'Permanent Redirect',
+        400 => 'Bad Request', 401 => 'Unauthorized', 402 => 'Payment Required', 403 => 'Forbidden', 404 => 'Not Found', 405 => 'Method Not Allowed', 406 => 'Not Acceptable', 407 => 'Proxy Authentication Required',
+        408 => 'Request Timeout', 409 => 'Conflict', 410 => 'Gone', 411 => 'Length Required', 412 => 'Precondition Failed', 413 => 'Request Entity Too Large',
+        414 => 'Request-URI Too Long', 415 => 'Unsupported Media Type', 416 => 'Requested Range Not Satisfiable', 417 => 'Expectation Failed',
+        500 => 'Internal Server Error', 501 => 'Not Implemented', 502 => 'Bad Gateway', 503 => 'Service Unavailable', 504 => 'Gateway Timeout', 505 => 'HTTP Version Not Supported'
+    ];
+    public $response_header = [];
 
     public $config = [];
     public $header = [];
@@ -272,7 +284,6 @@ class PHPRoll
             default:
                 mb_parse_str(parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY), $params);
         }
-
         return $params;
     }
 
@@ -306,7 +317,6 @@ class PHPRoll
             }
             if (count($param)) $prefix = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR;
         }
-
         return empty($name) ? null : $prefix . $name . $ext;
     }
 
@@ -318,7 +328,6 @@ class PHPRoll
      */
     public function getPattern(array $opt)
     {
-        $result = '';
         switch ($_SERVER['REQUEST_METHOD'])
         {
             case 'PUT':
@@ -330,7 +339,6 @@ class PHPRoll
             default:
                 $result = $this->tpl($this->path, $opt);
         }
-
         return $result;
     }
 
@@ -366,6 +374,7 @@ class PHPRoll
                 return $context;
             }
         }
+        return $context;
     }
 
     /**
@@ -380,89 +389,61 @@ class PHPRoll
             if ((substr($name, 0, 5) == 'HTTP_') || ($name == 'CONTENT_TYPE') || ($name == 'CONTENT_LENGTH'))
                 $headers[str_replace(array(' ', 'Http'), array('-', 'HTTP'),
                     ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-
         return $headers;
     }
 
     /**
+     * Установка параметров заголовка ответа
+     *
+     */
+    final function set_response_header()
+    {
+        array_walk($this->response_header, function ($v, $k) { header("$k: $v");});
+    }
+
+    /**
      * Генерация заголовка ответа и форматирование кода ответа
-     * HTTP STATUS CODES
-     *     Popular ones are:
-     *
-     *     Successful
-     *     200 OK
-     *     201 Created
-     *     202 Accepted
-     *     Redirection
-     *     300 Multiple Choices
-     *     301 Moved Permanently
-     *     304 Not Modified
-     *     Client Error
-     *     400 Bad Request
-     *     401 Unauthorized
-     *     402 Payment Required
-     *     403 Forbidden
-     *     404 Not Found
-     *     405 Method Not Allowed
-     *     406 Not Acceptable
-     *     408 Request Timeout
-     *     409 Conflict
-     *     410 Gone
-     *     416 Requested Range Not Satisfiable
-     *     423 Locked
-     *     Server Error
-     *     500 Internal Server Error
-     *     501 Not Implemented
-     *     503 Service Unavailable
-     *     507 Insufficient Storage
-     *
      * @param $type
      * @param $params
-     * @return int
+     * @return mixed
      */
     public function response(string $type, array $params)
     {
-        if (isset($_SERVER["HTTP_USER_AGENT"]) && strstr($_SERVER["HTTP_USER_AGENT"], "MSIE") == false) {
-            header("Cache-Control: no-cache");
-            header("Pragma: no-cache");
-        } else {
-            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
-            header("Pragma: public");
+        $code = $params['code'] ?? 200;
+        if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
+            header("HTTP/1.1 {$code} {\Application\PHPRoll::HTTP_RESPONSE_CODE[$code]}");
         }
+        http_response_code(intval($code));
+        header('Expires: 0');
 
-        if ( in_array(($type = strtolower($type)),['json','error']) ) {
-            header("Access-Control-Allow-Origin: *");
-            //header("Access-Control-Allow-Credentials: true");
-            header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE");
-            header("Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version");
-            header('Content-Encoding: utf-8');
-            // header('Content-Transfer-Encoding: binary');
-            header('HTTP/1.1 200 OK');
-            // header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            // header('Pragma: no-cache');
-            header('Expires: 0');
-            header('Content-Description: json');
-            header('Content-Type: Application/json; charset=utf-8');
+        if (isset($_SERVER['HTTP_USER_AGENT']) && strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE') == false) {
+            header('Cache-Control: no-cache');
+            header('Pragma: no-cache');
+        } else {
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+            header('Pragma: public');
         }
-        if (isset($params['code'])) http_response_code(intval($params['code']) ?? 200);
 
         switch ($type) {
             case 'json':
-                return json_encode($params ?? [], JSON_UNESCAPED_UNICODE);
-            case 'error':
-                $params['result'] = 'error';
-                $params['code'] = $params['code'] ?? 400;
-                return json_encode($params);
+                header('Content-Description: RESTfull json');
+                header('Content-Type: Application/json; charset=utf-8');
+                header('Access-Control-Allow-Origin: *');
+                //header('Access-Control-Allow-Credentials: true');
+                header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE');
+                header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version');
+                header('Content-Encoding: utf-8');
+                $this->set_response_header();
+                return json_encode($params, JSON_UNESCAPED_UNICODE);
             case 'file':
-                header("HTTP/1.1 200 OK");
                 header('Content-Description: File Transfer');
-                header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
-                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
                 header('Content-Transfer-Encoding: binary');
-                header('Expires: 0');
                 header('Connection: Keep-Alive');
                 header('Cache-Control: must-revalidate');
-                if (isset($params['size'])) header("Content-length: " . $params['size']);
+                $this->set_response_header();
+//                header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
+//                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
+//                if (isset($params['size'])) header("Content-length: " . $params['size']);
 
                 if ( is_resource($params['file']) ) {
                     fseek($params['file'], 0);
@@ -470,7 +451,10 @@ class PHPRoll
                 }
                 break;
             case 'view':
+                header('Content-Description: html view');
                 header('Content-Type: text/html; charset=utf-8');
+                header('Content-Encoding: utf-8');
+                $this->set_response_header();
                 $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     return $this->context($pattern, array(
@@ -484,10 +468,9 @@ class PHPRoll
                     break;
                 }
             default:
-                header('Content-Description: html view');
                 header('Content-Type: Application/xml; charset=utf-8');
+                header('Content-Encoding: utf-8');
         }
-
         return $params;
     }
 
@@ -504,7 +487,6 @@ class PHPRoll
 
         $content = $this->route(isset($this->path) ? $this->path : ['default']);
         if ($content && is_string($content)) return $content;
-
         return $this->response('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
     }
 }
