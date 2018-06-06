@@ -394,11 +394,11 @@ class PHPRoll
 
     /**
      * Установка параметров заголовка ответа
-     *
+     * @param $extra array - injection items for response headers
      */
-    final function set_response_header()
+    final function set_response_header(array $extra = [])
     {
-        array_walk($this->response_header, function ($v, $k) { header("$k: $v");});
+        array_walk(array_merge($extra, $this->response_header), function ($v, $k) { header("$k: $v");});
     }
 
     /**
@@ -452,6 +452,10 @@ class PHPRoll
                 break;
             case 'view':
                 header('Content-Description: html view');
+//                header('Content-Security-Policy: default-src "self"; frame-ancestors "self"');
+                header('Strict-Transport-Security: max-age=86400');
+                header('X-XSS-Protection: 1; mode=block');
+                header('X-Content-Type-Options: nosniff');
                 header('Content-Type: text/html; charset=utf-8');
                 header('Content-Encoding: utf-8');
                 $this->set_response_header();
@@ -468,8 +472,16 @@ class PHPRoll
                     break;
                 }
             default:
+                header('Content-Description: PHPRoll v2.0.12b');
                 header('Content-Type: Application/xml; charset=utf-8');
                 header('Content-Encoding: utf-8');
+                header('Access-Control-Allow-Origin: *');
+                header('Referer-Policy: origin-when-cross-origin');
+                header('Strict-Transport-Security: max-age=86400');
+                header('X-XSS-Protection: 1; mode=block');
+                header('X-Content-Type-Options: nosniff');
+                header('Timing-Allow-Origin: *');
+
         }
         return $params;
     }
