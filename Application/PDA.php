@@ -198,7 +198,7 @@ class PDA
                         case 'array':
 //                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v:printf("'%s'",$v) ; }, $val));
                             $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v : "'$v'"; }, $val));
-                            return "$c $glue $key IN ($a})";
+                            return "$c $glue $key IN ($a)";
                         case 'NULL':
                             if (empty($exp[1])) $exp[1] = '$^';
                             break;
