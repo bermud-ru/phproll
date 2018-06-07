@@ -124,8 +124,9 @@ class PDA
     {
         switch (gettype($param)) {
             case 'array':
-                $a = implode(',', array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param));
-                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+//                $a = implode(',', array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param));
+//                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                $val = array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param);
                 break;
             case 'NULL':
                 $val = null;
@@ -141,8 +142,9 @@ class PDA
                 break;
             case 'object':
 //                $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
-//                break;
-                $param = strval($param);
+                $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                break;
+//                $param = strval($param);
             case 'string':
                 if ( is_numeric($param) ) {
                     $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
