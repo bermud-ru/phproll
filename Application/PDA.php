@@ -430,12 +430,12 @@ class PDA
 
         $w_values = [];
         $__were = $this->where($where, $w_values);
-        $w = empty( $__were) ? '' : "WHERE  $__were";
+        $w = empty( $__were) ? '' : "WHERE$__were";
 //var_dump([$w,$w_values]);exit;
         $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? []);
         if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
             $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
-
+//var_dump($stmt);exit;
         return $this->status = $stmt->execute();
     }
 

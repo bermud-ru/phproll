@@ -274,7 +274,10 @@ class PHPRoll
 //                        }
 //                        $a_data[$matches[1]] = $matches[2];
 //                    }
-                }  else {
+                } else if (strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== FALSE) {
+                    $json = file_get_contents('php://input');
+                    $params = json_decode($json,true);
+                } else {
 //                    mb_parse_str(file_get_contents('php://input'), $params );
                     parse_str(file_get_contents('php://input'), $params );
                 }
@@ -398,7 +401,8 @@ class PHPRoll
      */
     final function set_response_header(array $extra = [])
     {
-        array_walk(array_merge($extra, $this->response_header), function ($v, $k) { header("$k: $v");});
+        $a = array_merge($extra, $this->response_header);
+        array_walk($a, function ($v, $k) { header("$k: $v");});
     }
 
     /**
