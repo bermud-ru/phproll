@@ -19,6 +19,7 @@ namespace Application;
 
 class PHPRoll
 {
+    const VERSION = 'PHPRoll v2.0.12b';
     const KEY_SEPARATOR = '.';
 
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
@@ -430,8 +431,8 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
-                header('Content-Description: RESTfull json');
-                header('Content-Type: Application/json; charset=utf-8');
+                header('Content-Description: '+\Application\PHPRoll::VERSION);
+                header('Content-Type: Application/json; charset=utf-8;');
                 header('Access-Control-Allow-Origin: *');
                 //header('Access-Control-Allow-Credentials: true');
                 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE');
@@ -476,7 +477,7 @@ class PHPRoll
                     break;
                 }
             default:
-                header('Content-Description: PHPRoll v2.0.12b');
+                header('Content-Description: '+\Application\PHPRoll::VERSION);
                 header('Content-Type: Application/xml; charset=utf-8');
                 header('Content-Encoding: utf-8');
                 header('Access-Control-Allow-Origin: *');
