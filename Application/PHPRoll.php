@@ -431,7 +431,7 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
-                header('Content-Description: '+\Application\PHPRoll::VERSION);
+                header('Content-Description: '.\Application\PHPRoll::VERSION);
                 header('Content-Type: Application/json; charset=utf-8;');
                 header('Access-Control-Allow-Origin: *');
                 //header('Access-Control-Allow-Credentials: true');

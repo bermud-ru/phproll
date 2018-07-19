@@ -235,6 +235,9 @@ class PDA
                     case '~': ;
                         return "$c $glue $key ILIKE $val";
                         break;
+                    case '=': ;
+                        return "$c $glue LOWER($key) = LOWER($val)";
+                        break;
                     case '@@': ;
                         return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery($val)";
                         break;
@@ -430,7 +433,7 @@ class PDA
 
         $w_values = [];
         $__were = $this->where($where, $w_values);
-        $w = empty( $__were) ? '' : "WHERE$__were";
+        $w = empty( $__were) ? '' : "WHERE $__were";
 //var_dump([$w,$w_values]);exit;
         $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? []);
         if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
