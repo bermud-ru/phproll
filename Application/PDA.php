@@ -235,8 +235,11 @@ class PDA
                     case '~': ;
                         return "$c $glue $key ILIKE $val";
                         break;
-                    case '=': ;
+                    case '==': ;
                         return "$c $glue LOWER($key) = LOWER($val)";
+                        break;
+                    case '++': ;
+                        return "$c $glue $val";
                         break;
                     case '@@': ;
                         return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery($val)";
@@ -356,7 +359,7 @@ class PDA
         $where = empty($w)  ? '' : " WHERE $w";
         if (isset($opt['where'])) $where .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
 
-        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
+        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' HAVING '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
     }
 
     /**
