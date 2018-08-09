@@ -412,7 +412,7 @@ class PHPRoll
      * @param $params
      * @return mixed
      */
-    public function response(string $type, array $params)
+    public function response(string $type, $params)
     {
         $code = $params['code'] ?? 200;
         if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
@@ -439,7 +439,15 @@ class PHPRoll
                 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version');
                 header('Content-Encoding: utf-8');
                 $this->set_response_header();
-                return json_encode($params, JSON_UNESCAPED_UNICODE);
+
+                switch (gettype($params)) {
+                    case 'object':
+                    case 'array':
+                        return json_encode($params, JSON_UNESCAPED_UNICODE);
+                    case 'string':
+                    default:
+                        return $params;
+                }
             case 'file':
                 header('Content-Description: File Transfer');
                 header('Content-Transfer-Encoding: binary');

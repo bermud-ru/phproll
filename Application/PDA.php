@@ -120,7 +120,7 @@ class PDA
      * @param $param
      * @return float|int|null|string
      */
-    public static function parameterize ($param)
+    public static function parameterize ($param, $opt = \PDO::NULL_NATURAL)
     {
         switch (gettype($param)) {
             case 'array':
@@ -148,10 +148,14 @@ class PDA
             case 'string':
                 if ( is_numeric($param) ) {
                     $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
-                } else $val = strval($param);
+                } else {
+                    $val = strval($param);
+                    if ($opt == \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+                }
                 break;
             default:
                 $val = strval($param);
+                if ($opt == \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
         }
 
         return $val;
@@ -303,7 +307,7 @@ class PDA
             $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
                 ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
             if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v) {
-                $value = strval($v);
+                $value = \Application\PDA::parameterize($v);
                 $query = str_replace(":$k", is_numeric($value) ? $value : "'$value'", $query);
             }
         }
@@ -319,40 +323,46 @@ class PDA
      * @param array $opt
      * @return string
      */
-    private  function filtration(string &$sql, array &$params = [], array &$opt = ['normolize'=>true, 'wrap'=> false]): string
+    private function filtration(string &$sql, array &$params = [], array &$opt = []): string
     {
-        //$opt = array_merge(['normolize'=>true, 'wrap'=> true], $opt);
+        $opt = array_merge(['normolize'=>true, 'wrap'=> false, 'paginator'=>true], $opt);
 
-        if (count($params)) {
-            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
-        } else {
-            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $opt['normolize'] ?
-                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
-        }
+//        if (count($params)) {
 
-        if (isset($opt['wrap']) && $opt['wrap']) {
+//        } else {
+//            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $opt['normolize'] ?
+//                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
+//        }
+
+        if ($opt['wrap']) {
             $f = is_string($opt['wrap']) ? $opt['wrap'] : '*';
             $sql = "WITH raw_query_sql as ($sql) SELECT $f FROM raw_query_sql";
         }
 
         $offset = '';
         $limit = '';
-        $ltd = 0;
-        if (isset($params['limit'])) {
-            $ltd = intval(strval($params['limit']));
+        if ($opt['paginator']) {
+            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
+            $ltd = 0;
+            if (isset($params['limit'])) {
+                $ltd = intval(strval($params['limit']));
 //        $limit = " limit $ltd";
-            $limit = "FETCH NEXT $ltd ROWS ONLY";
-            unset($params['limit']);
-        }
+                $limit = "FETCH NEXT $ltd ROWS ONLY";
+                unset($params['limit']);
+            }
 
-        if (isset($params['offset'])) {
-            $offset = ' OFFSET ' . (strval($params['offset'])) . ' ROWS ';
-            unset($params['offset']);
-            if (isset($params['page'])) unset($params['page']);
-        } elseif (isset($params['page'])) {
-            $offset = ' OFFSET ' . (strval($params['page']) * $ltd) . ' ROWS ';
+            if (isset($params['offset'])) {
+                $offset = ' OFFSET ' . (strval($params['offset'])) . ' ROWS ';
+                unset($params['offset']);
+                if (isset($params['page'])) unset($params['page']);
+            } elseif (isset($params['page'])) {
+                $offset = ' OFFSET ' . (strval($params['page']) * $ltd) . ' ROWS ';
 //        $offset = ' offset ' . (strval($params['page']) * $ltd);
-            unset($params['page']);
+                unset($params['page']);
+            }
+        } else {
+            if (isset($params['offset'])) unset($params['offset']);
+            if (isset($params['limit'])) unset($params['limit']);
         }
 
         $w = $this->where($params);
@@ -406,7 +416,7 @@ class PDA
         $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields)
                             .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')', $opt['PDO'] ?? []);
 //        foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
-        foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
+        foreach ($f as $v) $stmt->bindValue(":".$v, \Application\PDA::parameterize($values[$v]), \PDO::NULL_EMPTY_STRING);
 
         return$this->status = $stmt->execute();
     }
