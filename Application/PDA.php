@@ -17,44 +17,30 @@ class PDA
 {
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
-    public $owner = null;
+    const OBJECT_STRINGIFY = 4;
+
     public $status = false;
 
     protected $pdo = null;
-    protected $opt = array(
+    protected $opt = [
         //\PDO::ATTR_PERSISTENT => true,
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
-    );
+    ];
 
     /**
      * PDA constructor
      *
-     * @param PHPRoll $owner | array ['db'=>'dbengin:dbname=...;host=...;port=...;user=...;password=...']
-     * @param array|null $opt
+     * @param 'dsn' = 'dbengin:dbname=...;host=...;port=...;user=...;password=...']
+     * @param array $opt
      * @param boolean|null $attach if true \Application\PDA obeject will be attated to paretn object.
      */
-    public function __construct(&$owner, $attach = false, array $opt = null)
+    public function __construct($dsn, array $opt = [])
     {
-        if (empty($owner)) throw new \Exception('\Application\PDA - необходимо указать параметры подключения!');
+        if (empty($dsn)) throw new \Exception('\Application\PDA - необходимо указать параметры подключения!');
 
-        $db =  null;
-        $pdo = null;
-        if (is_array($owner)){
-            $this->owner = null;
-            $db = $owner['db'] ?? null;
-        } elseif ($owner instanceof \Application\PHPRoll) {
-            $this->owner = $owner;
-            $db = $owner->config['db'] ?? null;
-            if ($attach) {
-                $owner->db = $this;
-                if (!empty($owner->db) && $owner->db->pdo instanceof \PDO) $pdo = $this->owner->pdo;
-            }
-        }
-
-        if (empty($db) && empty($pdo)) throw new \Exception('\Application\PDA ERROR: DATABASE not defined.');
         try {
-            $this->pdo = $pdo ?? new \PDO($db, null, null, $opt ?? $this->opt);
+            $this->pdo = new \PDO($dsn, $opt['username'] ?? null, $opt['passwd'] ?? null, $opt['PDO'] ?? $this->opt);
            // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING);
         } catch (\Exception $e) {
             throw new \Exception(__CLASS__.": ".$e->getMessage());
@@ -103,11 +89,12 @@ class PDA
     }
 
     /**
+     * @function field
      *
      * @param $key
      * @return string
      */
-    final static function field(&$key): string
+    final static function field(string $key): string
     {
         preg_match('/([a-zA-Z0-9\._-]+)/', $key, $v);
         if ($v) return $v[1];
@@ -115,7 +102,49 @@ class PDA
     }
 
     /**
-     * parameterize
+     * @function queryParams
+     *
+     * @param string $query
+     * @return array
+     */
+    final static function queryParams(string $query): array
+    {
+        preg_match_all('/:([a-zA-Z0-9\._]+)/', $query, $v);
+        if (isset($v[1])) return array_flip($v[1]);
+        return [];
+    }
+
+    /**
+     * @function addPrefix
+     *
+     * @param  string | array $query
+     * @param string $prefix
+     * @return array [oldKey => newKey, .....] | []
+     */
+    final static function addPrefix(&$query, string $prefix): array
+    {
+        $keys = [];
+        if (is_array($query)) {
+            foreach($query as $k=>$v){
+                $query[$prefix.$k] = $v;
+                $keys[$k] = $prefix.$k;
+                unset($query[$k]);
+            }
+        } elseif ($query) {
+            preg_match_all('/:([a-zA-Z0-9\._]+)/', $query, $v);
+            if (isset($v[1])) {
+                foreach ($v[1] as $k => $v) {
+                    str_replace($v, $prefix . $v, $query);
+                    $keys[$v] = $prefix . $v;
+                }
+            }
+        }
+        return $keys;
+    }
+
+
+    /**
+     * @function parameterize
      *
      * @param $param
      * @return float|int|null|string
@@ -124,9 +153,9 @@ class PDA
     {
         switch (gettype($param)) {
             case 'array':
-//                $a = implode(',', array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param));
+//                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-                $val = array_map(function ($v) { return \Application\PDA::parameterize($v); }, $param);
+                $val = array_map(function ($v) { return self::parameterize($v); }, $param);
                 break;
             case 'NULL':
                 $val = null;
@@ -141,21 +170,25 @@ class PDA
                 $val = intval($param);
                 break;
             case 'object':
-//                $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
-                $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
+                    $val = strval($param);
+                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+                } else {
+//                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
+                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
                 break;
-//                $param = strval($param);
             case 'string':
                 if ( is_numeric($param) ) {
                     $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
                 } else {
                     $val = strval($param);
-                    if ($opt == \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
                 }
                 break;
             default:
                 $val = strval($param);
-                if ($opt == \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+                if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
         }
 
         return $val;
@@ -163,21 +196,21 @@ class PDA
 
     /**
      * Helper - where
+     * @function where
      *
      * @param $where
      * @param $vlues
      * @return string
      */
-    static function where($where, &$vlues=null):string
+    static function where($where, array &$vlues=[]):string
     {
-        if (is_array($where)) {
-
-            $is_assoc = \Application\PHPRoll::is_assoc($where);
-            if ($is_assoc) {
-                if ($vlues !== null) $vlues = array_values($where);
+        if (is_array($where))
+        {
+            if ($is_assoc = \Application\PHPRoll::is_assoc($where)) {
+                if ($vlues === []) $vlues = array_values($where);
                 $keys = array_keys($where); $vals = $where;
             } else {
-                if ($vlues !== null) $vlues = $where;
+                if ($vlues !== []) $vlues = $where;
                 $keys = $where; $vals = [];
             }
 
@@ -190,33 +223,8 @@ class PDA
                     case '&':
                     default: $glue = 'AND';
                 }
-
-                if (empty($vals)) {
-                    $val = ":$key" ;
-                } else {
-                    if (gettype($vals[$k]) == 'object') $val = $vals[$k]->value;
-                    else $val = $vals[$k];
-
-                    switch (gettype($val)) {
-                        case 'object':  //TODO: JSON filter
-                            $val = json_encode($vals[$k], JSON_FORCE_OBJECT);
-                            break;
-                        case 'array':
-//                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v:printf("'%s'",$v) ; }, $val));
-                            $a = implode(',', array_map(function ($v) { return is_numeric($v) ? $v : "'$v'"; }, $val));
-                            return "$c $glue $key IN ($a)";
-                        case 'NULL':
-                            if (empty($exp[1])) $exp[1] = '$^';
-                            break;
-                        case 'integer':
-                            $val = "{$vals[$k]}";
-                            break;
-                        case 'string':
-                        default:
-//                            $val = is_numeric($val) ? $val : "'{$val}'";
-                            $val = "'{$vals[$k]}'";
-                    }
-                }
+                
+                $val = empty($vals) ? ":$key" : self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
 
                 switch ( trim($exp[1]) ) {
 //                    case '{}': ;  //TODO: JSON filter
@@ -234,10 +242,10 @@ class PDA
                         return "$c $glue $key IS NULL";
                         break;
                     case '!~': ;
-                        return "$c $glue $key NOT ILIKE $val";
+                        return "$c $glue $key NOT ILIKE '$val'";
                         break;
                     case '~': ;
-                        return "$c $glue $key ILIKE $val";
+                        return "$c $glue $key ILIKE '$val'";
                         break;
                     case '==': ;
                         return "$c $glue LOWER($key) = LOWER($val)";
@@ -260,9 +268,20 @@ class PDA
                 }, ''
             );
 
-        } else {
-            preg_match_all('/:([a-zA-Z0-9\._]+)/', $where, $vars);
-            if ($vlues !== null) $vlues = $vars[1] ?? [];
+        }
+
+        $keys = self::queryParams($where);
+        if ($vlues == []) {
+            $vlues = $keys;
+        } elseif (\Application\PHPRoll::is_assoc($vlues)) {
+           foreach ($keys as $k=>$v) {
+               if (isset($vlues[$v])) {
+                   $item = self::parameterize($vlues[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
+                   str_repace(":$v", is_numeric($item) ? $item : "'$item'" , $where);
+               } else {
+                   str_repace(":$v", 'NULL', $where);
+               }
+           }
         }
 
         return $where;
@@ -270,22 +289,33 @@ class PDA
 
     /**
      * PDO stmt helper
+     * @function stmt
      *
      * @param string $sql
-     * @param array $params
+     * @param array $params {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @param array $opt
      * @return \PDOStatement
      */
-    public function stmt(string $sql, array $params=null, array $opt = ['normolize'=>true]): \PDOStatement
+    public function stmt(string $sql, array $params=[], array $opt = []): \PDOStatement
     {
-        $stmt = $this->prepare($sql, $opt['PDO'] ?? []);
-        preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
-        if (isset($v[1])) {
-            $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
-            ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
-            if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v)
-                $stmt->bindValue(":".$k, \Application\PDA::parameterize($v), \PDO::NULL_EMPTY_STRING);
+        $stmt = $this->prepare($sql, $opt['PDO'] ?? $this->opt);
+        if ($keys = self::queryParams($sql)) {
+            if (\Application\PHPRoll::is_assoc($params)) {
+                foreach (array_intersect_key($params, $keys) as $k => $v) {
+                    $stmt->bindValue(":" . $k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                }
+            } else {
+                $this->status = true;
+                foreach ($params as $i=>$row) {
+                    foreach (array_intersect_key($row, $keys) as $k => $v) {
+                        $stmt->bindValue(":" . $k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                    }
+                    $this->status = $this->status && $stmt->execute();
+                }
+                return $stmt;
+            }
         }
+
         $this->status = $stmt->execute();
 
         return $stmt;
@@ -293,21 +323,20 @@ class PDA
 
     /**
      * SQL builder - return complite SQL query string
+     * @function query
      *
      * @param string $sql
      * @param array|null $params
      * @param array $opt
      * @return string
      */
-    public function query(string $sql, array $params=null, array $opt = ['normolize'=>true]): string
+    public function query(string $sql, array &$params, array $opt = []): string
     {
         $query = $sql;
-        preg_match_all('/:([a-zA-Z0-9\._]+)/', $sql, $v);
-        if (isset($v[1])) {
-            $data = !is_null($params) && \Application\PHPRoll::is_assoc($params) ? $params :
-                ($opt['normolize'] ? \Application\PHPRoll::array_keys_normalization($params ?? $this->owner->params) : $this->owner->params);
-            if (count($data)) foreach (array_intersect_key($data, array_flip($v[1])) as $k=>$v) {
-                $value = \Application\PDA::parameterize($v);
+
+        if (($fields = self::queryParams($sql)) && \Application\PHPRoll::is_assoc($params) ) {
+            foreach (array_intersect_key($params, $fields) as $k=>$v) {
+                $value = $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
                 $query = str_replace(":$k", is_numeric($value) ? $value : "'$value'", $query);
             }
         }
@@ -317,22 +346,16 @@ class PDA
 
     /**
      * Prepare filter SQL query string
+     * @function filtration
      *
      * @param string $sql
      * @param array $params
      * @param array $opt
      * @return string
      */
-    private function filtration(string &$sql, array &$params = [], array &$opt = []): string
+    private function filtration(string $sql, array &$params, array $opt = []): string
     {
-        $opt = array_merge(['normolize'=>true, 'wrap'=> false, 'paginator'=>true], $opt);
-
-//        if (count($params)) {
-
-//        } else {
-//            $params = array_merge(\Application\PDA::FILTER_DEFAULT, $opt['normolize'] ?
-//                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
-//        }
+        $opt = array_merge(['wrap'=> false, 'paginator'=>true], $opt);
 
         if ($opt['wrap']) {
             $f = is_string($opt['wrap']) ? $opt['wrap'] : '*';
@@ -369,89 +392,134 @@ class PDA
         $where = empty($w)  ? '' : " WHERE $w";
         if (isset($opt['where'])) $where .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
 
-        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' HAVING '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
+        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
     }
 
     /**
      * SQL filter builder - return complite SQL query string
+     * @function filter_query
      *
      * @param string $sql
      * @param array $params
      * @param array $opt
      * @return string
      */
-    public function filter_query(string $sql, array $params = [], array $opt = ['normolize'=>true, 'wrap'=> false]): string
+    public function filter_query(string $sql, array $params, array $opt = []): string
     {
         return $this->query( $this->filtration( $sql, $params, $opt ), $params, $opt );
     }
 
     /**
-     *  PDO select helper with paggination, limit and etc
+     * PDO select helper with paggination, limit and etc
+     * @function filter
      *
      * @param string $sql
      * @param array $params
      * @param array $opt
      * @return \PDOStatement
      */
-    public function filter(string $sql, array $params = [], array $opt = ['normolize'=>true, 'wrap'=> false]): \PDOStatement
+    public function filter(string $sql, array $params, array $opt = []): \PDOStatement
     {
         return $this->stmt( $this->filtration( $sql, $params, $opt ), $params, $opt );
     }
 
     /**
-     *  PDO insert helper
+     * PDO insert helper
+     * @function insert
      *
      * @param string $table
-     * @param array $fields
-     * @param array $opt
+     * @param array $fields {is_assoc === TRUE for sing rowset, is_assoc === FALSE for $opt['params'] dataset }
+     * @param array $opt,  $opt['params'] {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @return bool
      */
-    public function insert(string $table, array $fields, array $opt = ['normolize'=>true]): bool
+    public function insert(string $table, array $fields, array $opt = []): bool
     {
-        $is_assoc = \Application\PHPRoll::is_assoc($fields);
-        $data = $opt['params'] ?? (!isset($opt['normolize']) || $opt['normolize'] === true ?
-                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
-        $values = array_intersect_key($data, array_flip($is_assoc ? array_values($fields) : $fields));
-        $f = $is_assoc ? array_values($fields) : $fields;
-        $stmt = $this->prepare("INSERT INTO $table (" . implode(', ', $is_assoc ? array_keys($fields) : $fields)
-                            .') VALUES (' . implode(', ', array_map(function($v){return ':'.$v;}, $f)) . ')', $opt['PDO'] ?? []);
-//        foreach ($f as $v) $stmt->bindValue(":".$v, $values[$v] == '' ? null : strval($values[$v]), \PDO::NULL_EMPTY_STRING);
-        foreach ($f as $v) $stmt->bindValue(":".$v, \Application\PDA::parameterize($values[$v]), \PDO::NULL_EMPTY_STRING);
+        $self = $this;
+        $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
+        {
+            return $self->prepare("INSERT INTO $table (".implode(',', $keys)
+                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).')',
+                $opt['PDO'] ?? $self->opt);
+        };
 
-        return$this->status = $stmt->execute();
+        if (\Application\PHPRoll::is_assoc($fields)) {
+            $keys = array_keys($fields);
+            $stmt = $prepare($keys, $opt);
+            foreach ($keys as $v) {
+                $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+            }
+            return $this->status = $stmt->execute();
+
+        } elseif (isset($opt['params'])) {
+            $keys = $fields ;
+            $stmt = $prepare($keys, $opt);
+            if (\Application\PHPRoll::is_assoc($opt['params'])) {
+                $params = array_intersect_key($opt['params'], array_flip($keys));
+                foreach ($keys as $v) {
+                    $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                }
+                return $this->status = $stmt->execute();
+            }
+        } else  {
+            trigger_error("Application\PDA::insert(table=$table) нет данных!", E_USER_WARNING);
+            return false;
+        }
+
+        $this->status = true;
+        foreach ($opt['params'] as $k=>$v){
+            $params = array_intersect_key($v, array_flip($keys));
+            foreach ($keys as $v) {
+                $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+            }
+            $this->status = $this->status && $stmt->execute();
+        }
+
+        return $this->status;
     }
 
     /**
      * PDO update helper
+     * @function update
      *
      * @param string $table
      * @param array $fields
-     * @param $where
+     * @param {string | array} $where
      * @param array $opt
      * @return bool
      */
-    public function update(string $table, array $fields, $where, array $opt = ['normolize'=>true]): bool
+    public function update(string $table, array $fields, $where = null, array $opt = []): bool
     {
-        $is_assoc = \Application\PHPRoll::is_assoc($fields);
-        $data = $opt['params'] ?? (!isset($opt['normolize']) || $opt['normolize'] === true ?
-                \Application\PHPRoll::array_keys_normalization($this->owner->params) : $this->owner->params);
-        if ($is_assoc) {
-            $f_keys = array_keys($fields);
-            $f_values = array_values($fields);
+        $params = []; $keys = $fields; $exta = isset($opt['params']) ? $opt['params'] : [];
+        if (\Application\PHPRoll::is_assoc($fields)) {
+            $keys = array_keys($fields);
+            $params = $fields;
+        } elseif (isset($opt['params'])) {
+            foreach ($keys as $k=>$v) { $params[$v] = isset($exta[$v]) ? $exta[$v] : null; }
         } else {
-            $f_keys = $fields;
-            $f_values = $fields;
+            trigger_error("Application\PDA::update(table=$table) нет данных!", E_USER_WARNING);
+            return false;
         }
-        $f = implode(', ', array_map(function ($v, $k) { return $k . ' = :' . $v; }, $f_values, $f_keys));
+        $f = implode(',', array_map(function ($v) { return $v .' = :'. str_replace('.','_', $v); }, $keys));
 
-        $w_values = [];
-        $__were = $this->where($where, $w_values);
-        $w = empty( $__were) ? '' : "WHERE $__were";
-//var_dump([$w,$w_values]);exit;
-        $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? []);
-        if (count($data)) foreach (array_intersect_key($data, array_flip(array_merge($f_values, $w_values))) as $k=>$v)
-            $stmt->bindValue(":".$k, $v == '' ? null : strval($v), \PDO::NULL_EMPTY_STRING);
-//var_dump($stmt);exit;
+        $w = '';
+        if (is_string($where)) {
+            $where_keys = self::queryParams($where);
+            $a = []; foreach ($where_keys as $k=>$v) { $a[$v] = isset($params[$v]) ? $params[$v] : (isset($exta[$v]) ? $exta[$v] : null); }
+            $w = $this->where($a);
+        } elseif (\Application\PHPRoll::is_assoc($where)) {
+            $w = $this->where($where);
+        } elseif ($where) {
+            $a = []; foreach ($where as $k=>$v) { $a[$v] = isset($params[$v]) ? $params[$v] : (isset($exta[$v]) ? $exta[$v] : null); }
+            $w = $this->where($a);
+        }
+        if (!empty($w)) $w = " WHERE $w";
+        if (isset($opt['where'])) $w .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
+
+        $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? $this->opt);
+        foreach ($keys as $v) {
+            $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+        }
+
         return $this->status = $stmt->execute();
     }
 
