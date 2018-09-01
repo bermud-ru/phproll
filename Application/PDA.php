@@ -142,7 +142,6 @@ class PDA
         return $keys;
     }
 
-
     /**
      * @function parameterize
      *
@@ -229,37 +228,29 @@ class PDA
                 switch ( trim($exp[1]) ) {
 //                    case '{}': ;  //TODO: JSON filter
 //                        return "$c $glue $key IN ($val)";
-//                        break;
                     case '[]': ;
                         return "$c $glue $key IN ($val)";
-                        break;
                     case '!^': ;
                         return "$c $glue $key IS NOT NULL";
-                        break;
                     case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
                         if (!empty($val)) break;
                     case '^': ;
                         return "$c $glue $key IS NULL";
-                        break;
                     case '!~': ;
                         return "$c $glue $key NOT ILIKE '$val'";
-                        break;
                     case '~': ;
                         return "$c $glue $key ILIKE '$val'";
-                        break;
                     case '==': ;
-                        return "$c $glue LOWER($key) = LOWER($val)";
-                        break;
+                        return "$c $glue LOWER($key) = LOWER('$val')";
                     case '++': ;
                         return "$c $glue $val";
-                        break;
                     case '@@': ;
                         return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery($val)";
-                        break;
                     case '>': case '>=': case '<': case '=<': case '=': case '!=':
+                        $val = is_numeric($val) ? $val : "'$val'";
                         return "$c $glue $key {$exp[1]} $val";
-                        break;
                     default:
+                        $val = is_numeric($val) ? $val : "'$val'";
                         ;
                 }
 
@@ -504,12 +495,12 @@ class PDA
         $w = '';
         if (is_string($where)) {
             $where_keys = self::queryParams($where);
-            $a = []; foreach ($where_keys as $k=>$v) { $a[$v] = isset($params[$v]) ? $params[$v] : (isset($exta[$v]) ? $exta[$v] : null); }
+            $a = []; foreach ($where_keys as $k=>$v) { $a[$v] = isset($exta[$v]) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
             $w = $this->where($a);
         } elseif (\Application\PHPRoll::is_assoc($where)) {
             $w = $this->where($where);
         } elseif ($where) {
-            $a = []; foreach ($where as $k=>$v) { $a[$v] = isset($params[$v]) ? $params[$v] : (isset($exta[$v]) ? $exta[$v] : null); }
+            $a = []; foreach ($where as $k=>$v) { $a[$v] = isset($exta[$v]) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
             $w = $this->where($a);
         }
         if (!empty($w)) $w = " WHERE $w";
