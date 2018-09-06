@@ -54,7 +54,7 @@ class PDA
      * @return mixed
      * @throws \Exception
      */
-    public function __get ( $name ) 
+    public function __get ($name)
     {
         if ($this->pdo instanceof \PDO && property_exists($this->pdo, $name)) {
             return $this->pdo->{$name};
@@ -154,7 +154,7 @@ class PDA
             case 'array':
 //                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-                $val = array_map(function ($v) { return self::parameterize($v); }, $param);
+                $val = array_map(function ($v) { return self::parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
                 break;
             case 'NULL':
                 $val = null;
@@ -163,7 +163,7 @@ class PDA
                 $val = $param ? 1 : 0;
                 break;
             case 'double':
-                $val =  floatval($param);
+                $val = floatval($param);
                 break;
             case 'integer':
                 $val = intval($param);
@@ -198,81 +198,79 @@ class PDA
      * @function where
      *
      * @param $where
-     * @param $vlues
+     * @param array $params
+     * @param array $source
      * @return string
      */
-    static function where($where, array &$vlues=[]):string
+    static function where(&$where, array &$params=null, array $source=null):string
     {
-        if (is_array($where))
-        {
+        if (is_array($where)) {
             if ($is_assoc = \Application\PHPRoll::is_assoc($where)) {
-                if ($vlues === []) $vlues = array_values($where);
-                $keys = array_keys($where); $vals = $where;
+                $keys = array_keys($where);
+                $vals = $where;
             } else {
-                if ($vlues !== []) $vlues = $where;
-                $keys = $where; $vals = [];
+                $keys = $where;
+                $vals = [];
             }
 
-            return array_reduce($keys, function ($c, $k) use (&$vals) {
-                $key = self::field($k);
-                $exp = explode($key, $k);
-                $glue = '';
-                if (!empty($c)) switch (trim($exp[0])) { //TODO OR engin
-                    case '|': $glue = 'OR'; break;
-                    case '&':
-                    default: $glue = 'AND';
-                }
-                
-                $val = empty($vals) ? ":$key" : self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
+            return array_reduce($keys, function ($c, $k) use (&$where, $vals, $source, &$params) {
+                    $key = self::field($k);
+                    $exp = explode($key, $k);
+                    $glue = !empty($c) ? 'AND' : '';
+                    $key = str_replace('.','_', $key);
 
-                switch ( trim($exp[1]) ) {
-//                    case '{}': ;  //TODO: JSON filter
-//                        return "$c $glue $key IN ($val)";
-                    case '[]': ;
-                        return "$c $glue $key IN ($val)";
-                    case '!^': ;
-                        return "$c $glue $key IS NOT NULL";
-                    case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
-                        if (!empty($val)) break;
-                    case '^': ;
-                        return "$c $glue $key IS NULL";
-                    case '!~': ;
-                        return "$c $glue $key NOT ILIKE '$val'";
-                    case '~': ;
-                        return "$c $glue $key ILIKE '$val'";
-                    case '==': ;
-                        return "$c $glue LOWER($key) = LOWER('$val')";
-                    case '++': ;
-                        return "$c $glue $val";
-                    case '@@': ;
-                        return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery($val)";
-                    case '>': case '>=': case '<': case '=<': case '=': case '!=':
-                        $val = is_numeric($val) ? $val : "'$val'";
-                        return "$c $glue $key {$exp[1]} $val";
-                    default:
-                        $val = is_numeric($val) ? $val : "'$val'";
-                        ;
-                }
+                    if ($params == null) {
+                        $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
+                        if ($key != $k) unset($where[$k]);
+                    } else {
+                        while (isset($params[$key])) { $key .= '_1'; }
+                        $params[$key] = $vals[$k] ?? $source = [$k] ?? null;
+                    }
 
-                return "$c $glue $key = $val";
+                    switch ( trim($exp[1]) ) {
+    //                    case '{}': ;  //TODO: JSON filter
+    //                        return "$c $glue $key IN ($val)";
+                        case '[]': ;
+                            return "$c $glue $key IN (:$key)";
+                        case '!^': ;
+                            if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
+                            return "$c $glue $key IS NOT NULL";
+                        case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
+                            $val = isset($vals[$k]) ? self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY) : null;
+                            if (!empty($val)) break;
+                        case '^': ;
+                            if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
+                            return "$c $glue $key IS NULL";
+                        case '!~': ;
+                            return "$c $glue $key NOT ILIKE :$key";
+                        case '~': ;
+                            return "$c $glue $key ILIKE :$key";
+                        case '==': ;
+                            return "$c $glue LOWER($key) = LOWER(:$key)";
+                        case '++': ;
+                            $val = isset($vals[$k]) ? self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY) : ":$key";
+                            if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
+                            return "$c $glue $val";
+                        case '@@': ;
+                            return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery(:$key)";
+                        case '>': case '>=': case '<': case '=<': case '=': case '!=':
+    //                        $val = is_numeric($val) ? $val : "'$val'";
+                            return "$c $glue $key {$exp[1]} :$key";
+                        default:
+    //                        $val = is_numeric($val) ? $val : "'$val'";
+                            ;
+                    }
 
+                    return "$c $glue $key = :$key";
                 }, ''
             );
-
         }
 
         $keys = self::queryParams($where);
-        if ($vlues == []) {
-            $vlues = $keys;
-        } elseif (\Application\PHPRoll::is_assoc($vlues)) {
-           foreach ($keys as $k=>$v) {
-               if (isset($vlues[$v])) {
-                   $item = self::parameterize($vlues[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
-                   str_repace(":$v", is_numeric($item) ? $item : "'$item'" , $where);
-               } else {
-                   str_repace(":$v", 'NULL', $where);
-               }
-           }
+        foreach ($keys as $k=>$v) {
+            $key = str_replace('.','_', $k);
+            while (isset($params[$key])) { $key .= '_1'; }
+            $params[$key] = $source=[$k] ?? $params[$k] ?? null;
         }
 
         return $where;
@@ -355,11 +353,14 @@ class PDA
 
         $offset = '';
         $limit = '';
+        $swap = [];
         if ($opt['paginator']) {
+            $swap = array_intersect_key($params, ['limit'=>0, 'page'=>1, 'offset'=>2]);
             $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
             $ltd = 0;
             if (isset($params['limit'])) {
-                $ltd = intval(strval($params['limit']));
+//                $ltd = intval(strval($params['limit']));
+                $ltd = $this->parameterize($params['limit'], \Application\PDA::OBJECT_STRINGIFY);
 //        $limit = " limit $ltd";
                 $limit = "FETCH NEXT $ltd ROWS ONLY";
                 unset($params['limit']);
@@ -382,7 +383,7 @@ class PDA
         $w = $this->where($params);
         $where = empty($w)  ? '' : " WHERE $w";
         if (isset($opt['where'])) $where .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
-
+        $params = $params + $swap;
         return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
     }
 
@@ -494,21 +495,19 @@ class PDA
 
         $w = '';
         if (is_string($where)) {
-            $where_keys = self::queryParams($where);
-            $a = []; foreach ($where_keys as $k=>$v) { $a[$v] = isset($exta[$v]) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
-            $w = $this->where($a);
+            $w = $this->where($where, $params, $exta);
         } elseif (\Application\PHPRoll::is_assoc($where)) {
-            $w = $this->where($where);
+            $w = $this->where($where,$params);
         } elseif ($where) {
             $a = []; foreach ($where as $k=>$v) { $a[$v] = isset($exta[$v]) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
-            $w = $this->where($a);
+            $w = $this->where($a,$params);
         }
         if (!empty($w)) $w = " WHERE $w";
         if (isset($opt['where'])) $w .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
 
         $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? $this->opt);
-        foreach ($keys as $v) {
-            $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+        foreach ($params as $k=>$v) {
+            $stmt->bindValue(':'.$k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
         }
 
         return $this->status = $stmt->execute();

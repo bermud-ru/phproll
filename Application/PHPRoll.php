@@ -363,12 +363,14 @@ class PHPRoll
         foreach ($p as $k => $f) {
             $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
             if (!file_exists($file)) {
-                $file = ($is_set) && ($k != $count) ? ((!$k) ? $path . $this->config['404'] ?? null : null) : $path . ($this->config['404'] ?? 'index.phtml');
+                $file = ($is_set) && ($k != $count) ? ((!$k) ? (isset($options['404']) ? $path . $options['404'] : null) : null) : (isset($options['404']) ? $path . $options['404'] : null);
             }
             $context = null;
-            if ($file) {
+            if ($file && file_exists($file)) {
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
+            } else {
+                throw new \Application\ContextException('\Application\PHPRoll::context - contex file not exist!');
             }
 
             if ($is_set &&  $k < $count) {
