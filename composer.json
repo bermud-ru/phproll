@@ -1,6 +1,6 @@
 {
   "name": "bermud-ru/phproll",
-  "version": "0.1.0",
+  "version": "2.1.2b",
   "type": "project",
   "description": "Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend",
   "keywords": [

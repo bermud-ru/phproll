@@ -18,6 +18,8 @@ class PDA
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
     const OBJECT_STRINGIFY = 4;
+    const ADDSLASHES = 8;
+    const QUERY_STRING_QUOTES = 16;
 
     public $status = false;
 
@@ -171,6 +173,7 @@ class PDA
             case 'object':
                 if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
                     $val = strval($param);
+                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
                 } else {
 //                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
@@ -182,6 +185,7 @@ class PDA
                     $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
                 } else {
                     $val = strval($param);
+                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
                 }
                 break;
@@ -325,11 +329,10 @@ class PDA
 
         if (($fields = self::queryParams($sql)) && \Application\PHPRoll::is_assoc($params) ) {
             foreach (array_intersect_key($params, $fields) as $k=>$v) {
-                $value = $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY);
-                $query = str_replace(":$k", is_numeric($value) ? $value : "'$value'", $query);
+//                $query = str_replace(":$k", is_numeric($value) ? $value : ( $value === null ? 'NULL' :"'$value'"), $query);
+                $query = str_replace(":$k", \Application\Parameter::ize($v,  \Application\PDA::ADDSLASHES | \Application\PDA::QUERY_STRING_QUOTES), $query);
             }
         }
-
         return $query;
     }
 
@@ -359,20 +362,20 @@ class PDA
             $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
             $ltd = 0;
             if (isset($params['limit'])) {
-//                $ltd = intval(strval($params['limit']));
-                $ltd = $this->parameterize($params['limit'], \Application\PDA::OBJECT_STRINGIFY);
+//                $ltd = intval(\Application\Parameter::ize($params['limit']));
+                $ltd = \Application\Parameter::ize($params['limit']);
 //        $limit = " limit $ltd";
                 $limit = "FETCH NEXT $ltd ROWS ONLY";
                 unset($params['limit']);
             }
 
             if (isset($params['offset'])) {
-                $offset = ' OFFSET ' . (strval($params['offset'])) . ' ROWS ';
+                $offset = ' OFFSET ' . (\Application\Parameter::ize($params['offset'])) . ' ROWS ';
                 unset($params['offset']);
                 if (isset($params['page'])) unset($params['page']);
             } elseif (isset($params['page'])) {
-                $offset = ' OFFSET ' . (strval($params['page']) * $ltd) . ' ROWS ';
-//        $offset = ' offset ' . (strval($params['page']) * $ltd);
+                $offset = ' OFFSET ' . (\Application\Parameter::ize($params['page']) * $ltd) . ' ROWS ';
+//        $offset = ' offset ' . (\Application\Parameter::ize($params['page']) * $ltd);
                 unset($params['page']);
             }
         } else {
@@ -438,7 +441,7 @@ class PDA
             $keys = array_keys($fields);
             $stmt = $prepare($keys, $opt);
             foreach ($keys as $v) {
-                $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
             }
             return $this->status = $stmt->execute();
 
@@ -448,7 +451,7 @@ class PDA
             if (\Application\PHPRoll::is_assoc($opt['params'])) {
                 $params = array_intersect_key($opt['params'], array_flip($keys));
                 foreach ($keys as $v) {
-                    $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                    $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
                 }
                 return $this->status = $stmt->execute();
             }
@@ -461,7 +464,7 @@ class PDA
         foreach ($opt['params'] as $k=>$v){
             $params = array_intersect_key($v, array_flip($keys));
             foreach ($keys as $v) {
-                $stmt->bindValue(':'.str_replace('.','_', $v), $this->parameterize($params[$v], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
             }
             $this->status = $this->status && $stmt->execute();
         }
@@ -507,7 +510,7 @@ class PDA
 
         $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? $this->opt);
         foreach ($params as $k=>$v) {
-            $stmt->bindValue(':'.$k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
         }
 
         return $this->status = $stmt->execute();

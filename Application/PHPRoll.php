@@ -19,7 +19,8 @@ namespace Application;
 
 class PHPRoll
 {
-    const VERSION = 'PHPRoll v2.0.12b';
+    const FRAMEWORK = 'PHPRoll';
+    const VERSION = '2.0.12b';
     const KEY_SEPARATOR = '.';
 
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
@@ -353,7 +354,7 @@ class PHPRoll
      * @param array $options
      * @return string
      */
-    public function context($pattern, array $options = array()): string
+    public function context($pattern, array $options = []): string
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
@@ -370,7 +371,7 @@ class PHPRoll
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
             } else {
-                throw new \Application\ContextException('\Application\PHPRoll::context - contex file not exist!');
+                throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
             }
 
             if ($is_set &&  $k < $count) {
@@ -433,7 +434,7 @@ class PHPRoll
 
         switch ($type) {
             case 'json':
-                header('Content-Description: '.\Application\PHPRoll::VERSION);
+                header('Content-Description: json data container');
                 header('Content-Type: Application/json; charset=utf-8;');
                 header('Access-Control-Allow-Origin: *');
                 //header('Access-Control-Allow-Credentials: true');
@@ -441,7 +442,7 @@ class PHPRoll
                 header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version');
                 header('Content-Encoding: utf-8');
                 $this->set_response_header();
-
+                
                 switch (gettype($params)) {
                     case 'object':
                     case 'array':
@@ -455,7 +456,6 @@ class PHPRoll
                 header('Content-Transfer-Encoding: binary');
                 header('Connection: Keep-Alive');
                 header('Cache-Control: must-revalidate');
-                $this->set_response_header();
 //                header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
 //                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
 //                if (isset($params['size'])) header("Content-length: " . $params['size']);
@@ -464,6 +464,7 @@ class PHPRoll
                     fseek($params['file'], 0);
                     fpassthru($params['file']);
                 }
+                $this->set_response_header();
                 break;
             case 'view':
                 header('Content-Description: html view');
@@ -473,21 +474,20 @@ class PHPRoll
                 header('X-Content-Type-Options: nosniff');
                 header('Content-Type: text/html; charset=utf-8');
                 header('Content-Encoding: utf-8');
-                $this->set_response_header();
+
                 $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
-                    return $this->context($pattern, array(
-                            'self' => &$this,
-                            'json' => function (array $params) {
-                                echo $this->response('json', $params);
-                                exit(1);
-                            }
-                        )
-                    );
-                    break;
+                    try {
+                        $option = [ 'self' => &$this, 'json' => function (array $params) { echo $this->response('json', $params); exit(1); }];
+                        $context = $this->context($pattern, $option);
+                    } catch (\Application\ContextException $e) {
+                        $context = $this->context($this->config['404']??'index.phtml', $option);
+                    }
+                    $this->set_response_header();
+                    return $context;
                 }
             default:
-                header('Content-Description: '+\Application\PHPRoll::VERSION);
+                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION);
                 header('Content-Type: Application/xml; charset=utf-8');
                 header('Content-Encoding: utf-8');
                 header('Access-Control-Allow-Origin: *');
@@ -496,6 +496,7 @@ class PHPRoll
                 header('X-XSS-Protection: 1; mode=block');
                 header('X-Content-Type-Options: nosniff');
                 header('Timing-Allow-Origin: *');
+                $this->set_response_header();
 
         }
         return $params;
