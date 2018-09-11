@@ -240,7 +240,7 @@ class PDA
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key IS NOT NULL";
                         case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
-                            $val = isset($vals[$k]) ? self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY) : null;
+                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
                             if (!empty($val)) break;
                         case '^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
@@ -249,10 +249,14 @@ class PDA
                             return "$c $glue $key NOT ILIKE :$key";
                         case '~': ;
                             return "$c $glue $key ILIKE :$key";
+                        case '&': ;
+                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
+                            return "$c $glue $key & $val = $val";
                         case '==': ;
                             return "$c $glue LOWER($key) = LOWER(:$key)";
                         case '++': ;
-                            $val = isset($vals[$k]) ? self::parameterize($vals[$k], \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY) : ":$key";
+                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $val";
                         case '@@': ;

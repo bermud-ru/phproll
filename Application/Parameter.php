@@ -211,7 +211,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
-        if (is_numeric($this->value)) return intval($this->value);
+        $val = preg_replace('/[^0-9]/', '', $this->value);
+        if (is_numeric($val)) return intval($val);
 
         trigger_error("Application\Parameter::__toInt() can't resolve numeric value!", E_USER_WARNING);
         return null;
@@ -224,7 +225,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat(): ?float
     {
-        if (is_numeric($this->value)) return floatval($this->value);
+        $val = (float) filter_var( $this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
+        if (is_numeric($val)) return floatval($val);
 
         trigger_error("Application\Parameter::__toFloat() can't resolve numeric value!", E_USER_WARNING);
         return null;
@@ -275,6 +277,9 @@ class Parameter implements \JsonSerializable
     {
         $val = null;
         switch (strtolower($this->type)) {
+            case 'date':
+                $val = empty($this->value) ? null : implode('-', array_reverse(explode('.', $this->value)));
+                break;
             case 'json':
                 $val = $this->__toJSON();
                 break;
