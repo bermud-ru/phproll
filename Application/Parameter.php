@@ -35,7 +35,7 @@ class Parameter implements \JsonSerializable
     public $params = null;
     public $value = null;
 
-    const MESSAGE = "\Application\Parameter::message %(name)s %(value)s!";
+    const MESSAGE = "Parameter error, %(name)s = %(value)s is wrong!";
     /**
      * Parameter constructor
      *
@@ -56,6 +56,22 @@ class Parameter implements \JsonSerializable
         if ($this->required && (is_null($this->value) || $this->value === '')) {
             $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value'=>strval($this->value)]);
         } else {
+            if (empty($this->validator) && $this->type != 'string') {
+                switch (strtolower($this->type)) {
+                    case 'bool':
+                        $this->validator = '/^(0|1)$/';
+                        break;
+                    case 'date':
+                        $this->validator = '/^(0|1|2|3)\d\.(0|1)\d\.\d{4}$/';
+                        break;
+                    case 'float':
+                        $this->validator = '[+-]?([0-9]*[.])?[0-9]+';
+                        break;
+                    case 'int':
+                        $this->validator = '/^[+-]?\d+$/';
+                        break;
+                }
+            }
             if (!empty($this->validator) && ($this->required || !empty($this->value))) {
                 if (is_callable($this->validator)) {
                     $this->notValid = !call_user_func_array($this->validator, $this->arguments($this->validator));
