@@ -218,10 +218,10 @@ class PDA
             }
 
             return array_reduce($keys, function ($c, $k) use (&$where, $vals, $source, &$params) {
-                    $key = self::field($k);
-                    $exp = explode($key, $k);
+                    $key_original = self::field($k);
+                    $exp = explode($key_original, $k);
                     $glue = !empty($c) ? 'AND' : '';
-                    $key = str_replace('.','_', $key);
+                    $key = str_replace('.','_', $key_original);
 
                     if ($params == null) {
                         $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
@@ -233,43 +233,43 @@ class PDA
 
                     switch ( trim($exp[1]) ) {
     //                    case '{}': ;  //TODO: JSON filter
-    //                        return "$c $glue $key IN ($val)";
+    //                        return "$c $glue $key_original IN ($val)";
                         case '[]': ;
-                            return "$c $glue $key IN (:$key)";
+                            return "$c $glue $key_original IN (:$key)";
                         case '!^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
-                            return "$c $glue $key IS NOT NULL";
+                            return "$c $glue $key_original IS NOT NULL";
                         case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
                             if (!empty($val)) break;
                         case '^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
-                            return "$c $glue $key IS NULL";
+                            return "$c $glue $key_original IS NULL";
                         case '!~': ;
-                            return "$c $glue $key NOT ILIKE :$key";
+                            return "$c $glue $key_original NOT ILIKE :$key";
                         case '~': ;
-                            return "$c $glue $key ILIKE :$key";
+                            return "$c $glue $key_original ILIKE :$key";
                         case '&': ;
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
-                            return "$c $glue $key & $val = $val";
+                            return "$c $glue $key_original & $val = $val";
                         case '==': ;
-                            return "$c $glue LOWER($key) = LOWER(:$key)";
+                            return "$c $glue LOWER($key_original) = LOWER(:$key)";
                         case '++': ;
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $val";
                         case '@@': ;
-                            return "$c $glue to_tsvector('english', $key::text) @@ to_tsquery(:$key)";
+                            return "$c $glue to_tsvector('english', $key_original::text) @@ to_tsquery(:$key)";
                         case '>': case '>=': case '<': case '=<': case '=': case '!=':
     //                        $val = is_numeric($val) ? $val : "'$val'";
-                            return "$c $glue $key {$exp[1]} :$key";
+                            return "$c $glue $key_original {$exp[1]} :$key";
                         default:
     //                        $val = is_numeric($val) ? $val : "'$val'";
                             ;
                     }
 
-                    return "$c $glue $key = :$key";
+                    return "$c $glue $key_original = :$key";
                 }, ''
             );
         }
@@ -299,13 +299,13 @@ class PDA
         if ($keys = self::queryParams($sql)) {
             if (\Application\PHPRoll::is_assoc($params)) {
                 foreach (array_intersect_key($params, $keys) as $k => $v) {
-                    $stmt->bindValue(":" . $k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                    $stmt->bindValue(':' . str_replace('.','_', $k), $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
                 }
             } else {
                 $this->status = true;
                 foreach ($params as $i=>$row) {
                     foreach (array_intersect_key($row, $keys) as $k => $v) {
-                        $stmt->bindValue(":" . $k, $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                        $stmt->bindValue(':' . str_replace('.','_', $k), $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
                     }
                     $this->status = $this->status && $stmt->execute();
                 }
@@ -334,7 +334,7 @@ class PDA
         if (($fields = self::queryParams($sql)) && \Application\PHPRoll::is_assoc($params) ) {
             foreach (array_intersect_key($params, $fields) as $k=>$v) {
 //                $query = str_replace(":$k", is_numeric($value) ? $value : ( $value === null ? 'NULL' :"'$value'"), $query);
-                $query = str_replace(":$k", \Application\Parameter::ize($v,  \Application\PDA::ADDSLASHES | \Application\PDA::QUERY_STRING_QUOTES), $query);
+                $query = str_replace(':' . str_replace('.','_', $k), \Application\Parameter::ize($v,  \Application\PDA::ADDSLASHES | \Application\PDA::QUERY_STRING_QUOTES), $query);
             }
         }
         return $query;
