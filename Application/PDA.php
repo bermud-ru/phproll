@@ -73,7 +73,7 @@ class PDA
      */
     public function __call($name, $arguments)
     {
-        if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array(array($this->pdo, $name), $arguments);
+        if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array([$this->pdo, $name], $arguments);
         throw new \Exception(__CLASS__."->$name(...) method not foudnd");
     }
 
@@ -86,7 +86,7 @@ class PDA
      */
     public static function __callStatic($name, $arguments)
     {
-        if (method_exists(\PDO, $name)) return call_user_func_array(array(\PDO, $name), $arguments);
+        if (method_exists(\PDO, $name)) return call_user_func_array([\PDO, $name], $arguments);
         throw new \Exception(__CLASS__."::$name(...) method not foudnd");
     }
 
@@ -144,58 +144,58 @@ class PDA
         return $keys;
     }
 
-    /**
-     * @function parameterize
-     *
-     * @param $param
-     * @return float|int|null|string
-     */
-    public static function parameterize ($param, $opt = \PDO::NULL_NATURAL)
-    {
-        switch (gettype($param)) {
-            case 'array':
-//                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
-//                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-                $val = array_map(function ($v) { return self::parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
-                break;
-            case 'NULL':
-                $val = null;
-                break;
-            case 'boolean':
-                $val = $param ? 1 : 0;
-                break;
-            case 'double':
-                $val = floatval($param);
-                break;
-            case 'integer':
-                $val = intval($param);
-                break;
-            case 'object':
-                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
-                    $val = strval($param);
-                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-                } else {
-//                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
-                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-                }
-                break;
-            case 'string':
-                if ( is_numeric($param) ) {
-                    $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
-                } else {
-                    $val = strval($param);
-                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-                }
-                break;
-            default:
-                $val = strval($param);
-                if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-        }
-
-        return $val;
-    }
+//    /**
+//     * @function parameterize
+//     *
+//     * @param $param
+//     * @return float|int|null|string
+//     */
+//    public static function parameterize ($param, $opt = \PDO::NULL_NATURAL)
+//    {
+//        switch (gettype($param)) {
+//            case 'array':
+////                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
+////                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+//                $val = array_map(function ($v) { return self::parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
+//                break;
+//            case 'NULL':
+//                $val = null;
+//                break;
+//            case 'boolean':
+//                $val = $param ? 1 : 0;
+//                break;
+//            case 'double':
+//                $val = floatval($param);
+//                break;
+//            case 'integer':
+//                $val = intval($param);
+//                break;
+//            case 'object':
+//                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
+//                    $val = strval($param);
+//                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
+//                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+//                } else {
+////                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
+//                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+//                }
+//                break;
+//            case 'string':
+//                if ( is_numeric($param) ) {
+//                    $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
+//                } else {
+//                    $val = strval($param);
+//                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
+//                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+//                }
+//                break;
+//            default:
+//                $val = strval($param);
+//                if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
+//        }
+//
+//        return $val;
+//    }
 
     /**
      * Helper - where
@@ -299,13 +299,13 @@ class PDA
         if ($keys = self::queryParams($sql)) {
             if (\Application\PHPRoll::is_assoc($params)) {
                 foreach (array_intersect_key($params, $keys) as $k => $v) {
-                    $stmt->bindValue(':' . str_replace('.','_', $k), $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                    $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
                 }
             } else {
                 $this->status = true;
                 foreach ($params as $i=>$row) {
                     foreach (array_intersect_key($row, $keys) as $k => $v) {
-                        $stmt->bindValue(':' . str_replace('.','_', $k), $this->parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY));
+                        $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
                     }
                     $this->status = $this->status && $stmt->execute();
                 }
