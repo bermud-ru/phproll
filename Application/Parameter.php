@@ -312,10 +312,10 @@ class Parameter implements \JsonSerializable
                 $val = boolval($this->value) ? 1 : 0;
                 break;
             case 'float':
-                $val = empty($this->value) ? null : $this->__toFloat();
+                $val =  $this->__toFloat();
                 break;
             case 'int':
-                $val = empty($this->value) ? null : $this->__toInt();
+                $val = $this->__toInt();
                 break;
             case 'string':
             default:
