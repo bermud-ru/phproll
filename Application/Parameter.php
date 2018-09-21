@@ -229,7 +229,7 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
-        if (!empty($this->value)) {
+        if ($this->value !== null) {
             $val = preg_replace('/[^0-9]/', '', $this->value);
             if (is_numeric($val)) return intval($val);
         }
@@ -243,7 +243,7 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat(): ?float
     {
-        if (!empty($this->value)) {
+        if ($this->value !== null) {
             $val = (float)filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             if (is_numeric($val)) return floatval($val);
         }
