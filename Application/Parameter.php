@@ -218,7 +218,7 @@ class Parameter implements \JsonSerializable
 //        elseif (is_array($this->value)) return json_encode($this->value);
         elseif (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
 
-        if ($this->value === NULL) return NULL;
+//        if ($this->value === NULL) return NULL;
         return strval($this->value);
     }
 
@@ -229,12 +229,10 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
-        if ($this->value === NULL) return NULL;
-
-        $val = preg_replace('/[^0-9]/', '', $this->value);
-        if (is_numeric($val)) return intval($val);
-
-        trigger_error("Application\Parameter::__toInt() can't resolve numeric value!", E_USER_WARNING);
+        if (!empty($this->value)) {
+            $val = preg_replace('/[^0-9]/', '', $this->value);
+            if (is_numeric($val)) return intval($val);
+        }
         return null;
     }
 
@@ -245,12 +243,10 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat(): ?float
     {
-        if ($this->value === NULL) return NULL;
-
-        $val = (float) filter_var( $this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
-        if (is_numeric($val)) return floatval($val);
-
-        trigger_error("Application\Parameter::__toFloat() can't resolve numeric value!", E_USER_WARNING);
+        if (!empty($this->value)) {
+            $val = (float)filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            if (is_numeric($val)) return floatval($val);
+        }
         return null;
     }
 
