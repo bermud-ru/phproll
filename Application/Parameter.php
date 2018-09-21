@@ -217,6 +217,8 @@ class Parameter implements \JsonSerializable
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 //        elseif (is_array($this->value)) return json_encode($this->value);
         elseif (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
+
+        if ($this->value === NULL) return NULL;
         return strval($this->value);
     }
 
@@ -227,6 +229,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
+        if ($this->value === NULL) return NULL;
+
         $val = preg_replace('/[^0-9]/', '', $this->value);
         if (is_numeric($val)) return intval($val);
 
@@ -241,6 +245,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat(): ?float
     {
+        if ($this->value === NULL) return NULL;
+
         $val = (float) filter_var( $this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION );
         if (is_numeric($val)) return floatval($val);
 
@@ -306,18 +312,19 @@ class Parameter implements \JsonSerializable
                 $val = boolval($this->value) ? 1 : 0;
                 break;
             case 'float':
-                $val = $this->__toFloat();
+                $val = empty($this->value) ? null : $this->__toFloat();
                 break;
             case 'int':
-                $val = $this->__toInt();
+                $val = empty($this->value) ? null : $this->__toInt();
                 break;
             case 'string':
             default:
                 $val = $this->__toString();
-                if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-                if ($opt & \Application\PDA::QUERY_STRING_QUOTES) {
-                    if ($val !== null) $val = "'$val'"; elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'NULL';
-                }
+                if (!empty($val)) {
+                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
+                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) $val = "'$val'";
+                } elseif ($opt & \PDO::NULL_EMPTY_STRING) { $val = NULL; }
+                elseif (($val === NULL || $val === '') && !($opt & \PDO::NULL_EMPTY_STRING)) { $val = 'NULL'; }
         }
         return $val;
     }
