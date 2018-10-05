@@ -6,8 +6,8 @@
  * @author Андрей Новиков <andrey@novikov.be>
  * @data 16/05/2018
  * @status beta
- * @version 0.1.3
- * @revision $Id: PHPRoll.php 0013 2018-05-16 1:04:01Z $
+ * @version 2.0.12b
+ * @revision $Id: PHPRoll.php 2012 2018-05-16 1:04:01Z $
  *
  */
 
@@ -51,15 +51,16 @@ class PHPRoll
     public function __construct($params)
     {
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
-        if (is_array($params)) {
-            $this->config = $params;
+        if ($params instanceof \Application\PHPRoll)
+        {
+            $this->setParent($params);
+        }
+        else
+        {
+            $this->config = $params??[];
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
             $this->params = $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
-        }
-        elseif ($params instanceof \Application\PHPRoll)
-        {
-            $this->setParent($params);
         }
     }
 
@@ -69,9 +70,9 @@ class PHPRoll
      * @param $params
      * @return mixed
      */
-    protected function route($params)
+    protected function route($params, array $opt = [])
     {
-        return isset($this->config['route']) && is_callable($this->config['route']) ? $this->config['route']($this, $params) : null;
+        return isset($this->config['route']) && is_callable($this->config['route']) ? call_user_func_array($this->config['route']->bindTo($this), ['params'=>$params, 'opt'=>$opt]) : null;
     }
 
     /**
@@ -305,24 +306,25 @@ class PHPRoll
     {
         $ext = $opt['ext'] ?? '.phtml';
         $script = $opt['script'] ?? null;
-        $prefix = ''; $name = null;
+        $prefix = '';
+        $name = [];
+        $path = ( isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR );
 
-        if (is_array($param) || ($script && $script != $param)) {
-            if (($script === false) || count($param) == 1 && (($script === false) || ($script && in_array($script, $param)))) {
-                $name = array_pop($param);
-            } else {
-                $param = is_array($param) ? $param : [$param];
-                foreach ($param as $k => $v) {
-                    $name[] = $prefix . $v . $ext;
-                    $prefix .= $v . DIRECTORY_SEPARATOR;
-                }
-                if (count($name) && $script && !in_array($script, $param)) array_unshift($name, $script . $ext);
-
-                return $name;
+        $param = is_array($param) ? $param : [$param];
+        if (count($param) ) {
+            foreach ($param as $k => $v) {
+                $tmpl = $prefix . $v . (strpos($v, $ext) ? '' : $ext);
+                if (file_exists($path . $tmpl)) $name[] = $tmpl;
+                $prefix .= $v . DIRECTORY_SEPARATOR;
             }
-            if (count($param)) $prefix = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR;
+            if (substr($_SERVER['REQUEST_URI'], -1) === '/' && file_exists($path . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR . $script . $ext)) {
+                $name[] = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR . $script . $ext;
+            } elseif (strtolower($v) === $script . $ext && file_exists($path . implode(DIRECTORY_SEPARATOR, $param))) {
+                return [implode(DIRECTORY_SEPARATOR, $param)];
+            }
+            if ($script && !in_array($script, $param)) array_unshift($name, $script . $ext); elseif ($script !== null) $name[] = $script . $ext;
         }
-        return empty($name) ? null : $prefix . $name . $ext;
+        return $name;
     }
 
     /**
@@ -354,34 +356,50 @@ class PHPRoll
      * @param array $options
      * @return string
      */
-    public function context($pattern, array $options = []): string
+    public function context($pattern, array $options = [], $assoc_index = false): string
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
-        $p = array_reverse($is_set ? $pattern : [$pattern]);
-        $count = count($p) - 1;
+        $is_assoc = $is_set ? \Application\PHPRoll::is_assoc($pattern) : false;
+        if (!isset($options['include'])) $options['include'] = [];
 
+        if ($is_assoc) {
+            foreach ($pattern as $x => $y) {
+                $options['include'][$x] = $this->context($y, $options, $x);
+            }
+            return $this->context(array_keys($pattern), $options);
+        } else {
+            $p = array_reverse($is_set ? $pattern : [$pattern]);
+        }
+
+        $count = count($p) - 1;
         foreach ($p as $k => $f) {
-            $file = (!preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $path . $f : $f;
+            $file = (preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $f : $path . $f;
+
             if (!file_exists($file)) {
                 $file = ($is_set) && ($k != $count) ? ((!$k) ? (isset($options['404']) ? $path . $options['404'] : null) : null) : (isset($options['404']) ? $path . $options['404'] : null);
             }
+
             $context = null;
             if ($file && file_exists($file)) {
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
             } else {
-                throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
+                if (!$assoc_index) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
             }
 
-            if ($is_set &&  $k < $count) {
-                if (!isset($options['include'])) $options['include'] = [];
-                $options['include'][$f] = $context;
+            if ($assoc_index) {
+                if (!isset($options[$assoc])) $options[$assoc] = [];
+                $options[$assoc][$k] = $context;
             } else {
-                return $context;
+                if ($is_set &&  $k < $count) {
+                    $options['include'][$f] = $context;
+                } else {
+                    return $context;
+                }
             }
         }
-        return $context;
+        return $assoc_index ? $options[$assoc] : $context;
     }
 
     /**
@@ -419,7 +437,7 @@ class PHPRoll
     {
         $code = $params['code'] ?? 200;
         if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
-            header("HTTP/1.1 {$code} {\Application\PHPRoll::HTTP_RESPONSE_CODE[$code]}");
+            header("HTTP/1.1 {$code} " . \Application\PHPRoll::HTTP_RESPONSE_CODE[$code]);
         }
         http_response_code(intval($code));
         header('Expires: 0');
@@ -433,6 +451,18 @@ class PHPRoll
         }
 
         switch ($type) {
+            case 'websocket':
+                header('Sec-WebSocket-Origin:');
+                header('Sec-WebSocket-Location:');
+                header('Upgrade: websocket');
+                header('Connection: Upgrade');
+                header('Sec-WebSocket-Accept: ' . base64_encode(pack('H*', sha1($this->header['Sec-Websocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'))));
+                if(isset($params['Sec-WebSocket-Protocol']) || isset($this->header['Sec-WebSocket-Protocol']) && !empty($this->header['Sec-WebSocket-Protocol'])) {
+                    header('Sec-WebSocket-Protocol: ' . $params['Sec-WebSocket-Protocol'] ?? $this->header['Sec-WebSocket-Protocol']);
+                }
+                header('Sec-WebSocket-Version: 13');
+                $this->set_response_header();
+                break;
             case 'json':
                 header('Content-Description: json data container');
                 header('Content-Type: Application/json; charset=utf-8;');
@@ -510,12 +540,14 @@ class PHPRoll
      */
     public function run(array $opt=[])
     {
-        if (isset($opt['method']) && method_exists($this, $opt['method']))
-            return call_user_func_array([$this,$opt['method']], [$opt['params'] ?? []]);
 
-        $content = $this->route(isset($this->path) ? $this->path : ['default']);
-        if ($content && is_string($content)) return $content;
-        return $this->response('view', ['pattern'=>$this->getPattern(array_merge(['script'=>'index','ext'=>'.phtml'], $opt['tpl'] ?? []))]);
+        if (isset($opt['method']) && method_exists($this, $opt['method']))
+            return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
+
+        $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
+        if ($content) return $content;
+
+        return $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml'])]);
     }
 }
 ?>
