@@ -365,10 +365,12 @@ class PHPRoll
         if (!isset($options['include'])) $options['include'] = [];
 
         if ($is_assoc) {
+            $bound = range(0, count($pattern) - 1);
             foreach ($pattern as $x => $y) {
-                $options['include'][$x] = $this->context($y, $options, $x);
+                $options['include'][isset($bound[$x])?$y:$x] = $this->context($y, $options, $x);
             }
-            return $this->context(array_keys($pattern), $options);
+            $keys=[]; foreach ($pattern as $k => $v) { $keys[] = isset($bound[$k])?$v:$k; }
+            return $this->context($keys, $options);
         } else {
             $p = array_reverse($is_set ? $pattern : [$pattern]);
         }
@@ -391,7 +393,7 @@ class PHPRoll
 
             if ($assoc_index) {
                 if (!isset($options[$assoc_index])) $options[$assoc_index] = [];
-                $options[$assoc_index][$k] = $context;
+                $options[$assoc_index][$f] = $context;
             } else {
                 if ($is_set &&  $k < $count) {
                     $options['include'][$f] = $context;

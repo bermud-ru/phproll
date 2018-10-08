@@ -26,7 +26,7 @@ class ContextException extends \Exception {
     public function __construct($owner, $pattern, $options) {
         $this->owner = $owner;
         $this->option = $options;
-        $p = is_array($pattern) ? implode(',', $pattern) : $pattern;
+        $p = is_array($pattern) ? implode(', ', $pattern) : $pattern;
         parent::__construct(get_class($owner) . " contex $p not exist!", $options['code']??'404', null);
     }
 
