@@ -355,9 +355,11 @@ class PHPRoll
      *
      * @param $pattern
      * @param array $options
-     * @return mixed
+     * @param bool $assoc_index
+     * @return false|mixed|null|string
+     * @throws ContextException
      */
-    public function context($pattern, array $options = [], $assoc_index = false)
+    public function context($pattern, array &$options = [], &$assoc_index = false)
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
@@ -365,14 +367,11 @@ class PHPRoll
         if (!isset($options['include'])) $options['include'] = [];
 
         if ($is_assoc) {
-            $bound = range(0, count($pattern) - 1); $keys=[];
+            $bound = range(0, count($pattern) - 1);
+            $keys = [];
             foreach ($pattern as $x => $y) {
-                if (isset($bound[$x])) {
-                    $keys[] = $y;
-                } else {
-                    $keys[] = $x;
-                    $options['include'][$x] = $this->context($y, $options, $x);
-                }
+                $keys[] = $key = isset($bound[$x]) ? $y : $x;
+                $options['include'][$key] = $this->context($y, $options, $x);
             }
             return $this->context($keys, $options);
         } else {
