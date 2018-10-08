@@ -317,10 +317,11 @@ class PHPRoll
                 if (file_exists($path . $tmpl)) $name[] = $tmpl;
                 $prefix .= $v . DIRECTORY_SEPARATOR;
             }
-            if (substr($_SERVER['REQUEST_URI'], -1) === '/' && file_exists($path . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR . $script . $ext)) {
-                $name[] = implode(DIRECTORY_SEPARATOR, $param) . DIRECTORY_SEPARATOR . $script . $ext;
-            } elseif (strtolower($v) === $script . $ext && file_exists($path . implode(DIRECTORY_SEPARATOR, $param))) {
-                return [implode(DIRECTORY_SEPARATOR, $param)];
+            $uri = implode(DIRECTORY_SEPARATOR, $param);
+            if (is_dir($path . DIRECTORY_SEPARATOR . $uri) && file_exists($path . DIRECTORY_SEPARATOR . $uri . DIRECTORY_SEPARATOR . $script . $ext)) {
+                $name[] = $uri . DIRECTORY_SEPARATOR . $script . $ext;
+            } elseif (strtolower($v) === $script . $ext && file_exists($path . $uri)) {
+                return [$uri];
             }
             if ($script && !in_array($script, $param)) array_unshift($name, $script . $ext); elseif ($script !== null) $name[] = $script . $ext;
         }
@@ -354,9 +355,9 @@ class PHPRoll
      *
      * @param $pattern
      * @param array $options
-     * @return string
+     * @return mixed
      */
-    public function context($pattern, array $options = [], $assoc_index = false): string
+    public function context($pattern, array $options = [], $assoc_index = false)
     {
         $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
@@ -389,8 +390,8 @@ class PHPRoll
             }
 
             if ($assoc_index) {
-                if (!isset($options[$assoc])) $options[$assoc] = [];
-                $options[$assoc][$k] = $context;
+                if (!isset($options[$assoc_index])) $options[$assoc_index] = [];
+                $options[$assoc_index][$k] = $context;
             } else {
                 if ($is_set &&  $k < $count) {
                     $options['include'][$f] = $context;
@@ -399,7 +400,7 @@ class PHPRoll
                 }
             }
         }
-        return $assoc_index ? $options[$assoc] : $context;
+        return $assoc_index ? $options[$assoc_index] : $context;
     }
 
     /**
