@@ -365,11 +365,15 @@ class PHPRoll
         if (!isset($options['include'])) $options['include'] = [];
 
         if ($is_assoc) {
-            $bound = range(0, count($pattern) - 1);
+            $bound = range(0, count($pattern) - 1); $keys=[];
             foreach ($pattern as $x => $y) {
-                $options['include'][isset($bound[$x])?$y:$x] = $this->context($y, $options, $x);
+                if (isset($bound[$x])) {
+                    $keys[] = $y;
+                } else {
+                    $keys[] = $x;
+                    $options['include'][$x] = $this->context($y, $options, $x);
+                }
             }
-            $keys=[]; foreach ($pattern as $k => $v) { $keys[] = isset($bound[$k])?$v:$k; }
             return $this->context($keys, $options);
         } else {
             $p = array_reverse($is_set ? $pattern : [$pattern]);
