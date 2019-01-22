@@ -552,8 +552,8 @@ class PHPRoll
 
         $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
         if ($content) return $content;
-
-        return $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml'])]);
+//var_dump([$this->path,$opt]);exit;
+        return $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml']+$opt)]);
     }
 }
 ?>
