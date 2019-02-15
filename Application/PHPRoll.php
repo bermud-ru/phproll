@@ -487,20 +487,20 @@ class PHPRoll
                     default:
                         return $params;
                 }
+                break;
             case 'file':
                 header('Content-Description: File Transfer');
                 header('Content-Transfer-Encoding: binary');
                 header('Connection: Keep-Alive');
                 header('Cache-Control: must-revalidate');
-//                header('Content-Type: '.(isset($params['mime']) ? $params['mime'] : 'application/octet-stream'));
-//                header('Content-Disposition: attachment; filename="'.(isset($params['name']) ? $params['name'] : 'download.file').'";');
-//                if (isset($params['size'])) header("Content-length: " . $params['size']);
+                $this->set_response_header();
 
                 if ( is_resource($params['file']) ) {
                     fseek($params['file'], 0);
                     fpassthru($params['file']);
+                    fclose($params['file']);
+                    exit;
                 }
-                $this->set_response_header();
                 break;
             case 'view':
                 header('Content-Description: html view');
@@ -522,6 +522,7 @@ class PHPRoll
                     $this->set_response_header();
                     return $context;
                 }
+
             default:
                 header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION);
                 header('Content-Type: Application/xml; charset=utf-8');
