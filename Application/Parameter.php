@@ -34,6 +34,7 @@ class Parameter implements \JsonSerializable
 
     public $params = null;
     public $value = null;
+    public $original = null;
 
     const MESSAGE = "Parameter error, %(name)s = %(value)s is wrong!";
     /**
@@ -84,7 +85,9 @@ class Parameter implements \JsonSerializable
             if (is_callable($this->after)) $this->value = call_user_func_array($this->after, $this->arguments($this->after));
         }
 
+        $this->original = $this->name;
         $this->params[$this->alias ? $this->alias : $this->name] = $this;
+//        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
     }
 
     /**
