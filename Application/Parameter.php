@@ -25,13 +25,13 @@ class Parameter implements \JsonSerializable
     protected $validator = null;
     protected $message = null;
     protected $required = false;
-    protected $notValid = false;
     protected $before = null;
     protected $after = null;
     protected $formatter = null;
     protected $raw = null;
     protected $restore = false;
 
+    public $isValid = true;
     public $params = null;
     public $value = null;
     public $original = null;
@@ -46,48 +46,55 @@ class Parameter implements \JsonSerializable
     public function __construct( array $opt, array &$params ){
         $this->params = &$params;
 
+
         foreach ($opt as $k => $v) { if (property_exists($this, $k)) $this->{$k} = $v; }
 
+//            if ($opt['name'] == 'org_id' || $opt['alias'] == 'org_id' ) {
+//        var_dump($opt);
+//            exit;}
+
         $this->raw = isset($params[$this->alias]) ? $params[$this->alias] : (isset($params[$this->name]) ? $params[$this->name] : null);
-        $this->value = is_null($this->raw) ? $this->default : $this->raw ;
+        $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default, $this->arguments($this->default)) : $this->default) : $this->raw ;
+
+        if (empty($this->validator) && $this->type != 'string') {
+            switch (strtolower($this->type)) {
+                case 'bool':
+                    $this->validator = '/^(0|1)$/';
+                    break;
+                case 'date':
+                    $this->validator = '/^(0|1|2|3)\d\.(0|1)\d\.\d{4}$/';
+                    break;
+                case 'float':
+                    $this->validator = '[+-]?([0-9]*[.])?[0-9]+';
+                    break;
+                case 'int':
+                    $this->validator = '/^[+-]?\d+$/';
+                    break;
+            }
+        }
 
         if (is_callable($this->before)) $this->value = call_user_func_array($this->before, $this->arguments($this->before));
+
         if (is_callable($this->required)) $this->required = call_user_func_array($this->required, $this->arguments($this->required));
 
         if ($this->required && (is_null($this->value) || $this->value === '')) {
-            $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value'=>strval($this->value)]);
-        } else {
-            if (empty($this->validator) && $this->type != 'string') {
-                switch (strtolower($this->type)) {
-                    case 'bool':
-                        $this->validator = '/^(0|1)$/';
-                        break;
-                    case 'date':
-                        $this->validator = '/^(0|1|2|3)\d\.(0|1)\d\.\d{4}$/';
-                        break;
-                    case 'float':
-                        $this->validator = '[+-]?([0-9]*[.])?[0-9]+';
-                        break;
-                    case 'int':
-                        $this->validator = '/^[+-]?\d+$/';
-                        break;
-                }
+            $this->isValid = false;
+        } elseif (!empty($this->validator) && ($this->required || !empty($this->value))) {
+            if (is_callable($this->validator)) {
+                $this->isValid = call_user_func_array($this->validator, $this->arguments($this->validator));
+            } elseif (is_string($this->validator) && !preg_match($this->validator, $this->value)) {
+                $this->isValid = false;
             }
-            if (!empty($this->validator) && ($this->required || !empty($this->value))) {
-                if (is_callable($this->validator)) {
-                    $this->notValid = !call_user_func_array($this->validator, $this->arguments($this->validator));
-                } elseif (is_string($this->validator) && !preg_match($this->validator, $this->value)) {
-                    $this->notValid = true;
-                }
-                if ($this->notValid && !(isset($params['required']) && $this->required)) $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
-            }
-
-            if (is_callable($this->after)) $this->value = call_user_func_array($this->after, $this->arguments($this->after));
         }
 
-        $this->original = $this->name;
-        $this->params[$this->alias ? $this->alias : $this->name] = $this;
+        if ($this->isValid) {
+            if (is_callable($this->after)) $this->value = call_user_func_array($this->after, $this->arguments($this->after));
+            $this->original = $this->name;
+            $this->params[$this->alias ? $this->alias : $this->name] = $this;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
+        } else {
+            $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
+        }
     }
 
     /**
@@ -219,7 +226,7 @@ class Parameter implements \JsonSerializable
 //                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 //        elseif (is_array($this->value)) return json_encode($this->value);
-        elseif (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
+        if (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
 
 //        if ($this->value === NULL) return NULL;
         return strval($this->value);
@@ -232,6 +239,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
+        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+
         if ($this->value !== null) {
             $val = preg_replace('/[^0-9]/', '', $this->value);
             if (is_numeric($val)) return intval($val);
@@ -246,6 +255,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat(): ?float
     {
+        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+
         if ($this->value !== null) {
             $val = (float)filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             if (is_numeric($val)) return floatval($val);
@@ -260,6 +271,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toArray(): ?array
     {
+        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+
         if (is_array($this->value)) return $this->value; elseif (!empty($this->value)) return [$this->value];
 
         trigger_error("Application\Parameter::__toArray() can't resolve numeric value!", E_USER_WARNING);
@@ -277,6 +290,8 @@ class Parameter implements \JsonSerializable
      */
     public function __toJSON(bool $assoc = true , int $depth = 512 , int $options = 0): ?array
     {
+        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+
         $json = json_decode($this->__toString(), $assoc, $depth, $options);
         return json_last_error() === JSON_ERROR_NONE ? $json : null;
     }
@@ -393,6 +408,7 @@ class Parameter implements \JsonSerializable
      */
     public function __sleep(): array
     {
+
         return [$this->alias ?? $this->name => self::ize($this->restore ? $this->raw : $this->value)];
     }
 
