@@ -314,8 +314,12 @@ class Parameter implements \JsonSerializable
         $val = null;
         switch (strtolower($this->type)) {
             case 'date':
-                $dt = empty($this->value) ? null : implode('-', array_reverse(explode('.', $this->value)));
-                $val = "'$dt'";
+                if (empty($this->value)) {
+                    $val = null;
+                } else {
+                    $dt = implode('-', array_reverse(explode('.', $this->value)));
+                    $val = "'$dt'";
+                }
                 break;
             case 'json':
                 $val = $this->__toJSON();
