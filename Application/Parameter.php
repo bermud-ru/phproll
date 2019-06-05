@@ -317,8 +317,14 @@ class Parameter implements \JsonSerializable
                 if (empty($this->value)) {
                     $val = null;
                 } else {
-                    $dt = implode('-', array_reverse(explode('.', $this->value)));
-                    $val = "'$dt'";
+                    if (preg_match('/^(0|1|2|3)*\d.(0|1)\d.\d{4}$/', $this->value)) {
+                        $dt = implode('-', array_reverse(explode('.', $this->value)));
+                    } elseif (preg_match('/^(\d{4}-(0|1)\d-(0|1|2|3)\d).*$/', $this->value, $match)) {
+                        $dt = $match[1];
+                    }
+                    $tmp = \DateTime::createFromFormat('Y-m-d', $dt);
+                    $is_valid = $tmp && $tmp->format('Y-m-d') === $dt;
+                    if ($is_valid) $val = "'$dt'"; else $val = "'$this->value'";
                 }
                 break;
             case 'json':
