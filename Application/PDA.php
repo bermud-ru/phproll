@@ -144,59 +144,6 @@ class PDA
         return $keys;
     }
 
-//    /**
-//     * @function parameterize
-//     *
-//     * @param $param
-//     * @return float|int|null|string
-//     */
-//    public static function parameterize ($param, $opt = \PDO::NULL_NATURAL)
-//    {
-//        switch (gettype($param)) {
-//            case 'array':
-////                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
-////                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-//                $val = array_map(function ($v) { return self::parameterize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
-//                break;
-//            case 'NULL':
-//                $val = null;
-//                break;
-//            case 'boolean':
-//                $val = $param ? 1 : 0;
-//                break;
-//            case 'double':
-//                $val = floatval($param);
-//                break;
-//            case 'integer':
-//                $val = intval($param);
-//                break;
-//            case 'object':
-//                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
-//                    $val = strval($param);
-//                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-//                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-//                } else {
-////                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
-//                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-//                }
-//                break;
-//            case 'string':
-//                if ( is_numeric($param) ) {
-//                    $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
-//                } else {
-//                    $val = strval($param);
-//                    if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-//                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-//                }
-//                break;
-//            default:
-//                $val = strval($param);
-//                if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-//        }
-//
-//        return $val;
-//    }
-
     /**
      * Helper - where
      * @function where
@@ -239,6 +186,9 @@ class PDA
                         case '!^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original IS NOT NULL";
+                        case '&^': ; // ( <параметр> == Parameter::ize(...) OR <параметр> is null )
+                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            return "$c $glue ($key_original = $val OR $key_original IS NULL)";
                         case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
                             if (!empty($val)) break;
