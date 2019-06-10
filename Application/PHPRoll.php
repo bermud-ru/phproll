@@ -390,6 +390,7 @@ class PHPRoll
             if ($file && file_exists($file)) {
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
+                $context = array_key_exists('grinder', $options) && is_callable($options['grinder']) ? call_user_func_array($options['grinder']->bindTo($this), ['contex'=>$context]):$context;
             } else {
                 if (!$assoc_index) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
             }
@@ -405,6 +406,7 @@ class PHPRoll
                 }
             }
         }
+        
         return $assoc_index ? $options[$assoc_index] : $context;
     }
 
