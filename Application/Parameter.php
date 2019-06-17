@@ -302,7 +302,8 @@ class Parameter implements \JsonSerializable
      */
     public function jsonSerialize()
     {
-        return self::ize($this->value);
+//        return self::ize($this->value);
+        return $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES);
     }
 
     /**
@@ -391,7 +392,7 @@ class Parameter implements \JsonSerializable
                 break;
             case 'string':
                 if ( is_numeric($param) ) {
-                    $folat = floatval($param); $val =  $folat != intval($folat) ? floatval($param) : intval($param);
+                    $folat = floatval($param); $val = $folat != intval($folat) ? floatval($param) : intval($param);
                 } else {
                     $val = strval($param);
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
@@ -417,8 +418,7 @@ class Parameter implements \JsonSerializable
      */
     public function __sleep(): array
     {
-
-        return [$this->alias ?? $this->name => self::ize($this->restore ? $this->raw : $this->value)];
+        return [$this->alias ?? $this->name => $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES)];
     }
 
     /**
@@ -426,7 +426,7 @@ class Parameter implements \JsonSerializable
      * @return array
      */
     public function __debugInfo() {
-        return [ $this->alias ?? $this->name => self::ize($this->restore ? $this->raw : $this->value) ];
+        return [ $this->alias ?? $this->name => $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) ];
     }
 }
 ?>
