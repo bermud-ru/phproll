@@ -23,6 +23,7 @@ class Parameter implements \JsonSerializable
     protected $alias = null;
     protected $default = null;
     protected $validator = null;
+    protected $opt = null;
     protected $message = null;
     protected $required = false;
     protected $before = null;
@@ -362,7 +363,7 @@ class Parameter implements \JsonSerializable
      */
     public static function ize ($param, $opt = \PDO::NULL_NATURAL)
     {
-        if ($param instanceof \Application\Parameter) return $param->getValue($opt | \Application\PDA::ADDSLASHES);
+        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt ?? $opt | \Application\PDA::ADDSLASHES);
 
         switch (gettype($param)) {
             case 'array':
