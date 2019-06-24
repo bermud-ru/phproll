@@ -59,6 +59,9 @@ class Parameter implements \JsonSerializable
 
         if (empty($this->validator) && $this->type != 'string') {
             switch (strtolower($this->type)) {
+                case 'array':
+                    $this->validator = function () { return is_array($this->value); };
+                    break;
                 case 'bool':
                     $this->validator = '/^(0|1)$/';
                     break;
@@ -202,6 +205,7 @@ class Parameter implements \JsonSerializable
     public function setMessage($message, $opt):\Application\Parameter
     {
         $this->alert = \Application\PHPRoll::formatter($message ? $message: "Parameter error %(name)s!", $opt);
+        if (!$this->owner) trigger_error($this->alert, E_USER_WARNING);
         return $this;
     }
 
@@ -274,10 +278,10 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-        if (is_array($this->value)) return $this->value; elseif (!empty($this->value)) return [$this->value];
+        if (is_array($this->value)) return $this->value; else return [$this->value];
 
         trigger_error("Application\Parameter::__toArray() can't resolve numeric value!", E_USER_WARNING);
-        return null;
+        return [];
     }
 
     /**
@@ -314,7 +318,7 @@ class Parameter implements \JsonSerializable
     public function getValue($opt=null)
     {
         $val = null;
-        switch (strtolower($this->type)) {
+        if ($this->isValid) switch (strtolower($this->type)) {
             case 'date':
                 if (empty($this->value)) {
                     $val = null;
@@ -429,5 +433,6 @@ class Parameter implements \JsonSerializable
     public function __debugInfo() {
         return [ $this->alias ?? $this->name => $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) ];
     }
+
 }
 ?>

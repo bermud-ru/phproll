@@ -4,10 +4,10 @@
  *
  * @category RIA (Rich Internet Application) / SPA (Single-page Application) Backend
  * @author Андрей Новиков <andrey@novikov.be>
- * @data 16/05/2018
+ * @data 23/06/2019
  * @status beta
- * @version 2.0.12b
- * @revision $Id: PHPRoll.php 2012 2018-05-16 1:04:01Z $
+ * @version 2.1.12b
+ * @revision $Id: PHPRoll.php 2.1.1b 2019-06-23 1:04:01Z $
  *
  */
 
@@ -17,6 +17,77 @@ namespace Application;
  * Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend
  */
 
+/**
+ * Class Conf
+ *
+ * @package Application
+ */
+class Conf
+{
+    private $owner;
+    public $config;
+    
+    /**
+     * Конструктор
+     *
+     * @param $config данные из файла конфигурации
+     */
+    public function __construct(\Application\PHPRoll &$owner, &$config)
+    {
+        $this->owner = $owner;
+        $this->config = $config ?? [];
+    }
+
+    /**
+     * is_set
+     * 
+     * @param $name
+     * @return bool
+     */
+    public function is_set ($name) {
+        return array_key_exists($name, $this->config);
+    }
+
+    public function is_callable ($name) {
+        return array_key_exists($name, $this->config) && is_callable($this->config[$name]);
+    }
+
+    /**
+     *  Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __get ($name)
+    {
+        if (isset($this->config[$name])) {
+            return $this->config[$name];
+        }
+        throw new \Exception(__CLASS__."->$name property not foudnd!");
+        return null;
+    }
+
+    /**
+     *  Native method
+     *
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (isset($this->config[$name]) && is_callable($this->config[$name])) return call_user_func_array($this->config[$name]->bindTo($this->owner), $arguments);
+        throw new \Exception(__CLASS__."->$name(...) method not foudnd");
+        return null;
+    }
+}
+
+/**
+ * Class PHPRoll
+ *
+ * @package Application
+ */
 class PHPRoll
 {
     const FRAMEWORK = 'PHPRoll';
@@ -35,11 +106,12 @@ class PHPRoll
     ];
     public $response_header = [];
 
-    public $config = [];
+    public $cfg = null;
     public $header = [];
     public $params = [];
     public $path = [];
-
+    public $ACL = null;
+    
     protected $parent = null;
     protected $file = null;
 
@@ -57,7 +129,7 @@ class PHPRoll
         }
         else
         {
-            $this->config = $params??[];
+            $this->cfg = new \Application\Conf($this, $params);
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
             $this->params = $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
@@ -72,7 +144,7 @@ class PHPRoll
      */
     protected function route($params, array $opt = [])
     {
-        return isset($this->config['route']) && is_callable($this->config['route']) ? call_user_func_array($this->config['route']->bindTo($this), ['params'=>$params, 'opt'=>$opt]) : null;
+        return $this->cfg->is_callable('route') ? $this->cfg->route($params, $opt) : $this->cfg->route;
     }
 
     /**
@@ -308,7 +380,7 @@ class PHPRoll
         $script = $opt['script'] ?? null;
         $prefix = '';
         $name = [];
-        $path = ( isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR );
+        $path = ( $this->cfg->is_set('view') ? $this->cfg->view : __DIR__ . DIRECTORY_SEPARATOR );
 
         $param = is_array($param) ? $param : [$param];
         if (count($param) ) {
@@ -361,7 +433,7 @@ class PHPRoll
      */
     public function context($pattern, array &$options = [], &$assoc_index = false)
     {
-        $path = (isset($this->config['view']) ? $this->config['view'] : __DIR__ . DIRECTORY_SEPARATOR);
+        $path = ($this->cfg->is_set('view') ? $this->cfg->view : __DIR__ . DIRECTORY_SEPARATOR);
         $is_set = is_array($pattern);
         $is_assoc = $is_set ? \Application\PHPRoll::is_assoc($pattern) : false;
         if (!isset($options['include'])) $options['include'] = [];
@@ -471,6 +543,7 @@ class PHPRoll
                 header('Sec-WebSocket-Version: 13');
                 $this->set_response_header();
                 break;
+
             case 'json':
                 header('Content-Description: json data container');
                 header('Content-Type: Application/json; charset=utf-8;');
@@ -490,6 +563,7 @@ class PHPRoll
                         return $params;
                 }
                 break;
+
             case 'file':
                 header('Content-Description: File Transfer');
                 header('Content-Transfer-Encoding: binary');
@@ -504,6 +578,7 @@ class PHPRoll
                     exit;
                 }
                 break;
+
             case 'view':
                 header('Content-Description: html view');
 //                header('Content-Security-Policy: default-src "self"; frame-ancestors "self"');
@@ -516,10 +591,10 @@ class PHPRoll
                 $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     try {
-                        $option = [ 'self' => &$this, 'json' => function (array $params) { echo $this->response('json', $params); exit(1); }];
+                        $option = ['json' => function (array $params) { echo $this->response('json', $params); exit(1); }];
                         $context = $this->context($pattern, $option);
                     } catch (\Application\ContextException $e) {
-                        $context = $this->context($this->config['404']??'index.phtml', $option);
+                        $context = $this->context($this->cfg->is_set('404')  ? $this->cfg->config['404'] : 'index.phtml', $option);
                     }
                     $this->set_response_header();
                     return $context;
@@ -536,7 +611,6 @@ class PHPRoll
                 header('X-Content-Type-Options: nosniff');
                 header('Timing-Allow-Origin: *');
                 $this->set_response_header();
-
         }
         return $params;
     }
@@ -549,13 +623,12 @@ class PHPRoll
      */
     public function run(array $opt=[])
     {
-
         if (isset($opt['method']) && method_exists($this, $opt['method']))
             return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
         if ($content) return $content;
-//var_dump([$this->path,$opt]);exit;
+
         return $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml']+$opt)]);
     }
 }
