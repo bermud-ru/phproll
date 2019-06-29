@@ -316,10 +316,10 @@ class PDA
             $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
             $ltd = 0;
             if (isset($params['limit'])) {
-//                $ltd = intval(\Application\Parameter::ize($params['limit']));
                 $ltd = \Application\Parameter::ize($params['limit']);
 //        $limit = " limit $ltd";
-                $limit = "FETCH NEXT $ltd ROWS ONLY";
+//        $limit = "FETCH NEXT $ltd ROWS ONLY";
+                $limit = "FETCH FIRST $ltd ROW ONLY";
                 unset($params['limit']);
             }
 
