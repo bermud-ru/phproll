@@ -24,6 +24,7 @@ class Parameter implements \JsonSerializable
     protected $default = null;
     protected $validator = null;
     protected $opt = null;
+    protected $property = null;
     protected $message = null;
     protected $required = false;
     protected $before = null;
@@ -46,13 +47,7 @@ class Parameter implements \JsonSerializable
      */
     public function __construct( array $opt, array &$params ){
         $this->params = &$params;
-
-
         foreach ($opt as $k => $v) { if (property_exists($this, $k)) $this->{$k} = $v; }
-
-//            if ($opt['name'] == 'org_id' || $opt['alias'] == 'org_id' ) {
-//        var_dump($opt);
-//            exit;}
 
         $this->raw = isset($params[$this->alias]) ? $params[$this->alias] : (isset($params[$this->name]) ? $params[$this->name] : null);
         $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default, $this->arguments($this->default)) : $this->default) : $this->raw ;

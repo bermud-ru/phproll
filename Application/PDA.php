@@ -209,8 +209,10 @@ class PDA
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $val";
+                        case '@': ;
+                            return "$c $glue similarity($key_original, :$key) > 0.5";
                         case '@@': ;
-                            return "$c $glue to_tsvector('english', $key_original::text) @@ to_tsquery(:$key)";
+                            return "$c $glue to_tsvector('russian', $key_original::text) @@ to_tsquery(:$key)";
                         case '>': case '>=': case '<': case '=<': case '=': case '!=':
     //                        $val = is_numeric($val) ? $val : "'$val'";
                             return "$c $glue $key_original {$exp[1]} :$key";
