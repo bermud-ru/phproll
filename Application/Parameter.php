@@ -45,7 +45,8 @@ class Parameter implements \JsonSerializable
      * @param $parent \Application\Rest
      * @param array $opt
      */
-    public function __construct( array $opt, array &$params ){
+    public function __construct( array $opt, array &$params )
+    {
         $this->params = &$params;
         foreach ($opt as $k => $v) { if (property_exists($this, $k)) $this->{$k} = $v; }
 
