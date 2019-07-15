@@ -70,7 +70,7 @@ class Jsonb implements \JsonSerializable
     {
         $fields = explode('.', $field); $self = $this;
 
-        function iterator($json, array &$fields, $default) use ($self) {
+        function iterator($json, array &$fields, $default) {
             if (count($field) > 1) {
                 $field = array_shift($fields);
                 if (property_exists($json, $field)) {
