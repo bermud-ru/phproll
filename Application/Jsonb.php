@@ -66,15 +66,13 @@ class Jsonb implements \JsonSerializable
      * @param string|null $default
      * @return string
      */
-    public function v ($fields, string $default=null): string
+    public function v ($fields, string $default=null)
     {
-        $fields = explode('.', $field); $self = $this;
-
-        function iterator($json, array &$fields, $default) {
-            if (count($field) > 1) {
+       $iterator = function (array $fields, $default) {
+            if (count($fields) > 1) {
                 $field = array_shift($fields);
-                if (property_exists($json, $field)) {
-                    return iterator($json->{$field}, $fields, $default);
+                if (property_exists($this, $field)) {
+                    return iterator($this->{$field}, $fields, $default);
                 } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
                     throw new \Exception(__CLASS__."->$field property not foudnd!");
                 }
@@ -82,16 +80,17 @@ class Jsonb implements \JsonSerializable
                 return $default;
             }
 
-            if (property_exists($json, $fields[0])) {
-                return $json->{$fields[0]};
+            if (property_exists($this, $fields[0])) {
+                return $this->{$fields[0]};
             } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
                 throw new \Exception(__CLASS__."->{$fields[0]} property not foudnd!");
             }
 
             return $default;
-        }
+        };
 
-        return iterator($this->json, $fields, $default);
+        $f = explode('.', $fields);
+        return call_user_func_array($iterator->bindTo($this->json), [$f, $default]);
 
     }
 
@@ -103,16 +102,10 @@ class Jsonb implements \JsonSerializable
      * @return string
      * @throws \Exception
      */
-    public function str ($field, string $default=''): string
+    public function str ($field, string $default=''): ?string
     {
-        if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
-            return strval($this->json->{$field});
-        } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
-            throw new \Exception(__CLASS__."->$field property not foudnd!");
-        }
-
-        return $default;
-
+        $s = $this->v($field, $default);
+        return $s !== null && is_scalar($s) ? strval($s) : $default;
     }
 
     /**
@@ -123,16 +116,25 @@ class Jsonb implements \JsonSerializable
      * @return int
      * @throws \Exception
      */
-    public function int ($field, int $default=0): int
+    public function int ($field, int $default=0): ?int
     {
-        if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
-            return intval($this->json->{$name});
-        } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
-            throw new \Exception(__CLASS__."->$name property not foudnd!");
-        }
+        $s = $this->v($field, $default);
+        return $s !== null && is_scalar($s) ? intval($s) : $default;
+    }
 
-        return $default;
+    /**
+     * Get value as Date
+     *
+     * @param $field
+     * @param string $format
+     * @return false|string|null
+     */
+    public function date ($field, string $format='Y-m-d H:i:s')
+    {
+        $s = $this->v($field);
+        if (($s !== null && is_scalar($s)) && ($time = strtotime($s))) return date($format, $time);
 
+        return null;
     }
 
     /**
