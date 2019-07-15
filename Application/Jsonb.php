@@ -50,7 +50,7 @@ class Jsonb implements \JsonSerializable
             }
         }
 
-        $this->json = json_decode($source, $assoc, $depth, $options);
+        $this->json = json_decode($source, $this->assoc, $this->depth, $this->options);
         $this->error = json_last_error();
         if ($this->error !== JSON_ERROR_NONE) if ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
             throw new \Exception(__CLASS__." $source can't build JSON object!");
@@ -58,6 +58,32 @@ class Jsonb implements \JsonSerializable
             $this->json = new \stdClass();
         }
     }
+
+
+    public function str ($field, string $default=''): string
+    {
+        if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
+            return strval($this->json->{$field});
+        } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
+            throw new \Exception(__CLASS__."->$field property not foudnd!");
+        }
+
+        return $default;
+
+    }
+
+    public function int ($field, int $default=0): int
+    {
+        if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
+            return intval($this->json->{$name});
+        } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
+            throw new \Exception(__CLASS__."->$name property not foudnd!");
+        }
+
+        return $default;
+
+    }
+
 
     /**
      * Native property
