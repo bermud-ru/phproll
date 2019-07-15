@@ -66,31 +66,28 @@ class Jsonb implements \JsonSerializable
      * @param string|null $default
      * @return string
      */
-    public function v ($fields, string $default=null)
+    public function v ($fields, $default=null)
     {
-       $iterator = function (array $fields, $default) {
-            if (count($fields) > 1) {
-                $field = array_shift($fields);
-                if (property_exists($this, $field)) {
-                    return iterator($this->{$field}, $fields, $default);
-                } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
-                    throw new \Exception(__CLASS__."->$field property not foudnd!");
-                }
+        $fx = is_array($fields) ? $fields : explode('.', $fields);
 
-                return $default;
-            }
-
-            if (property_exists($this, $fields[0])) {
-                return $this->{$fields[0]};
-            } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
-                throw new \Exception(__CLASS__."->{$fields[0]} property not foudnd!");
+        if (count($fx) > 1) {
+            $field = array_shift($fx);
+            if (property_exists($this->json, $field)) {
+                return $this->v($fx, $default);
+            } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
+                throw new \Exception(__CLASS__."->$field property not foudnd!");
             }
 
             return $default;
-        };
+        }
 
-        $f = explode('.', $fields);
-        return call_user_func_array($iterator->bindTo($this->json), [$f, $default]);
+        if (property_exists($this->json, $fx[0])) {
+            return $this->json->{$fx[0]};
+        } elseif ($this->mode & \Application\Jsonb::JSON_STRICT ) {
+            throw new \Exception(__CLASS__."->{$fx[0]} property not foudnd!");
+        }
+
+        return $default;
 
     }
 
