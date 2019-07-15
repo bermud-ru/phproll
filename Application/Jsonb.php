@@ -104,7 +104,7 @@ class Jsonb implements \JsonSerializable
      */
     public function str ($field, string $default=''): ?string
     {
-        $s = $this->v($field, $default);
+        $s = $this->v($field);
         return $s !== null && is_scalar($s) ? strval($s) : $default;
     }
 
@@ -118,7 +118,7 @@ class Jsonb implements \JsonSerializable
      */
     public function int ($field, int $default=0): ?int
     {
-        $s = $this->v($field, $default);
+        $s = $this->v($field);
         return $s !== null && is_scalar($s) ? intval($s) : $default;
     }
 
