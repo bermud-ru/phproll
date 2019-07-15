@@ -59,7 +59,50 @@ class Jsonb implements \JsonSerializable
         }
     }
 
+    /**
+     * Get value by recusion name
+     *
+     * @param $fields
+     * @param string|null $default
+     * @return string
+     */
+    public function v ($fields, string $default=null): string
+    {
+        $fields = explode('.', $field); $self = $this;
 
+        function iterator($json, array &$fields, $default) use ($self) {
+            if (count($field) > 1) {
+                $field = array_shift($fields);
+                if (property_exists($json, $field)) {
+                    return iterator($json->{$field}, $fields, $default);
+                } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
+                    throw new \Exception(__CLASS__."->$field property not foudnd!");
+                }
+
+                return $default;
+            }
+
+            if (property_exists($json, $fields[0])) {
+                return $json->{$fields[0]};
+            } elseif ($self->mode & \Application\Jsonb::JSON_STRICT ) {
+                throw new \Exception(__CLASS__."->{$fields[0]} property not foudnd!");
+            }
+
+            return $default;
+        }
+
+        return iterator($this->json, $fields, $default);
+
+    }
+
+    /**
+     * Get valuea as String
+     *
+     * @param $field
+     * @param string $default
+     * @return string
+     * @throws \Exception
+     */
     public function str ($field, string $default=''): string
     {
         if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
@@ -72,6 +115,14 @@ class Jsonb implements \JsonSerializable
 
     }
 
+    /**
+     * Get value as Int
+     *
+     * @param $field
+     * @param int $default
+     * @return int
+     * @throws \Exception
+     */
     public function int ($field, int $default=0): int
     {
         if (property_exists($this->json, $field) && is_scalar($this->json->{$field})) {
@@ -83,7 +134,6 @@ class Jsonb implements \JsonSerializable
         return $default;
 
     }
-
 
     /**
      * Native property
