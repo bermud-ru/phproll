@@ -588,7 +588,7 @@ class PHPRoll
                 header('Content-Type: text/html; charset=utf-8');
                 header('Content-Encoding: utf-8');
 
-                $pattern = count($params['pattern']) ? $params['pattern'] : 'index.phtml';
+                $pattern = isset($params['pattern']) && !empty($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     try {
                         $option = ['json' => function (array $params) { echo $this->response('json', $params); exit(1); }];

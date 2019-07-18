@@ -205,6 +205,18 @@ class Parameter implements \JsonSerializable
         return $this;
     }
 
+
+    /**
+     * @function is_null
+     *
+     * @return boolean
+     */
+    public function is_null(): bool
+    {
+        $val = $this->getValue();
+        return is_null($val);
+    }
+
     /**
      * @function count
      * 
@@ -212,7 +224,8 @@ class Parameter implements \JsonSerializable
      */
     public function count(): ?int
     {
-        if (!empty($this->value) && (is_array($this->value) || $this->value instanceof \Countable)) return count($this->value);
+        $val = $this->getValue();
+        if ((is_array($val) || $val instanceof \Countable)) return count($val);
         return null;
     }
 
@@ -227,10 +240,11 @@ class Parameter implements \JsonSerializable
 //                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 //        elseif (is_array($this->value)) return json_encode($this->value);
+
         if (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
 
 //        if ($this->value === NULL) return NULL;
-        return strval($this->value);
+        return  is_scalar($this->value) ? strval($this->value) : null;
     }
 
     /**
@@ -240,9 +254,9 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt(): ?int
     {
-        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+        if ( is_callable($this->formatter) ) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-        if ($this->value !== null) {
+        if ( is_scalar($this->value) ) {
             $val = preg_replace('/[^0-9]/', '', $this->value);
             if (is_numeric($val)) return intval($val);
         }
@@ -258,7 +272,7 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-        if ($this->value !== null) {
+        if ( is_scalar($this->value) ) {
             $val = (float)filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             if (is_numeric($val)) return floatval($val);
         }
@@ -274,7 +288,7 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-        if (is_array($this->value)) return $this->value; else return [$this->value];
+       if ((is_array($this->value) || $this->value instanceof \Countable)) return $this->value; else return [$this->value];
 
         trigger_error("Application\Parameter::__toArray() can't resolve numeric value!", E_USER_WARNING);
         return [];
