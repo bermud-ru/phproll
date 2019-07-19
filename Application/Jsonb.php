@@ -60,6 +60,36 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @param null $fields
+     * @param $obj
+     * @param null $default
+     * @return array|mixed|\stdClass|string|null
+     * @throws \Exception
+     */
+    private function getParam ($fields=null, $obj, $default=null) {
+        if (is_null($fields)) return $this->json;
+
+        $fx = is_array($fields) ? $fields : explode('.', $fields);
+
+        if (count($fx) > 1) {
+            $field = array_shift($fx);
+            if ( $this->assoc ? array_key_exists($field, $obj) : property_exists($obj, $field) ) {
+                return $this->v($fx, $this->assoc ? $obj[$field] : $obj->{$field}, $default);
+            } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
+                throw new \Exception("\Application\Jsonb  ($field) not foudnd!");
+            }
+            return $default;
+        }
+
+        if ( $this->assoc ? array_key_exists($fx[0], $obj) : property_exists($obj, $fx[0]) ) {
+            return $this->assoc ? $obj[$fx[0]] : $obj->{$fx[0]};
+        } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
+            throw new \Exception("\Application\Jsonb ({$fx[0]}) not foudnd!");
+        }
+        return $default;
+    }
+
+    /**
      * Get value by recusion name
      *
      * @param $fields
@@ -68,26 +98,7 @@ class Jsonb implements \JsonSerializable
      */
     public function v ($fields=null, $default=null)
     {
-        if (is_null($fields)) return $this->json;
-
-        $fx = is_array($fields) ? $fields : explode('.', $fields);
-
-        if (count($fx) > 1) {
-            $field = array_shift($fx);
-            if ( $this->assoc ? array_key_exists($field, $this->json) : property_exists($this->json, $field) ) {
-                return $this->v($fx, $default);
-            } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
-                throw new \Exception("\Application\Jsonb  ($field) not foudnd!");
-            }
-            return $default;
-        }
-
-        if ( $this->assoc ? array_key_exists($fx[0], $this->json) : property_exists($this->json, $fx[0]) ) {
-            return $this->assoc ? $this->json[$fx[0]] : $this->json->{$fx[0]};
-        } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
-            throw new \Exception("\Application\Jsonb ({$fx[0]}) not foudnd!");
-        }
-        return $default;
+        return $this->getParam($fields, $this->json, $default);
     }
 
     /**

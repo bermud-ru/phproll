@@ -48,8 +48,56 @@ class Conf
         return array_key_exists($name, $this->config);
     }
 
+    /**
+     * is_callable
+     *
+     * @param $name
+     * @return bool
+     */
     public function is_callable ($name) {
         return array_key_exists($name, $this->config) && is_callable($this->config[$name]);
+    }
+
+
+    /**
+     * getParameter
+     *
+     * @param null $fields
+     * @param array $cfg
+     * @param null $default
+     * @return array|mixed|null
+     */
+    protected function getParameter ($fields=null, array $cfg, $default=null)
+    {
+        if (is_null($fields)) return $cfg;
+
+        $fx = is_array($fields) ? $fields : explode('.', $fields);
+
+        if (count($fx) > 1) {
+            $field = array_shift($fx);
+            if ( is_array($cfg) && array_key_exists($field, $cfg)  ) {
+                return $this->getParameter($fx, $cfg[$field], $default);
+            }
+            return $default;
+        }
+
+        if ( array_key_exists($fx[0], $cfg) ) {
+            return $cfg[$fx[0]];
+        }
+        
+        return $default;
+    }
+
+    /**
+     * param
+     *
+     * @param $field
+     * @param null $default
+     * @return array|mixed|null
+     */
+    public function param ($field, $default=null)
+    {
+        return $this->getParameter($field, $this->config, $default);
     }
 
     /**
@@ -459,7 +507,7 @@ class PHPRoll
             }
 
             $context = null;
-            if ($file && file_exists($file)) {
+            if ($file && is_file($file)) {
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
                 $context = array_key_exists('grinder', $options) && is_callable($options['grinder']) ? call_user_func_array($options['grinder']->bindTo($this), ['contex'=>$context]):$context;
