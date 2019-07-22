@@ -240,11 +240,12 @@ class Parameter implements \JsonSerializable
 //                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
 //                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 //        elseif (is_array($this->value)) return json_encode($this->value);
-
-        if (is_array($this->value)) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
+//        if ($this->name != 'Hash') var_dump($this);exit;
+        if (is_array($this->value) || $this->value instanceof \Countable) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
 
 //        if ($this->value === NULL) return NULL;
-        return  is_scalar($this->value) ? strval($this->value) : null;
+//        return is_scalar($this->value) ? strval($this->value) : null;
+        return strval($this->value);
     }
 
     /**
@@ -288,7 +289,7 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-       if ((is_array($this->value) || $this->value instanceof \Countable)) return $this->value; else return [$this->value];
+       if (is_array($this->value) || $this->value instanceof \Countable) return $this->value; else return [$this->value];
 
         trigger_error("Application\Parameter::__toArray() can't resolve numeric value!", E_USER_WARNING);
         return [];
