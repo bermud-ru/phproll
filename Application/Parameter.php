@@ -244,8 +244,8 @@ class Parameter implements \JsonSerializable
         if (is_array($this->value) || $this->value instanceof \Countable) return implode(',', array_map(function ($v) { return \Application\Parametr::ize($v); }, $this->value));
 
 //        if ($this->value === NULL) return NULL;
-//        return is_scalar($this->value) ? strval($this->value) : null;
-        return strval($this->value);
+        return is_scalar($this->value) ? strval($this->value) : null;
+//        return strval($this->value);
     }
 
     /**
