@@ -293,28 +293,17 @@ class PDA
     }
 
     /**
-     * Prepare filter SQL query string
-     * @function filtration
+     * query_paginator
      *
-     * @param string $sql
-     * @param array $params
-     * @param array $opt
+     * @param $params
+     * @param bool $is_paginator
      * @return string
      */
-    private function filtration(string $sql, array &$params, array $opt = []): string
+    static function query_paginator (&$params, $is_paginator = true): string
     {
-        $opt = array_merge(['wrap'=> false, 'paginator'=>true], $opt);
-
-        if ($opt['wrap']) {
-            $f = is_string($opt['wrap']) ? $opt['wrap'] : '*';
-            $sql = "WITH raw_query_sql as ($sql) SELECT $f FROM raw_query_sql";
-        }
-
         $offset = '';
         $limit = '';
-        $swap = [];
-        if ($opt['paginator']) {
-            $swap = array_intersect_key($params, ['limit'=>0, 'page'=>1, 'offset'=>2]);
+        if ($is_paginator) {
             $params = array_merge(\Application\PDA::FILTER_DEFAULT, $params);
             $ltd = 0;
             if (isset($params['limit'])) {
@@ -335,15 +324,40 @@ class PDA
                 unset($params['page']);
             }
         } else {
+            if (isset($params['page'])) unset($params['page']);
             if (isset($params['offset'])) unset($params['offset']);
             if (isset($params['limit'])) unset($params['limit']);
         }
+
+        return $offset . $limit;
+    }
+
+    /**
+     * Prepare filter SQL query string
+     * @function filtration
+     *
+     * @param string $sql
+     * @param array $params
+     * @param array $opt
+     * @return string
+     */
+    private function filtration(string $sql, array &$params, array $opt = []): string
+    {
+        $opt = array_merge(['wrap'=> false, 'paginator'=>true], $opt);
+
+        if ($opt['wrap']) {
+            $f = is_string($opt['wrap']) ? $opt['wrap'] : '*';
+            $sql = "WITH raw_query_sql as ($sql) SELECT $f FROM raw_query_sql";
+        }
+
+        $swap = array_intersect_key($params, ['limit'=>0, 'page'=>1, 'offset'=>2]);
+        $offset = $this->query_paginator($params, $opt['paginator']);
 
         $w = $this->where($params);
         $where = empty($w)  ? '' : " WHERE $w";
         if (isset($opt['where'])) $where .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
         $params = $params + $swap;
-        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset . $limit;
+        return $sql . $where . (isset($opt['group']) ? ' '.$opt['group'].' ':'') . (isset($opt['having']) ? ' '.$opt['having'].' ':'') .(isset($opt['order']) ? ' '.$opt['order'].' ':'') . $offset;
     }
 
     /**
