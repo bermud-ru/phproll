@@ -219,7 +219,7 @@ class Parameter implements \JsonSerializable
 
     /**
      * @function count
-     * 
+     *
      * @return int|null
      */
     public function count(): ?int
@@ -257,6 +257,8 @@ class Parameter implements \JsonSerializable
     {
         if ( is_callable($this->formatter) ) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
+
+        if ($this->value === NULL) return NULL;
         if ( is_scalar($this->value) ) {
             $val = preg_replace('/[^0-9]/', '', $this->value);
             if (is_numeric($val)) return intval($val);

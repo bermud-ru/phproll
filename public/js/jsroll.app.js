@@ -23,7 +23,7 @@ tmpl('/tmpl/login.tmpl', null, function (content) {
                     JSON.form(spa.el('#login')).release({fn:function(responce){
                         if (responce.result == 'ok') {
                             popup.hide();
-                            msg.show({error: 'Добро пожаловать!', message: 'в SPA приложение [' +JSON.stringify(responce.data)+']'}, true);
+                            app.msg({error: 'Добро пожаловать!', message: 'в SPA приложение [' +JSON.stringify(responce.data)+']'}, true);
                         }
                         spinner.run = false;
                     }});

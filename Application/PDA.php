@@ -196,8 +196,12 @@ class PDA
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original IS NULL";
                         case '!~': ;
-                            return "$c $glue $key_original NOT ILIKE :$key";
+                            return "$c $glue $key_original NOT LIKE :$key";
                         case '~': ;
+                            return "$c $glue $key_original LIKE :$key";
+                        case '!~*': ;
+                            return "$c $glue $key_original NOT ILIKE :$key";
+                        case '~*': ;
                             return "$c $glue $key_original ILIKE :$key";
                         case '&': ;
                             $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
