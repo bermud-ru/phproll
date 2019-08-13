@@ -89,8 +89,9 @@ class Parameter implements \JsonSerializable
 
         if ($this->isValid) {
             if (is_callable($this->after)) $this->value = call_user_func_array($this->after, $this->arguments($this->after));
-            $this->original = $this->name;
+
             $this->params[$this->alias ? $this->alias : $this->name] = $this;
+            $this->original = $this->name;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
         } else {
             $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
@@ -257,11 +258,10 @@ class Parameter implements \JsonSerializable
     {
         if ( is_callable($this->formatter) ) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
-
         if ($this->value === NULL) return NULL;
         if ( is_scalar($this->value) ) {
-            $val = preg_replace('/[^0-9]/', '', $this->value);
-            if (is_numeric($val)) return intval($val);
+            $val = is_int($this->value) ? $this->value : intval(filter_var($this->value, FILTER_SANITIZE_NUMBER_INT));
+            return $val;
         }
         return null;
     }
@@ -276,8 +276,8 @@ class Parameter implements \JsonSerializable
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
 
         if ( is_scalar($this->value) ) {
-            $val = (float)filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-            if (is_numeric($val)) return floatval($val);
+            $val = is_float($this->value) ? $this->value : floatval(filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+            return $val;
         }
         return null;
     }
