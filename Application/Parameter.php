@@ -237,16 +237,15 @@ class Parameter implements \JsonSerializable
      */
     public function __toString(): ?string
     {
-        if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
-//                $a = implode(',', array_map(function ($v) { return $this->parameterize($v); }, $param));
-//                $val = json_encode($a,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-//        elseif (is_array($this->value)) return json_encode($this->value);
-//        if ($this->name != 'Hash') var_dump($this);exit;
-        if (is_array($this->value) || $this->value instanceof \Countable) return '[' . implode(',', array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value)). ']';
+        if (is_callable($this->formatter)) {
+            return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
+        }
 
-//        if ($this->value === NULL) return NULL;
-        return is_scalar($this->value) ? strval($this->value) : null;
-//        return strval($this->value);
+        if (is_array($this->value) || $this->value instanceof \Countable) {
+            return '[' . implode(',', array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value)). ']';
+        }
+
+        return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : null;
     }
 
     /**
@@ -256,13 +255,15 @@ class Parameter implements \JsonSerializable
      */
     public function __toInt()
     {
-        if ( is_callable($this->formatter) ) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
+        if ( is_callable($this->formatter) ) {
+            return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
+        }
 
-        if ($this->value === NULL) return NULL;
-        if ( is_scalar($this->value) ) {
+        if ( $this->value !== NULL && $this->value !=='' && is_scalar($this->value) ) {
             $val = is_int($this->value) ? $this->value : intval(filter_var($this->value, FILTER_SANITIZE_NUMBER_INT));
             return $val;
         }
+
         return null;
     }
 
@@ -273,12 +274,15 @@ class Parameter implements \JsonSerializable
      */
     public function __toFloat()
     {
-        if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
+        if (is_callable($this->formatter)) {
+            return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
+        }
 
-        if ( is_scalar($this->value) ) {
+        if ( $this->value !== NULL && $this->value !=='' && is_scalar($this->value) ) {
             $val = is_float($this->value) ? $this->value : floatval(filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
             return $val;
         }
+
         return null;
     }
 
@@ -291,11 +295,13 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
-       if (is_array($this->value) || $this->value instanceof \Countable) return array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value);
-       else return [\Application\Parameter::ize($this->value)];
+        if (is_array($this->value) || $this->value instanceof \Countable) {
+            return array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value);
+        } else {
+            return [\Application\Parameter::ize($this->value)];
+        }
 
-        trigger_error("Application\Parameter::__toArray() can't resolve numeric value!", E_USER_WARNING);
-        return [];
+        return $this->value !== NULL ? [] : null;
     }
 
     /**
@@ -309,7 +315,9 @@ class Parameter implements \JsonSerializable
      */
     public function __toJSON($opt = [ 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ])
     {
-        if (is_callable($this->formatter)) return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+        if (is_callable($this->formatter)) {
+            return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+        }
 
         $json = new \Application\Jsonb($this->__toString(), $opt);
         return $json->v();
