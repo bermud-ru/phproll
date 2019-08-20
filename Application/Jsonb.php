@@ -66,7 +66,7 @@ class Jsonb implements \JsonSerializable
      * @return array|mixed|\stdClass|string|null
      * @throws \Exception
      */
-    private function getParam ($fields=null, $obj, $default=null) {
+    private function getParam (&$fields=null, $obj, $default=null) {
         if (is_null($fields)) return $this->json;
 
         $fx = is_array($fields) ? $fields : explode('.', $fields);
@@ -74,7 +74,7 @@ class Jsonb implements \JsonSerializable
         if (count($fx) > 1) {
             $field = array_shift($fx);
             if ( $this->assoc ? array_key_exists($field, $obj) : property_exists($obj, $field) ) {
-                return $this->v($fx, $this->assoc ? $obj[$field] : $obj->{$field}, $default);
+                return $this->getParam($fx, $this->assoc ? $obj[$field] : $obj->{$field}, $default);
             } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
                 throw new \Exception("\Application\Jsonb  ($field) not foudnd!");
             }
