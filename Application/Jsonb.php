@@ -35,7 +35,7 @@ class Jsonb implements \JsonSerializable
      * @param array $opt
      */
 
-    public function __construct( ?string $source, $opt = [] )
+    public function __construct( &$source, $opt = [] )
     {
         foreach ($opt as $k => $v) {
             switch (strtolower($k)) {
@@ -50,8 +50,17 @@ class Jsonb implements \JsonSerializable
             }
         }
 
-        $this->json = json_decode($source, $this->assoc, $this->depth, $this->options);
-        $this->error = json_last_error();
+        if ( is_null($source) || is_string($source) ) {
+            $this->json = json_decode($source, $this->assoc, $this->depth, $this->options);
+            $this->error = json_last_error();
+        } elseif ( is_object($source) ) {
+            $this->assoc = false;
+            $this->json = $source;
+        } elseif ( is_array($source) ) {
+            $this->assoc = true;
+            $this->json = $source;
+        }
+
         if ($this->error !== JSON_ERROR_NONE) if ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
             throw new \Exception(__CLASS__." $source can't build JSON " . ($this->assoc ? "assoc array!" : "object!"));
         } else {
