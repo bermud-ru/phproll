@@ -502,7 +502,7 @@ class PHPRoll
         foreach ($p as $k => $f) {
             $file = (preg_match('/^\\' . DIRECTORY_SEPARATOR . '.+$/i', $f)) ? $f : $path . $f;
 
-            if (!file_exists($file)) {
+            if (!is_file($file)) {
                 $file = ($is_set) && ($k != $count) ? ((!$k) ? (isset($options['404']) ? $path . $options['404'] : null) : null) : (isset($options['404']) ? $path . $options['404'] : null);
             }
 
