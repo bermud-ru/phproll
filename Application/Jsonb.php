@@ -35,7 +35,7 @@ class Jsonb implements \JsonSerializable
      * @param array $opt
      */
 
-    public function __construct( string $source, $opt = [] )
+    public function __construct( ?string $source, $opt = [] )
     {
         foreach ($opt as $k => $v) {
             switch (strtolower($k)) {
