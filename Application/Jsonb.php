@@ -27,6 +27,8 @@ class Jsonb implements \JsonSerializable
     private $options = 0;
     private $mode = \Application\Jsonb::JSON_STRICT;
     private $default = [];
+    private $owner = null;
+    private $params = [];
 
     /**
      * Parameter constructor
@@ -39,6 +41,9 @@ class Jsonb implements \JsonSerializable
     {
         foreach ($opt as $k => $v) {
             switch (strtolower($k)) {
+                case 'owner':
+                    $this->owner = is_null($v) ? $this : $v;
+                    break;
                 case 'assoc':
                     $this->assoc = boolval($v);
                     break;
@@ -105,81 +110,63 @@ class Jsonb implements \JsonSerializable
      * @param string|null $default
      * @return string
      */
-    public function v ($fields=null, $default=null)
+    public function get ($fields=null, $default=null)
     {
-        return $this->getParam($fields, $this->json, $default);
-    }
+        $item =  $this->getParam($fields, $this->json, $default);
 
-    /**
-     * Get valuea as String
-     *
-     * @param $field
-     * @param string $default
-     * @return string
-     * @throws \Exception
-     */
-    public function str ($field, string $default=''): ?string
-    {
-        $s = $this->v($field);
-        return $s !== null && is_scalar($s) ? strval($s) : $default;
-    }
+        if (is_callable($item)) return $item;
 
-    /**
-     * Get value as Int
-     *
-     * @param $field
-     * @param int $default
-     * @return int
-     * @throws \Exception
-     */
-    public function int ($field, int $default=0): ?int
-    {
-        $s = $this->v($field);
-        return $s !== null && is_scalar($s) ? intval($s) : $default;
-    }
-
-    /**
-     * Get value as Date
-     *
-     * @param $field
-     * @param string $format
-     * @return false|string|null
-     */
-    public function date ($field, string $format='Y-m-d H:i:s')
-    {
-        $s = $this->v($field);
-        if (($s !== null && is_scalar($s)) && ($time = strtotime($s))) return date($format, $time);
-
-        return null;
-    }
-
-    /**
-     * Native property
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-    public function __set ($name, $value)
-    {
-        if ($this->assoc) $this->json[$name] = $value; else $this->json->{$name} = $value;
-    }
-
-    /**
-     * Native property
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-    public function __get ($name)
-    {
-        $v = $this->v($name);
-        if (is_null($v) && isset($this->default[$name])) {
-            return $this->default[$name];
+        $key = is_array($fields) ? \Application\PHPRoll::array_keys_normalization($fields) : strval($fields);
+        if (array_key_exists($key, $this->params)) {
+            $item = (new \Application\Parameter($this->params[$key], [$key=>$item]))->setOwner($this->owner);
         }
 
-        return $v;
+        return \Application\Parameter::ize($item);
+    }
+
+    /**
+     * call
+     *
+     * @param string $name
+     * @param array $arguments
+     * @param null $bind
+     * @return mixed|string
+     */
+    private function call(string $name, array $arguments, $context = null)
+    {
+        $fn = $this->get($name);
+
+        if ( is_callable($fn) ) {
+            return is_null($context) ? call_user_func_array($fn, $arguments) : call_user_func_array($fn->bindTo($context), $arguments);
+        } else {
+            throw new \Exception("\Application\Jsonb->$name() method not foudnd!");
+        }
+
+        return $fn;
+    }
+
+//    /**
+//     * Native property
+//     *
+//     * @param $name
+//     * @return mixed
+//     * @throws \Exception
+//     */
+//    public function __set ($name, $value)
+//    {
+//        if ($this->assoc) $this->json[$name] = $value; else $this->json->{$name} = $value;
+//    }
+
+    /**
+     * Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __get ( $name )
+    {
+        return $this->get($name);
     }
 
     /**
@@ -191,12 +178,7 @@ class Jsonb implements \JsonSerializable
      */
     public function __call($name, $arguments)
     {
-        if (!$this->assoc) {
-            if (method_exists($this->json, $name)) return call_user_func_array([$this->json, $name], $arguments);
-            throw new \Exception("\Application\Jsonb->$name() method not foudnd!");
-        }
-
-        return $this->v($name);
+        return $this->call($name, $arguments, $this->owner);
     }
 
     /**

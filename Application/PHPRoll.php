@@ -18,120 +18,6 @@ namespace Application;
  */
 
 /**
- * Class Conf
- *
- * @package Application
- */
-class Conf
-{
-    private $owner;
-    public $config;
-    
-    /**
-     * Конструктор
-     *
-     * @param $config данные из файла конфигурации
-     */
-    public function __construct(\Application\PHPRoll &$owner, &$config)
-    {
-        $this->owner = $owner;
-        $this->config = $config ?? [];
-    }
-
-    /**
-     * is_set
-     * 
-     * @param $name
-     * @return bool
-     */
-    public function is_set ($name) {
-        return array_key_exists($name, $this->config);
-    }
-
-    /**
-     * is_callable
-     *
-     * @param $name
-     * @return bool
-     */
-    public function is_callable ($name) {
-        return array_key_exists($name, $this->config) && is_callable($this->config[$name]);
-    }
-
-
-    /**
-     * getParameter
-     *
-     * @param null $fields
-     * @param array $cfg
-     * @param null $default
-     * @return array|mixed|null
-     */
-    protected function getParameter ($fields=null, array $cfg, $default=null)
-    {
-        if (is_null($fields)) return $cfg;
-
-        $fx = is_array($fields) ? $fields : explode('.', $fields);
-
-        if (count($fx) > 1) {
-            $field = array_shift($fx);
-            if ( is_array($cfg) && array_key_exists($field, $cfg)  ) {
-                return $this->getParameter($fx, $cfg[$field], $default);
-            }
-            return $default;
-        }
-
-        if ( array_key_exists($fx[0], $cfg) ) {
-            return $cfg[$fx[0]];
-        }
-        
-        return $default;
-    }
-
-    /**
-     * param
-     *
-     * @param $field
-     * @param null $default
-     * @return array|mixed|null
-     */
-    public function param ($field, $default=null)
-    {
-        return $this->getParameter($field, $this->config, $default);
-    }
-
-    /**
-     *  Native property
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Exception
-     */
-    public function __get ($name)
-    {
-        if (isset($this->config[$name])) {
-            return $this->config[$name];
-        }
-        throw new \Exception(__CLASS__."->$name property not foudnd!");
-        return null;
-    }
-
-    /**
-     *  Native method
-     *
-     * @param $name
-     * @param $arguments
-     * @return mixed
-     */
-    public function __call($name, $arguments)
-    {
-        if (isset($this->config[$name]) && is_callable($this->config[$name])) return call_user_func_array($this->config[$name]->bindTo($this->owner), $arguments);
-        throw new \Exception(__CLASS__."->$name(...) method not foudnd");
-        return null;
-    }
-}
-
-/**
  * Class PHPRoll
  *
  * @package Application
@@ -177,7 +63,7 @@ class PHPRoll
         }
         else
         {
-            $this->cfg = new \Application\Conf($this, $params);
+            $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
             $this->params = $this->initParams();
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
@@ -192,7 +78,7 @@ class PHPRoll
      */
     protected function route($params, array $opt = [])
     {
-        return $this->cfg->is_callable('route') ? $this->cfg->route($params, $opt) : $this->cfg->route;
+        return $this->cfg->route($params, $opt);
     }
 
     /**
@@ -428,7 +314,7 @@ class PHPRoll
         $script = $opt['script'] ?? null;
         $prefix = '';
         $name = [];
-        $path = ( $this->cfg->is_set('view') ? $this->cfg->view : __DIR__ . DIRECTORY_SEPARATOR );
+        $path = $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
 
         $param = is_array($param) ? $param : [$param];
         if (count($param) ) {
@@ -481,7 +367,7 @@ class PHPRoll
      */
     public function context($pattern, array &$options = [], &$assoc_index = false)
     {
-        $path = ($this->cfg->is_set('view') ? $this->cfg->view : __DIR__ . DIRECTORY_SEPARATOR);
+        $path = $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
         $is_set = is_array($pattern);
         $is_assoc = $is_set ? \Application\PHPRoll::is_assoc($pattern) : false;
         if (!isset($options['include'])) $options['include'] = [];
@@ -642,7 +528,7 @@ class PHPRoll
                         $option = ['json' => function (array $params) { echo $this->response('json', $params); exit(1); }];
                         $context = $this->context($pattern, $option);
                     } catch (\Application\ContextException $e) {
-                        $context = $this->context($this->cfg->is_set('404')  ? $this->cfg->config['404'] : 'index.phtml', $option);
+                        $context = $this->context($this->cfg->get('404','index.phtml'), $option);
                     }
                     $this->set_response_header();
                     return $context;
