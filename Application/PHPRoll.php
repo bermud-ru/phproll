@@ -439,7 +439,7 @@ class PHPRoll
     {
         $a = array_merge($extra, $this->response_header);
         array_walk($a, function ($v, $k) {
-            $o = trim(preg_replace('/\s+/', ' ',  $v));
+            $o = trim(preg_replace('/\s+/', ' ',  addslashes($v)));
             header("$k: $o");
         });
     }
