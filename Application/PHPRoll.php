@@ -438,7 +438,7 @@ class PHPRoll
     final function set_response_header(array $extra = [])
     {
         $a = array_merge($extra, $this->response_header);
-        array_walk($a, function ($v, $k) { header("$k: $v");});
+        array_walk($a, function ($v, $k) { $o = htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); header("$k: $o");});
     }
 
     /**

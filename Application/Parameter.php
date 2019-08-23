@@ -206,6 +206,20 @@ class Parameter implements \JsonSerializable
         return $this;
     }
 
+    /**
+     * filter
+     *
+     * @param array $a
+     * @param callable|null $cb
+     * @param int $flag
+     * @return array
+     */
+    public static function filter(array $a, callable $cb = null, $flag = ARRAY_FILTER_USE_BOTH): array
+    {
+        if (is_null($cb)) $cb = function($v) { return ($v instanceof \Application\Parameter) ? !$v->is_null() : ($v !== null && $v !== ''); };
+
+        return array_filter($p, $cb, $flag);
+    }
 
     /**
      * @function is_null
@@ -408,7 +422,9 @@ class Parameter implements \JsonSerializable
                 $val = intval($param);
                 break;
             case 'object':
-                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
+                if (is_callable($param)) {
+                    $val = null;
+                } elseif ($opt & \Application\PDA::OBJECT_STRINGIFY) {
                     $val = strval($param);
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);

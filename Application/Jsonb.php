@@ -112,16 +112,16 @@ class Jsonb implements \JsonSerializable
      */
     public function get ($fields=null, $default=null)
     {
-        $item =  $this->getParam($fields, $this->json, $default);
+        $item = $this->getParam($fields, $this->json, $default);
 
-        if (is_callable($item)) return $item;
+        if (is_callable($item) || is_null($fields)) return $item;
 
         $key = is_array($fields) ? \Application\PHPRoll::array_keys_normalization($fields) : strval($fields);
         if (array_key_exists($key, $this->params)) {
             $item = (new \Application\Parameter($this->params[$key], [$key=>$item]))->setOwner($this->owner);
         }
 
-        return \Application\Parameter::ize($item);
+        return $item;
     }
 
     /**
