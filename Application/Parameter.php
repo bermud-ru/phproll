@@ -55,6 +55,11 @@ class Parameter implements \JsonSerializable
 
         if (empty($this->validator) && $this->type != 'string') {
             switch (strtolower($this->type)) {
+                case 'file':
+                    $this->validator = function () {
+                        var_dump($_FILES);exit;
+                        return isset($_FILES[$this->name]);
+                    };
                 case 'array':
                     $this->validator = function () { return is_array($this->value); };
                     break;
@@ -327,14 +332,13 @@ class Parameter implements \JsonSerializable
      * @param int $options
      * @return null|object
      */
-    public function __toJSON($opt = [ 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ])
+    public function __toJSON($opt = [ 'assoc'=>false, 'mode'=>\Application\Jsonb::JSON_ALWAYS ])
     {
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter, $this->arguments($this->formatter));
         }
 
-        $json = new \Application\Jsonb($this->__toString(), $opt);
-        return $json->v();
+        return (new \Application\Jsonb($this->value, $opt))>get();
     }
 
     /**
@@ -355,6 +359,9 @@ class Parameter implements \JsonSerializable
     {
         $val = null;
         if ($this->isValid) switch (strtolower($this->type)) {
+            case 'file':
+                $val = new \Application\Jsonb($_FILES[$this->name]);
+                break;
             case 'date':
                 if (empty($this->value)) {
                     $val = null;
@@ -368,7 +375,7 @@ class Parameter implements \JsonSerializable
                 }
                 break;
             case 'json':
-                $val = $this->__toJSON();
+                $val = $this->__toJSON([ 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ]);
                 break;
             case 'array':
                 $val = $this->__toArray();

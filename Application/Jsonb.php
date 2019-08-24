@@ -30,6 +30,8 @@ class Jsonb implements \JsonSerializable
     private $owner = null;
     private $params = [];
 
+    public $is_decoded = false;
+
     /**
      * Parameter constructor
      *
@@ -58,6 +60,7 @@ class Jsonb implements \JsonSerializable
         if ( is_null($source) || is_string($source) ) {
             $this->json = json_decode($source, $this->assoc, $this->depth, $this->options);
             $this->error = json_last_error();
+            $this->is_decoded = $this->error !== JSON_ERROR_NONE;
         } elseif ( is_object($source) ) {
             $this->assoc = false;
             $this->json = $source;
