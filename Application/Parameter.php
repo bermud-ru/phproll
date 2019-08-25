@@ -462,6 +462,24 @@ class Parameter implements \JsonSerializable
     }
 
     /**
+     * Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __get ( $name )
+    {
+        $v = $this->getValue();
+        
+        if ( $v instanceof \Application\Jsonb ) return $v->get($name);
+        elseif (is_array($v) && key_exists($name,$v)) return $v[$name];
+        elseif (is_object($v) && property_exists($v, $name)) return $v->{naem};
+
+        return null;
+    }
+
+    /**
      * serialize rule
      *
      * @return array
