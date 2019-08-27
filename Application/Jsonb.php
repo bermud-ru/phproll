@@ -120,7 +120,8 @@ class Jsonb implements \JsonSerializable
         if (is_callable($item) || is_null($fields)) return $item;
 
         $key = is_array($fields) ? \Application\PHPRoll::array_keys_normalization($fields) : strval($fields);
-        if (array_key_exists($key, $this->params)) {
+        if (array_key_exists($key, $this->params) && is_array($this->params[$key])) {
+            $this->params[$key]['name'] = $key;
             $item = (new \Application\Parameter($this->params[$key], [$key=>$item]))->setOwner($this->owner);
         }
 
