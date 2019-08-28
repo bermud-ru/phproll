@@ -25,7 +25,7 @@ namespace Application;
 class PHPRoll
 {
     const FRAMEWORK = 'PHPRoll';
-    const VERSION = '2.0.12b';
+    const VERSION = '2.1.1b';
     const KEY_SEPARATOR = '.';
 
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
@@ -439,8 +439,15 @@ class PHPRoll
     {
         $a = array_merge($extra, $this->response_header);
         array_walk($a, function ($v, $k) {
-            $o = trim(preg_replace('/\s+/', ' ',  addslashes($v)));
-            header("$k: $o");
+            if (is_scalar($v)) {
+                $o = trim(preg_replace('/\s+/', ' ', addslashes($v)));
+                header("$k: $o");
+            } elseif (is_array($v) && count($v)) {
+                $o = $v[0];
+                $replace = isset($v[1]) ? boolval($v[1]) : TRUE;
+                $http_response_code = isset($v[2]) ? intval($v[2]) : 200;
+                header("$k: $o", $replace, $http_response_code);
+            }
         });
     }
 
@@ -460,34 +467,34 @@ class PHPRoll
         header('Expires: 0');
 
         if (isset($_SERVER['HTTP_USER_AGENT']) && strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE') == false) {
-            header('Cache-Control: no-cache');
-            header('Pragma: no-cache');
+            header('Cache-Control: no-cache', false);
+            header('Pragma: no-cache', false);
         } else {
-            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-            header('Pragma: public');
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0', false);
+            header('Pragma: public', false);
         }
 
         switch ($type) {
             case 'websocket':
-                header('Sec-WebSocket-Origin:');
-                header('Sec-WebSocket-Location:');
-                header('Upgrade: websocket');
-                header('Connection: Upgrade');
-                header('Sec-WebSocket-Accept: ' . base64_encode(pack('H*', sha1($this->header['Sec-Websocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'))));
+                header('Sec-WebSocket-Origin:', false);
+                header('Sec-WebSocket-Location:', false);
+                header('Upgrade: websocket', false);
+                header('Connection: Upgrade', false);
+                header('Sec-WebSocket-Accept: ' . base64_encode(pack('H*', sha1($this->header['Sec-Websocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'))), false);
                 if(isset($params['Sec-WebSocket-Protocol']) || isset($this->header['Sec-WebSocket-Protocol']) && !empty($this->header['Sec-WebSocket-Protocol'])) {
                     header('Sec-WebSocket-Protocol: ' . $params['Sec-WebSocket-Protocol'] ?? $this->header['Sec-WebSocket-Protocol']);
                 }
-                header('Sec-WebSocket-Version: 13');
+                header('Sec-WebSocket-Version: 13', false);
                 $this->set_response_header();
                 break;
 
             case 'json':
                 header('Content-Description: json data container');
                 header('Content-Type: Application/json; charset=utf-8;');
-                header('Access-Control-Allow-Origin: *');
+                header('Access-Control-Allow-Origin: *', false);
                 //header('Access-Control-Allow-Credentials: true');
-                header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE');
-                header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version');
+                header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE', false);
+                header('Access-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Xhr-Version', false);
                 header('Content-Encoding: utf-8');
                 $this->set_response_header();
                 
@@ -503,8 +510,8 @@ class PHPRoll
 
             case 'file':
                 header('Content-Description: File Transfer');
-                header('Content-Transfer-Encoding: binary');
-                header('Connection: Keep-Alive');
+                header('Content-Transfer-Encoding: binary',false);
+                header('Connection: Keep-Alive', false);
                 header('Cache-Control: must-revalidate');
                 $this->set_response_header();
 
