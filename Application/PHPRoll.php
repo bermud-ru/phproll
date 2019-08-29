@@ -65,7 +65,8 @@ class PHPRoll
         {
             $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-            $this->params = $this->initParams();
+            $opt = $this->initParams();
+            $this->params =  new \Application\Jsonb($opt, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
     }
@@ -284,8 +285,8 @@ class PHPRoll
 //                        $a_data[$matches[1]] = $matches[2];
 //                    }
                 } else if (strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== FALSE) {
-                    $json = file_get_contents('php://input');
-                    $params = json_decode($json,true);
+                    $params = file_get_contents('php://input');
+//                    $params = json_decode($json,true);
                 } else {
 //                    mb_parse_str(file_get_contents('php://input'), $params );
                     parse_str(file_get_contents('php://input'), $params );
