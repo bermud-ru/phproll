@@ -66,7 +66,7 @@ class PHPRoll
             $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
             $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
             $opt = $this->initParams();
-            $this->params =  new \Application\Jsonb($opt, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
+            $this->params = new \Application\Jsonb($opt, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
         }
     }
@@ -347,7 +347,7 @@ class PHPRoll
         {
             case 'PUT':
             case 'POST':
-                $result = $this->tpl(key($this->params), $opt);
+                $result = $this->tpl(key($this->params->get()), $opt);
                 break;
             case 'GET':
             case 'DELETE':
@@ -462,10 +462,10 @@ class PHPRoll
     {
         $code = $params['code'] ?? 200;
         if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
-            header("HTTP/1.1 {$code} " . \Application\PHPRoll::HTTP_RESPONSE_CODE[$code]);
+            header("HTTP/1.1 {$code} " . \Application\PHPRoll::HTTP_RESPONSE_CODE[$code], false);
         }
         http_response_code(intval($code));
-        header('Expires: 0');
+        header('Expires: 0', false);
 
         if (isset($_SERVER['HTTP_USER_AGENT']) && strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE') == false) {
             header('Cache-Control: no-cache', false);
@@ -546,7 +546,7 @@ class PHPRoll
                 }
 
             default:
-                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION);
+                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION, false);
                 header('Content-Type: Application/xml; charset=utf-8');
                 header('Content-Encoding: utf-8');
                 header('Access-Control-Allow-Origin: *');
