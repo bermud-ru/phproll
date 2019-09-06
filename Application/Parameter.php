@@ -250,18 +250,32 @@ class Parameter implements \JsonSerializable
     }
 
     /**
+     * array_to_string
+     *
+     * @param array $a
+     * @return string|null
+     */
+    public function array_to_string (array $a): ?string
+    {
+        return '[' . implode(',', array_map(function ($v) {
+                return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v) : \Application\Parameter::ize($v);
+            },  $a)) . ']';
+    }
+
+    /**
      * @function __toString
      *
      * @return string | null
      */
     public function __toString(): ?string
     {
+
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
         }
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return '[' . implode(',', array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value)). ']';
+            return $this->array_to_string($this->value);
         }
 
         return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : null;
