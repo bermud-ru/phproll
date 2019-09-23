@@ -86,7 +86,7 @@ class Jsonb implements \JsonSerializable
     private function getParam (&$fields=null, $obj, $default=null) {
         if (is_null($fields)) return $this->json;
 
-        $fx = is_array($fields) ? $fields : explode('.', $fields);
+        $fx = is_array($fields) ? $fields : explode(\Application\PHPRoll::KEY_SEPARATOR, $fields);
 
         if (count($fx) > 1) {
             $field = array_shift($fx);
