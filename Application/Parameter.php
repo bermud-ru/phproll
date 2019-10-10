@@ -352,7 +352,7 @@ class Parameter implements \JsonSerializable
             return call_user_func_array($this->formatter, $this->arguments($this->formatter));
         }
 
-        return (new \Application\Jsonb($this->value, $opt))>get();
+        return (new \Application\Jsonb($this->value, $opt))->get();
     }
 
     /**
@@ -389,7 +389,7 @@ class Parameter implements \JsonSerializable
                 }
                 break;
             case 'json':
-                $val = $this->__toJSON([ 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ]);
+                $val = $this->__toJSON(is_array($opt) ? $opt : ['assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ]);
                 break;
             case 'array':
                 $val = $this->__toArray();
