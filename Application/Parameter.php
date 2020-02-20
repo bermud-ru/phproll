@@ -221,9 +221,9 @@ class Parameter implements \JsonSerializable
      */
     public static function filter(array $a, callable $cb = null, $flag = ARRAY_FILTER_USE_BOTH): array
     {
-        if (is_null($cb)) $cb = function($v) { return ($v instanceof \Application\Parameter) ? !$v->is_null() : ($v !== null && $v !== ''); };
+        if (is_null($cb)) $cb = function($v) { return ($v instanceof \Application\Parameter) ? !$v->is_null(\PDO::NULL_EMPTY_STRING) : ($v !== null && $v !== ''); };
 
-        return array_filter($p, $cb, $flag);
+        return array_filter($a, $cb, $flag);
     }
 
     /**
@@ -231,9 +231,9 @@ class Parameter implements \JsonSerializable
      *
      * @return boolean
      */
-    public function is_null(): bool
+    public function is_null($opt=null): bool
     {
-        $val = $this->getValue();
+        $val = $this->getValue($opt);
         return is_null($val);
     }
 
@@ -385,7 +385,7 @@ class Parameter implements \JsonSerializable
                     } elseif (preg_match('/^(\d{4}-(0|1)\d-(0|1|2|3)\d).*$/', $this->value, $match)) {
                         $dt = $match[1];
                     }
-                    $val = "'$dt'";
+                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) { $val = "'$dt'"; } else { $val = "$dt";}
                 }
                 break;
             case 'json':
