@@ -167,8 +167,21 @@ class PDA
             return array_reduce($keys, function ($c, $k) use (&$where, $vals, $source, &$params) {
                     $key_original = self::field($k);
                     $exp = explode($key_original, $k);
+                    $jsoned = FALSE;
+
+                    switch ( trim($exp[0]) ) {
+                        case '>>': ;
+                            $f = explode('.', $key_original);
+                            $i = array_pop($f);
+                            $prefix = implode('.', $f);
+                            $key_original = "$prefix->>'{$i}'";
+                            $jsoned = TRUE;
+                            break;
+                        default:
+                    }
+
                     $glue = !empty($c) ? 'AND' : '';
-                    $key = str_replace('.','_', $key_original);
+                    $key = $jsoned ? $i : str_replace('.','_', $key_original);
 
                     if ($params == null) {
                         $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
