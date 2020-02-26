@@ -177,6 +177,13 @@ class PDA
                             $key_original = "$prefix->>'{$i}'";
                             $jsoned = TRUE;
                             break;
+                        case '#>': ;
+                            $f = explode('.', $key_original);
+                            $i = array_pop($f);
+                            $prefix = implode('.', $f);
+                            $key_original = "($prefix->>'{$i}')::int";
+                            $jsoned = TRUE;
+                            break;
                         default:
                     }
 
