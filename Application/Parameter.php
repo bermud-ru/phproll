@@ -233,7 +233,7 @@ class Parameter implements \JsonSerializable
      */
     public function is_null($opt=null): bool
     {
-        $val = $this->getValue($opt);
+        $val = $this->getValue($opt === NULL ?  $this->opt : $opt);
         return is_null($val);
     }
 
@@ -369,8 +369,9 @@ class Parameter implements \JsonSerializable
      * @param null $opt
      * @return array|float|int|null|string
      */
-    public function getValue($opt=null)
+    public function getValue($option=null)
     {
+        $opt = $option === NULL ? $this->opt : $option;
         $val = null;
         if ($this->isValid) switch (strtolower($this->type)) {
             case 'file':
@@ -424,7 +425,7 @@ class Parameter implements \JsonSerializable
      */
     public static function ize ($param, $opt = \PDO::NULL_NATURAL)
     {
-        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt ?? $opt | \Application\PDA::ADDSLASHES);
+        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === NULL ? ($opt | \Application\PDA::ADDSLASHES) : $param->opt );
 
         switch (gettype($param)) {
             case 'array':
@@ -500,7 +501,7 @@ class Parameter implements \JsonSerializable
      */
     public function __sleep(): array
     {
-        return [$this->alias ?? $this->name => $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES)];
+        return [$this->alias ?? $this->name => $this->getValue($this->opt === NULL ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt)];
     }
 
     /**
@@ -508,7 +509,7 @@ class Parameter implements \JsonSerializable
      * @return array
      */
     public function __debugInfo() {
-        return [ $this->alias ?? $this->name => $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) ];
+        return [ $this->alias ?? $this->name => $this->getValue($this->opt === NULL ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt) ];
     }
 
 }
