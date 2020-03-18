@@ -20,6 +20,7 @@ class PDA
     const OBJECT_STRINGIFY = 4;
     const ADDSLASHES = 8;
     const QUERY_STRING_QUOTES = 16;
+    const QUERY_ARRAY_SEQUENCE = 32;
 
     public $status = false;
 

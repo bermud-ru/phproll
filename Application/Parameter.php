@@ -57,11 +57,13 @@ class Parameter implements \JsonSerializable
             switch (strtolower($this->type)) {
                 case 'file':
                     $this->validator = function () {
-                        var_dump($_FILES);exit;
                         return isset($_FILES[$this->name]);
                     };
+                    break;
                 case 'array':
-                    $this->validator = function () { return is_array($this->value); };
+                    $this->validator = function () {
+                        return is_string($this->value) ? preg_match('/^\s*\[.*\]\s*$/', $this->value) : is_array($this->value);
+                    };
                     break;
                 case 'bool':
                     $this->validator = '/^(0|1)$/';
@@ -255,11 +257,12 @@ class Parameter implements \JsonSerializable
      * @param array $a
      * @return string|null
      */
-    public function array_to_string (array $a): ?string
+    public function array_to_string (array $a, $opt=null): ?string
     {
-        return '[' . implode(',', array_map(function ($v) {
-                return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v) : \Application\Parameter::ize($v);
-            },  $a)) . ']';
+        $str = implode(',', array_map(function ($v) {
+            return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : \Application\Parameter::ize($v);
+        },  $a));
+        return  (!$this->is_null($opt) && $opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
     }
 
     /**
@@ -274,8 +277,11 @@ class Parameter implements \JsonSerializable
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
         }
 
+
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return $this->array_to_string($this->value);
+            return $this->array_to_string($this->value, $this->opt);
+        } elseif (($this->opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) && preg_match('/^\s*\[(.*)\]\s*$/', $this->value, $matches) ) {
+            return $matches ? $matches[1] : $this->value;
         }
 
         return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : null;
@@ -286,7 +292,7 @@ class Parameter implements \JsonSerializable
      *
      * @return int | mixed | null
      */
-    public function __toInt()
+    public function __toInt($opt)
     {
         if ( is_callable($this->formatter) ) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -305,7 +311,7 @@ class Parameter implements \JsonSerializable
      *
      * @return float | mixed | null
      */
-    public function __toFloat()
+    public function __toFloat($opt)
     {
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -324,14 +330,18 @@ class Parameter implements \JsonSerializable
      *
      * @return array | mixed | null
      */
-    public function __toArray()
+    public function __toArray($opt)
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return array_map(function ($v) { return \Application\Parameter::ize($v); }, $this->value);
+            return array_map(function ($v) { return \Application\Parameter::ize($v, $opt); }, $this->value);
         } else {
-            return [\Application\Parameter::ize($this->value)];
+            if (is_string($this->value)) {
+                if (preg_match('/^\s*\[.*\]\s*$/', $this->value)) return json_decode($this->value);
+                return explode(',', $this->value);
+            }
+            return [\Application\Parameter::ize($this->value, $opt)];
         }
 
         return $this->value !== NULL ? [] : null;
@@ -393,16 +403,16 @@ class Parameter implements \JsonSerializable
                 $val = $this->__toJSON(is_array($opt) ? $opt : ['assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ]);
                 break;
             case 'array':
-                $val = $this->__toArray();
+                $val = $this->__toArray($opt);
                 break;
             case 'bool':
                 $val = boolval($this->value) ? 1 : 0;
                 break;
             case 'float':
-                $val =  $this->__toFloat();
+                $val =  $this->__toFloat($opt);
                 break;
             case 'int':
-                $val = $this->__toInt();
+                $val = $this->__toInt($opt);
                 break;
             case 'string':
             default:
