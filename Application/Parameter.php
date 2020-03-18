@@ -292,7 +292,7 @@ class Parameter implements \JsonSerializable
      *
      * @return int | mixed | null
      */
-    public function __toInt($opt)
+    public function __toInt($opt=null)
     {
         if ( is_callable($this->formatter) ) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -311,7 +311,7 @@ class Parameter implements \JsonSerializable
      *
      * @return float | mixed | null
      */
-    public function __toFloat($opt)
+    public function __toFloat($opt=null)
     {
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -330,7 +330,7 @@ class Parameter implements \JsonSerializable
      *
      * @return array | mixed | null
      */
-    public function __toArray($opt)
+    public function __toArray($opt=null): ?array
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
@@ -338,7 +338,8 @@ class Parameter implements \JsonSerializable
             return array_map(function ($v) { return \Application\Parameter::ize($v, $opt); }, $this->value);
         } else {
             if (is_string($this->value)) {
-                if (preg_match('/^\s*\[.*\]\s*$/', $this->value)) return json_decode($this->value);
+                // JSON_OBJECT_AS_ARRAY | JSON_INVALID_UTF8_IGNORE
+                if (preg_match('/^\s*\[.*\]\s*$/', $this->value)) return json_decode($this->value, false, 512,JSON_OBJECT_AS_ARRAY | JSON_INVALID_UTF8_IGNORE) ?? null;
                 return explode(',', $this->value);
             }
             return [\Application\Parameter::ize($this->value, $opt)];
