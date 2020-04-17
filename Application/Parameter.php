@@ -51,7 +51,7 @@ class Parameter implements \JsonSerializable
         foreach ($opt as $k => $v) { if (property_exists($this, $k)) $this->{$k} = $v; }
 
         $this->raw = isset($params[$this->alias]) ? $params[$this->alias] : (isset($params[$this->name]) ? $params[$this->name] : null);
-        $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default, $this->arguments($this->default)) : $this->default) : $this->raw ;
+        $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default->bindTo($this), $this->arguments($this->default)) : $this->default) : $this->raw ;
 
         if (empty($this->validator) && $this->type != 'string') {
             switch (strtolower($this->type)) {
@@ -80,22 +80,22 @@ class Parameter implements \JsonSerializable
             }
         }
 
-        if (is_callable($this->before)) $this->value = call_user_func_array($this->before, $this->arguments($this->before));
+        if (is_callable($this->before)) $this->value = call_user_func_array($this->before->bindTo($this), $this->arguments($this->before));
 
-        if (is_callable($this->required)) $this->required = call_user_func_array($this->required, $this->arguments($this->required));
+        if (is_callable($this->required)) $this->required = call_user_func_array($this->required->bindTo($this), $this->arguments($this->required));
 
         if ($this->required && (is_null($this->value) || $this->value === '')) {
             $this->isValid = false;
         } elseif (!empty($this->validator) && ($this->required || !empty($this->value))) {
             if (is_callable($this->validator)) {
-                $this->isValid = call_user_func_array($this->validator, $this->arguments($this->validator));
+                $this->isValid = call_user_func_array($this->validator->bindTo($this), $this->arguments($this->validator));
             } elseif (is_string($this->validator) && !preg_match($this->validator, $this->value)) {
                 $this->isValid = false;
             }
         }
 
         if ($this->isValid) {
-            if (is_callable($this->after)) $this->value = call_user_func_array($this->after, $this->arguments($this->after));
+            if (is_callable($this->after)) $this->value = call_user_func_array($this->after->bindTo($this), $this->arguments($this->after));
 
             $this->params[$this->alias ? $this->alias : $this->name] = $this;
             $this->original = $this->name;
@@ -157,7 +157,7 @@ class Parameter implements \JsonSerializable
 
         $result = &$this->{$name};
         if (is_callable($result)) {
-            $result = call_user_func_array($result, $this->arguments($result));
+            $result = call_user_func_array($result->bindTo($this), $this->arguments($result));
             if ($result === false) {
                 trigger_error("Application\Parameter::$name run time error!", E_USER_WARNING);
                 return $default;
@@ -360,7 +360,7 @@ class Parameter implements \JsonSerializable
     public function __toJSON($opt = [ 'assoc'=>false, 'mode'=>\Application\Jsonb::JSON_ALWAYS ])
     {
         if (is_callable($this->formatter)) {
-            return call_user_func_array($this->formatter, $this->arguments($this->formatter));
+            return call_user_func_array($this->formatter->bindTo($this->params), $this->arguments($this->formatter));
         }
 
         return (new \Application\Jsonb($this->value, $opt))->get();
