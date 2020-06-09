@@ -480,6 +480,7 @@ class PHPRoll
 
         switch ($type) {
             case 'websocket':
+                header('Access-Control-Max-Age: 0', false);
                 header('Sec-WebSocket-Origin:', false);
                 header('Sec-WebSocket-Location:', false);
                 header('Upgrade: websocket', false);
@@ -495,6 +496,7 @@ class PHPRoll
             case 'json':
                 header('Content-Description: json data container');
                 header('Content-Type: Application/json; charset=utf-8;');
+                header('Access-Control-Max-Age: 0', false);
                 header('Access-Control-Allow-Origin: *', false);
                 //header('Access-Control-Allow-Credentials: true');
                 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, HEAD, OPTIONS, DELETE', false);
@@ -505,7 +507,7 @@ class PHPRoll
                 switch (gettype($params)) {
                     case 'object':
                     case 'array':
-                        return json_encode($params, JSON_UNESCAPED_UNICODE);
+                        return json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                     case 'string':
                     default:
                         return $params;
@@ -513,6 +515,7 @@ class PHPRoll
                 break;
 
             case 'file':
+                header('Access-Control-Max-Age: 0', false);
                 header('Content-Description: File Transfer');
                 header('Content-Transfer-Encoding: binary',false);
                 header('Connection: Keep-Alive', false);
