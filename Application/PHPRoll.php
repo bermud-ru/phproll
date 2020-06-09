@@ -466,6 +466,9 @@ class PHPRoll
         }
         http_response_code(intval($code));
         header('Expires: 0', false);
+//        header("Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
+//        header("X-Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
+//        header("X-Webkit-CSP: default-src *; connect-src *; script-src 'unsafe-inline' 'unsafe-eval' *; object-src *;", false);
 
         if (isset($_SERVER['HTTP_USER_AGENT']) && strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE') == false) {
             header('Cache-Control: no-cache', false);
