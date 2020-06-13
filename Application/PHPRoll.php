@@ -27,7 +27,6 @@ class PHPRoll extends \Application\Request
     const FRAMEWORK = 'PHPRoll';
     const VERSION = '2.1.1b';
     const KEY_SEPARATOR = '.';
-
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
     const HTTP_RESPONSE_CODE = [
         100 => 'Continue', 101 => 'Switching Protocol', 102 => 'Processing',
@@ -38,11 +37,8 @@ class PHPRoll extends \Application\Request
         414 => 'Request-URI Too Long', 415 => 'Unsupported Media Type', 416 => 'Requested Range Not Satisfiable', 417 => 'Expectation Failed',
         500 => 'Internal Server Error', 501 => 'Not Implemented', 502 => 'Bad Gateway', 503 => 'Service Unavailable', 504 => 'Gateway Timeout', 505 => 'HTTP Version Not Supported'
     ];
-    public $response_header = [];
 
-    public $cfg = null;
-    public $header = [];
-    public $params = [];
+    public $response_header = [];
     public $path = [];
     public $ACL = null;
     
@@ -63,8 +59,9 @@ class PHPRoll extends \Application\Request
         }
         else
         {
-            $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
             parent::__construct($params);
+            $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
+            $this->params = new \Application\Jsonb($this->params, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
         }
     }
 

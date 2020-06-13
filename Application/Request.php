@@ -28,8 +28,7 @@ abstract class Request
     {
         $this->cfg = new \Application\Jsonb($params, ['owner' => $this]);
         $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
-        $opt = $this->initParams();
-        $this->params = new \Application\Jsonb($opt, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
+        $this->params = $this->initParams();
     }
 
     /**
