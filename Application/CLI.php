@@ -15,6 +15,10 @@ namespace Application;
 
 abstract class CLI
 {
+    public $pidfile = null;
+    private $__running = false;
+    private $__PID = null;
+
     /**
      * Конструктор
      *
@@ -25,6 +29,39 @@ abstract class CLI
         $this->path = pathinfo(__FILE__, PATHINFO_DIRNAME);
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
         $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
+
+        if ($this->pidfile = isset($params['pidfile']) ? $params['pidfile'] : $this->pidfile) {
+            if (file_exists($this->pidfile)) {
+                $this->__PID = trim(file_get_contents($this->pidfile));
+                // yum install -y php-process
+                if (posix_kill($this->__PID, 0)) {
+                    $this->__running = true;
+                }
+            }
+
+            if (!$this->__running) {
+                $this->__PID = getmypid();
+                file_put_contents($this->pidfile, $this->__PID);
+            }
+        }
+    }
+
+    /**
+     * Проверяет запущел экземпляр класса
+     * @return bool
+     */
+    public function is_running() {
+        return $this->__running ? $this->__PID : false;
+    }
+
+    /**
+     * Деструктор
+     *
+     */
+    public function __destruct() {
+        if (!$this->__running && $this->pidfile && file_exists($this->pidfile)) {
+            unlink($this->pidfile);
+        }
     }
 
     /**
