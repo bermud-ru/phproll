@@ -17,11 +17,12 @@ abstract class CLI
 {
     public $args = [];
     public $pidfile = null;
-    protected static $scriptID;
+    public $cron = null;
 
     private $__running = false;
     private $__PID = null;
 
+    protected static $scriptID;
     /**
      * Конструктор
      *
@@ -58,6 +59,7 @@ abstract class CLI
             if (!$this->__running) {
                 $this->__PID = getmypid();
                 file_put_contents($this->pidfile, $this->__PID);
+                if ($this->cron && is_string($this->cron)) $this->crontab($this->cron);
             }
         }
     }
@@ -71,7 +73,7 @@ abstract class CLI
     final static function crontab($rules, $update = true) {
         if (!static::$scriptID) error_log(__CLASS__.': scriptID not defined!',E_USER_WARNING);
 
-        $tasks = @shell_exec('crontab -l') ?? '';
+        $tasks = @shell_exec('crontab -l > /dev/null 2>&1') ?? '';
         $tmp = md5($rules);
         $setup = false;
         $scriptID = str_replace(['\\','/'], '~', self::$scriptID);
