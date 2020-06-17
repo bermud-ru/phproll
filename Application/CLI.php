@@ -15,7 +15,9 @@ namespace Application;
 
 abstract class CLI
 {
+    public $args = [];
     public $pidfile = null;
+
     private $__running = false;
     private $__PID = null;
 
@@ -29,6 +31,17 @@ abstract class CLI
         $this->path = pathinfo(__FILE__, PATHINFO_DIRNAME);
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
         $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
+
+        global $argv;
+        for ($i = 1; $i < count($argv); $i++) {
+            if (preg_match('/^--([^=]+)=(.*)$/', $argv[$i], $match)) {
+                $this->args[$match[1]] = $match[2];
+            } elseif (preg_match('/^-([a-zA-Z0-9])$/', $argv[$i], $match)) {
+                $this->args[$match[1]] = true;
+            } else {
+                $this->args[$argv[$i]] = true;
+            }
+        }
 
         if ($this->pidfile = isset($params['pidfile']) ? $params['pidfile'] : $this->pidfile) {
             if (file_exists($this->pidfile)) {
