@@ -75,7 +75,7 @@ abstract class CLI
         $tmp = md5($rules);
         $setup = false;
         $scriptID = str_replace(['\\','/'], '~', self::$scriptID);
-        if (empty($tasks) || !preg_match_all("/#task:$scriptID:(.*)[\n|$]/m", $tasks, $matches)) {
+        if (empty($tasks) || !preg_match_all("/#task:$scriptID:(.*)\n*$/m", $tasks, $matches)) {
             $setup = true;
         } else {
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
@@ -84,7 +84,7 @@ abstract class CLI
 
         if (isset($matches[1])) {
             $m = is_array($matches[1]) ? $matches[1] : [$matches[1]];
-            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\n*/m", '', $tasks);
+            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\n*$/m", '', $tasks);
         }
 
         if ($update) {
