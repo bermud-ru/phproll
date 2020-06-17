@@ -74,8 +74,8 @@ abstract class CLI
         $tasks = @shell_exec('crontab -l') ?? '';
         $tmp = md5($rules);
         $setup = false;
-
-        if (empty($tasks) || !preg_match('/#task:'.static::$scriptID.':(.*)/m', $tasks, $matches)) {
+        $scriptID = str_replace(['\\','/'], '~', self::$scriptID);
+        if (empty($tasks) || !preg_match_all("/#task:$scriptID:(.*)[\n|$]/m", $tasks, $matches)) {
             $setup = true;
         } else {
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
@@ -83,12 +83,13 @@ abstract class CLI
         if (!$setup) return;
 
         if (isset($matches[1])) {
-            $tasks = preg_replace("/^.+{$matches[1]}/", '', $tasks);
+            $m = is_array($matches[1]) ? $matches[1] : [$matches[1]];
+            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\n*/m", '', $tasks);
         }
 
         if ($update) {
-            $task_id = "#task:".static::$scriptID.":{$tmp}";
-            file_put_contents("/tmp/{$tmp}.tmp", $tasks . $rules . " " . $task_id . PHP_EOL);
+            $task_id = "#task:$scriptID:{$tmp}";
+            file_put_contents("/tmp/{$tmp}.tmp", $tasks . $rules . " " . $task_id . "\n");
         }
 
         if (exec("crontab /tmp/{$tmp}.tmp")) unlink("/tmp/{$tmp}.tmp");
