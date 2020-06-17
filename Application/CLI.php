@@ -17,6 +17,7 @@ abstract class CLI
 {
     public $args = [];
     public $pidfile = null;
+    protected static $scriptID;
 
     private $__running = false;
     private $__PID = null;
@@ -31,6 +32,8 @@ abstract class CLI
         $this->path = pathinfo(__FILE__, PATHINFO_DIRNAME);
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
         $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
+
+        static::$scriptID = get_class($this);
 
         global $argv;
         for ($i = 1; $i < count($argv); $i++) {
@@ -61,17 +64,18 @@ abstract class CLI
 
     /**
      * Crontab manager
-     * 
+     *
      * @param $rules
      * @param bool $update
      */
-    final function crontab($rules, $update = true) {
+    final static function crontab($rules, $update = true) {
+        if (!static::$scriptID) error_log(__CLASS__.': scriptID not defined!',E_USER_WARNING);
+
         $tasks = @shell_exec('crontab -l') ?? '';
         $tmp = md5($rules);
         $setup = false;
-        $script = str_replace('/', '~',$this->path . DIRECTORY_SEPARATOR . $this->file);
 
-        if (empty($tasks) || !preg_match('/#task:'.$script.':(.*)/m', $tasks, $matches)) {
+        if (empty($tasks) || !preg_match('/#task:'.static::$scriptID.':(.*)/m', $tasks, $matches)) {
             $setup = true;
         } else {
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
@@ -79,11 +83,11 @@ abstract class CLI
         if (!$setup) return;
 
         if (isset($matches[1])) {
-            $tasks = preg_replace("/^.+{$matches[1]}", '', $tasks);
+            $tasks = preg_replace("/^.+{$matches[1]}/", '', $tasks);
         }
 
         if ($update) {
-            $task_id = "#task:{$script}:{$tmp}";
+            $task_id = "#task:".static::$scriptID.":{$tmp}";
             file_put_contents("/tmp/{$tmp}.tmp", $tasks . $rules . " " . $task_id . PHP_EOL);
         }
 
