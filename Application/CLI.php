@@ -60,6 +60,37 @@ abstract class CLI
     }
 
     /**
+     * Crontab manager
+     * 
+     * @param $rules
+     * @param bool $update
+     */
+    final function crontab($rules, $update = true) {
+        $tasks = @shell_exec('crontab -l') ?? '';
+        $tmp = md5($rules);
+        $setup = false;
+        $script = str_replace('/', '~',$this->path . DIRECTORY_SEPARATOR . $this->file);
+
+        if (empty($tasks) || !preg_match('/#task:'.$script.':(.*)/m', $tasks, $matches)) {
+            $setup = true;
+        } else {
+            $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
+        }
+        if (!$setup) return;
+
+        if (isset($matches[1])) {
+            $tasks = preg_replace("/^.+{$matches[1]}", '', $tasks);
+        }
+
+        if ($update) {
+            $task_id = "#task:{$script}:{$tmp}";
+            file_put_contents("/tmp/{$tmp}.tmp", $tasks . $rules . " " . $task_id . PHP_EOL);
+        }
+
+        if (exec("crontab /tmp/{$tmp}.tmp")) unlink("/tmp/{$tmp}.tmp");
+    }
+
+    /**
      * Проверяет запущел экземпляр класса
      * @return bool
      */
