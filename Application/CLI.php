@@ -76,7 +76,7 @@ abstract class CLI
     final static function crontab($rules, $update = true) {
         if (!static::$scriptID) error_log(__CLASS__.': scriptID not defined!',E_USER_WARNING);
 
-        $tasks = @shell_exec('crontab -l > /dev/null 2>&1') ?? '';
+        $tasks = @shell_exec('crontab -l') ?? '';
         $tmp = md5($rules);
         $setup = false;
         $scriptID = str_replace(['\\','/'], '~', self::$scriptID);
@@ -86,7 +86,7 @@ abstract class CLI
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
         }
         if (!$setup) return;
-
+        
         if (isset($matches[1])) {
             $m = is_array($matches[1]) ? $matches[1] : [$matches[1]];
             foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\n*$/m", '', $tasks);
