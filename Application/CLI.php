@@ -23,15 +23,18 @@ abstract class CLI
     private $__PID = null;
 
     protected static $scriptID;
+    public  $path;
+    public  $file;
+
     /**
      * Конструктор
      *
      * @param $config данные из файла конфигурации
      */
-    public function __construct($params)
+    public function __construct($params, $bootstrap = null)
     {
-        $this->path = pathinfo(__FILE__, PATHINFO_DIRNAME);
-        $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
+        $this->path = pathinfo($bootstrap ?? __FILE__, PATHINFO_DIRNAME);
+        $this->file = pathinfo($bootstrap ?? __FILE__, PATHINFO_BASENAME);
         $this->cfg = new \Application\Jsonb($params, ['owner'=>$this]);
 
         static::$scriptID = get_class($this);
@@ -59,7 +62,7 @@ abstract class CLI
             if (!$this->__running) {
                 $this->__PID = getmypid();
                 file_put_contents($this->pidfile, $this->__PID);
-                if ($this->cron && is_string($this->cron)) $this->crontab($this->cron);
+                if ($bootstrap && $this->cron && is_string($this->cron)) $this->crontab(str_replace('__FILE__', $bootstrap, $this->cron));
             }
         }
     }
