@@ -20,7 +20,7 @@ abstract class CLI
     public $cron = null;
 
     private $__running = false;
-    private $__PID = null;
+    public $processPID = null;
 
     protected static $scriptID;
     public  $path;
@@ -52,16 +52,16 @@ abstract class CLI
 
         if ($this->pidfile = isset($params['pidfile']) ? $params['pidfile'] : $this->pidfile) {
             if (file_exists($this->pidfile)) {
-                $this->__PID = trim(file_get_contents($this->pidfile));
+                $this->processPID = trim(file_get_contents($this->pidfile));
                 // yum install -y php-process
-                if (posix_kill($this->__PID, 0)) {
+                if (posix_kill($this->processPID, 0)) {
                     $this->__running = true;
                 }
             }
 
             if (!$this->__running) {
-                $this->__PID = getmypid();
-                file_put_contents($this->pidfile, $this->__PID);
+                $this->processPID = getmypid();
+                file_put_contents($this->pidfile, $this->processPID);
                 if ($bootstrap && $this->cron && is_string($this->cron)) $this->crontab(str_replace('__FILE__', $bootstrap, $this->cron));
             }
         }
@@ -80,16 +80,16 @@ abstract class CLI
         $tmp = md5($rules);
         $setup = false;
         $scriptID = str_replace(['\\','/'], '~', self::$scriptID);
-        if (empty($tasks) || !preg_match_all("/#task:$scriptID:(.*)\n*$/m", $tasks, $matches)) {
+        if (empty($tasks) || !preg_match_all("/#task:$scriptID:(.*)\r*\n*$/m", $tasks, $matches)) {
             $setup = true;
         } else {
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
         }
         if (!$setup) return;
-        
+
         if (isset($matches[1])) {
             $m = is_array($matches[1]) ? $matches[1] : [$matches[1]];
-            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\n*$/m", '', $tasks);
+            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\r*\n*$/m", '', $tasks);
         }
 
         if ($update) {
@@ -105,7 +105,7 @@ abstract class CLI
      * @return bool
      */
     public function is_running() {
-        return $this->__running ? $this->__PID : false;
+        return $this->__running ? $this->processPID : false;
     }
 
     /**
