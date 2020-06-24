@@ -26,6 +26,10 @@ abstract class CLI
     public  $path;
     public  $file;
 
+    protected $max_threads = 10;
+    protected $threads = [];
+    private $threads_timeout = 1;
+
     /**
      * Конструктор
      *
@@ -114,7 +118,7 @@ abstract class CLI
      */
     public function __destruct() {
         if (!$this->__running && $this->pidfile && file_exists($this->pidfile)) {
-            unlink($this->pidfile);
+            @unlink($this->pidfile);
         }
     }
 
@@ -145,5 +149,46 @@ abstract class CLI
      * @return mixed
      */
     abstract function run();
+
+    /**
+     * threading
+     *
+     * @param int $max
+     */
+    final function threading(int $max=10)
+    {
+        $this->max_threads = $max;
+
+        while ( true ) {
+            while ( count($this->threads) >= $this->max_threads ) {
+//                sleep($this->threads_timeout);
+                foreach ( $this->threads as $pid => $flag ) {
+                    $res = pcntl_waitpid($pid, $status, WNOHANG); // слушаем статус детей
+                    if ( $res == -1 || $res > 0 ) unset($this->threads[$pid]);
+                }
+                continue;
+            }
+
+            $this->launcher();
+        }
+    }
+
+    /**
+     * @return bool
+     *
+     */
+    private function launcher() {
+        $pid = pcntl_fork();
+        if ($pid == -1) {
+            trigger_error('Could not launch new job, exiting', E_USER_WARNING);
+            return false;
+        } else if ($pid) {
+            $this->threads[$pid] = $pid; // храним список детей для прослушки
+        } else {
+            $this->run();
+            exit(0);
+        }
+        return true;
+    }
 
 }
