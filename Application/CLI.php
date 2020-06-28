@@ -13,6 +13,8 @@
 
 namespace Application;
 
+declare(ticks = 1);
+
 abstract class CLI
 {
     public $args = [];
@@ -26,9 +28,16 @@ abstract class CLI
     public  $path;
     public  $file;
 
-    protected $max_threads = 10;
-    protected $threads = [];
-    private $threads_timeout = 1;
+    const THREAD_DEFAULT = 0;
+    const THREAD_INFINITY = 1;
+    const THREAD_LAZYJOB = 2;
+    const THREAD_NOTCOMPLETE = 4;
+    const THREAD_COMPLETE = 8;
+
+    public  $max_threads = null;
+    public  $thread_NUM = null;
+    private $threads = [];
+    private $threads_timeout = 0;
 
     /**
      * Конструктор
@@ -151,42 +160,67 @@ abstract class CLI
     abstract function run();
 
     /**
-     * threading
+     * @function threadin
      *
      * @param int $max
+     * @param int $opt
+     * @param int $timeout
+     *
      */
-    final function threading(int $max=10)
+    final function threading(int $max = 5, int $opt = \Application\CLI::THREAD_DEFAULT, int $timeout=0)
     {
+        $looper = true;
         $this->max_threads = $max;
+        $timeout = $opt & \Application\CLI::THREAD_INFINITY ? $timeout : 0;
 
-        while ( true ) {
-            while ( count($this->threads) >= $this->max_threads ) {
-//                sleep($this->threads_timeout);
-                foreach ( $this->threads as $pid => $flag ) {
-                    $res = pcntl_waitpid($pid, $status, WNOHANG); // слушаем статус детей
-                    if ( $res == -1 || $res > 0 ) unset($this->threads[$pid]);
+        while ( $looper ) {
+            while ( count($this->threads) > $this->max_threads ) {
+                foreach ( $this->threads as $pid => $thread_num ) {
+//                    $child = pcntl_waitpid($pid, $result, WNOHANG|WUNTRACED); // слушаем статус детей
+//                    if ( $child == -1 || $child > 0 ) {
+//                        $code = pcntl_wexitstatus($result);
+//                        echo "=== STATUS: [ $code ] === $child : {$this->threads[$child]} ======\n\n";
+//                        unset($this->threads[$pid]);
+//                    }
+                    $child = pcntl_wait($result);
+                    if (pcntl_wifexited($result) !== 0) {
+                        $code = pcntl_wexitstatus($result);
+                        if ($code & \Application\CLI::THREAD_COMPLETE) {
+                            $this->max_threads = 0;
+                            $looper = false;
+                        } else if ($code & \Application\CLI::THREAD_NOTCOMPLETE && $this->max_threads < $max && !$timeout) {
+                            $this->max_threads++;
+                        }
+                        unset($this->threads[$child]);
+                    }
                 }
                 continue;
             }
+            if ($looper) $this->launcher($opt, $timeout);
 
-            $this->launcher();
+            if ( $this->max_threads == 0 && $timeout && $looper ) {
+                sleep($timeout);
+                $this->max_threads = $max;
+            }
         }
     }
 
     /**
-     * @return bool
      *
+     * @param int $opt
+     * @param $timeout
+     * @return bool
      */
-    private function launcher() {
+    private function launcher(int $opt = \Application\CLI::THREAD_DEFAULT, $timeout) {
         $pid = pcntl_fork();
+        if (!$opt & \Application\CLI::THREAD_INFINITY || $timeout > 0) $this->max_threads--;
         if ($pid == -1) {
             trigger_error('Could not launch new job, exiting', E_USER_WARNING);
             return false;
         } else if ($pid) {
-            $this->threads[$pid] = $pid; // храним список детей для прослушки
+            $this->thread_NUM = $this->threads[$pid] = $this->max_threads; // храним список детей для прослушки
         } else {
-            $this->run();
-            exit(0);
+            exit( $this->run() );
         }
         return true;
     }
