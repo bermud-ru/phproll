@@ -162,9 +162,9 @@ abstract class CLI
     /**
      * @function threadin
      *
-     * @param int $max
+     * @param int $max threads count
      * @param int $opt
-     * @param int $timeout
+     * @param int $timeout between threads chunk
      *
      */
     final function threading(int $max = 5, int $opt = \Application\CLI::THREAD_DEFAULT, int $timeout=0)
