@@ -522,10 +522,20 @@ class PDA
      */
     public static function array2insert(array $a, array $fiels = [], bool $keys = true):string
     {
-        $ds = count($fiels) ? array_intersect_key($a, array_flip($fiels)) : $a;
-        return ($keys ? ' ('.implode(',', array_keys($ds)).') ' : '') . 'values ('.implode(',', array_map(function($v){
+        $query = '';
+        $ds = !\Application\PHPRoll::is_assoc($a) ? $a : [$a];
+
+        if ($keys) $query = ' (' . ( count($fiels) ? implode(',', array_keys(array_intersect_key($ds[0], array_flip($fiels)))) : implode(',', array_keys($ds[0]))) . ') ';
+
+        $items = [];
+        foreach ($ds as $idx => $row) {
+            $items[] ='(' . implode(',', array_map(function ($v) {
                 switch (gettype($v)) {
                     case 'object':
+                        if ($v instanceof DateTime) {
+                            $val = "'" . date('Y-m-d H:i:s', $v) . "'" ;
+                            break;
+                        }
                     case 'array':
                         $val = "'" . json_encode($v, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
                         break;
@@ -546,7 +556,11 @@ class PDA
                         $val = "'$v'";
                 }
                 return $val;
-            }, array_values($ds))) . ')';
+            }, array_values(count($fiels) ? array_intersect_key($row, array_flip($fiels)) : $row))) . ')';
+        }
+        $query .= 'values ' . implode(',', $items);
+
+        return $query;
     }
 
 }
