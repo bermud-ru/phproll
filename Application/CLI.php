@@ -35,7 +35,8 @@ abstract class CLI
     const THREAD_COMPLETE = 8;
 
     public  $max_threads = null;
-    public  $thread_NUM = null;
+    public  $thread_idx = null;
+    private $thread_pid = null;
     private $threads = [];
     private $threads_timeout = 0;
 
@@ -218,7 +219,8 @@ abstract class CLI
             trigger_error('Could not launch new job, exiting', E_USER_WARNING);
             return false;
         } else if ($pid) {
-            $this->thread_NUM = $this->threads[$pid] = $this->max_threads; // храним список детей для прослушки
+            $this->thread_pid = $pid;
+            $this->thread_idx = $this->threads[$pid] = $this->max_threads; // храним список детей для прослушки
         } else {
             exit( $this->run() );
         }
