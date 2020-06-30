@@ -511,6 +511,44 @@ class PDA
         return $this->status = $stmt->execute();
     }
 
+    /**
+     * @function array2insert
+     * Array to Sting for greate sql insert query or vlues pattern
+     *
+     * @param array $a
+     * @param array $fiels
+     * @param bool $keys
+     * @return string
+     */
+    public static function array2insert(array $a, array $fiels = [], bool $keys = true):string
+    {
+        $ds = count($fiels) ? array_intersect_key($a, array_flip($fiels)) : $a;
+        return ($keys ? ' ('.implode(',', array_keys($ds)).') ' : '') . 'values ('.implode(',', array_map(function($v){
+                switch (gettype($v)) {
+                    case 'object':
+                    case 'array':
+                        $val = "'" . json_encode($v, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
+                        break;
+                    case 'NULL':
+                        $val = 'NULL';
+                        break;
+                    case 'boolean':
+                        $val = boolval($v) ? 1 : 0;
+                        break;
+                    case 'double':
+                        $val = floatval($v);
+                        break;
+                    case 'integer':
+                        $val = intval($v);
+                        break;
+                    case 'string':
+                    default:
+                        $val = "'$v'";
+                }
+                return $val;
+            }, array_values($ds))) . ')';
+    }
+
 }
 
 ?>
