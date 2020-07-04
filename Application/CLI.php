@@ -82,7 +82,7 @@ abstract class CLI
     }
 
     /**
-     * Crontab manager
+     * @function crontab( Crontab manager
      *
      * @param $rules
      * @param bool $update
@@ -115,6 +115,7 @@ abstract class CLI
     }
 
     /**
+     * @function is_running(
      * Проверяет запущел экземпляр класса
      * @return bool
      */
@@ -170,6 +171,8 @@ abstract class CLI
      */
     final function threading(int $max = 5, int $opt = \Application\CLI::THREAD_DEFAULT, int $timeout=0)
     {
+        pcntl_signal(SIGINT, array($this, "signals"));
+
         $looper = true;
         $this->max_threads = $max;
         $timeout = $opt & \Application\CLI::THREAD_INFINITY ? $timeout : 0;
@@ -207,6 +210,7 @@ abstract class CLI
     }
 
     /**
+     * `@function launcher
      *
      * @param int $opt
      * @param $timeout
@@ -225,6 +229,21 @@ abstract class CLI
             exit( $this->run() );
         }
         return true;
+    }
+
+    /**
+     * @function signals
+     *
+     * @param $signo
+     */
+    public function signals($signo){
+        switch ($signo) {
+            case SIGINT:
+                $this->$__running = false;
+                break;
+            default:
+                fprintf(STDERR, "Unknown signal ". $signo);
+        }
     }
 
 }
