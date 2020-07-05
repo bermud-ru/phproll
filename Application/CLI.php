@@ -13,7 +13,9 @@
 
 namespace Application;
 
-declare(ticks = 1);
+if(version_compare(PHP_VERSION, "5.3.0", '<')) {
+    declare(ticks = 1);
+}
 
 abstract class CLI
 {
@@ -167,11 +169,20 @@ abstract class CLI
      * @param int $max threads count
      * @param int $opt
      * @param int $timeout between threads chunk
-     *
+     * SIGINT — прерывание процесса. Случается, когда пользователь оканчивает выполнение скрипта командой "ctrl+c".
+     * SIGTERM — окончание процесса. Происходит, когда процесс останавливают командой kill (либо другой командой, посылающей такой сигнал).
+     * SIGHUP - Кроме остановки выполнения скрипта, существует также сигнал перезапуска. Его часто используют для обновления конфигурации работающих процессов без их остановки.
+     * pkill -HUP -f test.php
      */
     final function threading(int $max = 5, int $opt = \Application\CLI::THREAD_DEFAULT, int $timeout=0)
     {
+        pcntl_signal(SIGTERM, array($this, "signals"));
         pcntl_signal(SIGINT, array($this, "signals"));
+        pcntl_signal(SIGHUP, array($this, "signals"));
+
+        if(version_compare(PHP_VERSION, "5.3.0", '>=')){
+            pcntl_signal_dispatch();
+        }
 
         $looper = true;
         $this->max_threads = $max;
