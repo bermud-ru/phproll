@@ -13,9 +13,7 @@
 
 namespace Application;
 
-if(version_compare(PHP_VERSION, "5.3.0", '<')) {
-    declare(ticks = 1);
-}
+if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 
 abstract class CLI
 {
@@ -101,11 +99,12 @@ abstract class CLI
         } else {
             $setup = isset($matches[1]) ? $matches[1] != $tmp : true;
         }
+
         if (!$setup) return;
 
         if (isset($matches[1])) {
             $m = is_array($matches[1]) ? $matches[1] : [$matches[1]];
-            foreach ( $m as $k => $v) $tasks = preg_replace("/^.+{$v}\r*\n*$/m", '', $tasks);
+            foreach ( $m as $k => $v ) $tasks = preg_replace("/^.+{$v}\r*\n*$/m", '', $tasks);
         }
 
         if ($update) {
@@ -164,6 +163,14 @@ abstract class CLI
     abstract function run();
 
     /**
+     * System signals handlers
+     * 
+     * @function SIGTERM();
+     * @function SIGINT();
+     * @function SIGHUP();
+     */
+
+    /**
      * @function threadin
      *
      * @param int $max threads count
@@ -176,13 +183,10 @@ abstract class CLI
      */
     final function threading(int $max = 5, int $opt = \Application\CLI::THREAD_DEFAULT, int $timeout=0)
     {
-        pcntl_signal(SIGTERM, array($this, "signals"));
-        pcntl_signal(SIGINT, array($this, "signals"));
-        pcntl_signal(SIGHUP, array($this, "signals"));
-
-        if(version_compare(PHP_VERSION, "5.3.0", '>=')){
-            pcntl_signal_dispatch();
-        }
+        if (method_exists($this,'SIGTERM')) { pcntl_signal(SIGTERM, array($this, "SIGTERM")); }
+        if (method_exists($this,'SIGINT')) { pcntl_signal(SIGINT, array($this, "SIGINT")); }
+        if (method_exists($this,'SIGHUP')) { pcntl_signal(SIGHUP, array($this, "SIGHUP")); }
+        if (version_compare(PHP_VERSION, "5.3.0", '>=')) { pcntl_signal_dispatch(); }
 
         $looper = true;
         $this->max_threads = $max;
@@ -240,21 +244,6 @@ abstract class CLI
             exit( $this->run() );
         }
         return true;
-    }
-
-    /**
-     * @function signals
-     *
-     * @param $signo
-     */
-    public function signals($signo){
-        switch ($signo) {
-            case SIGINT:
-                $this->$__running = false;
-                break;
-            default:
-                fprintf(STDERR, "Unknown signal ". $signo);
-        }
     }
 
 }
