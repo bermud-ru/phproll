@@ -34,8 +34,9 @@ abstract class CLI
     const THREAD_NOTCOMPLETE = 4;
     const THREAD_COMPLETE = 8;
 
-    public  $max_threads = null;
-    public  $thread_idx = null;
+    public $looper = true;
+    public $max_threads = 0;
+    public $thread_idx = 0;
     private $thread_pid = null;
     private $threads = [];
     private $threads_timeout = 0;
@@ -164,7 +165,7 @@ abstract class CLI
 
     /**
      * System signals handlers
-     * 
+     *
      * @function SIGTERM();
      * @function SIGINT();
      * @function SIGHUP();
@@ -188,11 +189,11 @@ abstract class CLI
         if (method_exists($this,'SIGHUP')) { pcntl_signal(SIGHUP, array($this, "SIGHUP")); }
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) { pcntl_signal_dispatch(); }
 
-        $looper = true;
+        $this->looper = true;
         $this->max_threads = $max;
         $timeout = $opt & \Application\CLI::THREAD_INFINITY ? $timeout : 0;
 
-        while ( $looper ) {
+        while ( $this->looper ) {
             while ( count($this->threads) > $this->max_threads ) {
                 foreach ( $this->threads as $pid => $thread_num ) {
 //                    $child = pcntl_waitpid($pid, $result, WNOHANG|WUNTRACED); // слушаем статус детей
@@ -206,7 +207,7 @@ abstract class CLI
                         $code = pcntl_wexitstatus($result);
                         if ($code & \Application\CLI::THREAD_COMPLETE) {
                             $this->max_threads = 0;
-                            $looper = false;
+                            $this->looper = false;
                         } else if ($code & \Application\CLI::THREAD_NOTCOMPLETE && $this->max_threads < $max && !$timeout) {
                             $this->max_threads++;
                         }
@@ -215,9 +216,9 @@ abstract class CLI
                 }
                 continue;
             }
-            if ($looper) $this->launcher($opt, $timeout);
+            if ($this->looper) $this->launcher($opt, $timeout);
 
-            if ( $this->max_threads == 0 && $timeout && $looper ) {
+            if ( $this->max_threads == 0 && $timeout && $this->looper) {
                 sleep($timeout);
                 $this->max_threads = $max;
             }
