@@ -512,6 +512,43 @@ class PDA
     }
 
     /**
+     * @function param_wraper
+     *
+     * @param $v - Value
+     * @param $i - Index
+     * @param $a - Array
+     * @return float|int|string
+     */
+    public static function param_wraper($v) {
+        switch (gettype($v)) {
+            case 'object':
+                if ($v instanceof DateTime) {
+                    $val = "'" . date('Y-m-d H:i:s', $v) . "'" ;
+                    break;
+                }
+            case 'array':
+                $val = "'" . json_encode($v, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
+                break;
+            case 'NULL':
+                $val = 'NULL';
+                break;
+            case 'boolean':
+                $val = boolval($v) ? 1 : 0;
+                break;
+            case 'double':
+                $val = floatval($v);
+                break;
+            case 'integer':
+                $val = intval($v);
+                break;
+            case 'string':
+            default:
+                $val = "'".filter_var($v, FILTER_SANITIZE_ADD_SLASHES)."'";
+        }
+        return $val;
+    }
+
+    /**
      * @function array2insert
      * Array to Sting for greate sql insert query or vlues pattern
      *
@@ -529,40 +566,24 @@ class PDA
 
         $items = [];
         foreach ($ds as $idx => $row) {
-            $items[] ='(' . implode(',', array_map(function ($v) {
-                switch (gettype($v)) {
-                    case 'object':
-                        if ($v instanceof DateTime) {
-                            $val = "'" . date('Y-m-d H:i:s', $v) . "'" ;
-                            break;
-                        }
-                    case 'array':
-                        $val = "'" . json_encode($v, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
-                        break;
-                    case 'NULL':
-                        $val = 'NULL';
-                        break;
-                    case 'boolean':
-                        $val = boolval($v) ? 1 : 0;
-                        break;
-                    case 'double':
-                        $val = floatval($v);
-                        break;
-                    case 'integer':
-                        $val = intval($v);
-                        break;
-                    case 'string':
-                    default:
-                        $val = "'$v'";
-                }
-                return $val;
-            }, array_values(count($fiels) ? array_intersect_key($row, array_flip($fiels)) : $row))) . ')';
+            $items[] ='(' . implode(',', array_map( function ($v) { return \Application\PDA::param_wraper($v);}, array_values(count($fiels) ? array_intersect_key($row, array_flip($fiels)) : $row))) . ')';
         }
         $query .= 'values ' . implode(',', $items);
 
         return $query;
     }
 
+    /**
+     * @function array2update
+     *
+     * @param array $a - Key Value
+     * @return string
+     */
+    public static function array2update(array $a, array $exclude = []): string
+    {
+        $p = array_diff_key($a, array_flip($exclude));
+        return implode(',', array_map(function ($k, $v) { return "$k = " . \Application\PDA::param_wraper($v); }, array_keys($p), $p));
+    }
 }
 
 ?>
