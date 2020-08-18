@@ -28,7 +28,7 @@ abstract class CLI
         'SIGIO' => SIGPOLL, 'SIGPWR' => SIGPWR, 'SIGSYS' => SIGSYS,
 //        'SIGRTMIN' => 34,
 //        'SIGRTMIN+1' => 35, 'SIGRTMIN+2' => 36, 'SIGRTMIN+3' => 37, 'SIGRTMIN+4' => 38,
-//        'SIGRTMIN+5' => 39, 'SIGRTMIN+6' => 40, 'SIGRTMIN+7' => 41, 'SIGRTMIN+8' => 42,
+//        'SIGRTMIN+5' => 39, 'SIGRTMIxN+6' => 40, 'SIGRTMIN+7' => 41, 'SIGRTMIN+8' => 42,
 //        'SIGRTMIN+9' => 43, 'SIGRTMIN+10' => 44, 'SIGRTMIN+11' => 45, 'SIGRTMIN+12' => 46,
 //        'SIGRTMIN+13' => 47, 'SIGRTMIN+14' => 48, 'SIGRTMIN+15' => 49, 'SIGRTMAX-14' => 50,
 //        'SIGRTMAX-13' => 51, 'SIGRTMAX-12' => 52, 'SIGRTMAX-11' => 53, 'SIGRTMAX-10' => 54,
@@ -192,7 +192,7 @@ abstract class CLI
      *
      * @param int $max forks count
      * @param int $opt
-     * @param int $timeout between forks chunk
+     * @param int $timeout between forks chunk  micro_seconds
      * SIGINT — прерывание процесса. Случается, когда пользователь оканчивает выполнение скрипта командой "ctrl+c".
      * SIGTERM — окончание процесса. Происходит, когда процесс останавливают командой kill (либо другой командой, посылающей такой сигнал).
      * SIGHUP - Кроме остановки выполнения скрипта, существует также сигнал перезапуска. Его часто используют для обновления конфигурации работающих процессов без их остановки.
@@ -240,17 +240,17 @@ abstract class CLI
                             if (!$complete) $this->max_forks++;
                         }
                         unset($this->forks[$child]);
+
+                        if ( $this->max_forks == 0 && $timeout && $this->looper ) {
+                            usleep($timeout);
+                            $this->max_forks = $max;
+                        }
                     }
                 }
                 continue;
             }
 
             if ( $this->looper && !$complete ) $this->launcher($opt, $timeout);
-
-            if ( $this->max_forks == 0 && $timeout && $this->looper ) {
-                sleep($timeout);
-                $this->max_forks = $max;
-            }
         }
 
     }
