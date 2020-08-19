@@ -176,16 +176,23 @@ abstract class CLI
             case (strpos($name, 'db') === 0 ? true: false):
                 $value = isset($this->{$name}) ? $this->{$name} : ($this->{$name} = new \Application\PDA($this->cfg->{$name}));
                 break;
+            default:
+                $value = isset($this->args[$name]) ? $this->args[$name] : null;
         }
         return $value;
     }
 
     /**
-     * run Abstract method
-     *
+     * @function run
      * @return mixed
      */
-    abstract function run();
+    abstract public function run();
+
+    /**
+     * @function job
+     * @return int FORK_EMPTY | FORK_RESULTSET | FORK_COMPLETE
+     */
+    public function job(): int { return \Application\CLI::FORK_COMPLETE; }
 
     /**
      * @function fork
@@ -276,7 +283,7 @@ abstract class CLI
             }
             $this->fork_idx = $this->forks[$pid] = $this->max_forks; // храним список детей для прослушки
         } else {
-            exit( $this->run() );
+            exit( $this->job() );
         }
         return true;
     }
