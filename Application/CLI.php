@@ -192,7 +192,7 @@ abstract class CLI
      * @function job
      * @return int FORK_EMPTY | FORK_RESULTSET | FORK_COMPLETE
      */
-    public function job(): int { return \Application\CLI::FORK_COMPLETE; }
+    public function job(): int { return self::FORK_COMPLETE; }
 
     /**
      * @function fork
@@ -207,23 +207,23 @@ abstract class CLI
      * ps -efw | grep php | grep -v grep | awk '{print $2}' | xargs kill
      * netstat -anop
      */
-    final function fork(int $max = 5, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
+    final function fork(int $max = 5, int $opt = self::FORK_DEFAULT, int $timeout=0)
     {
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) {
 //            pcntl_signal_dispatch();
             pcntl_async_signals(true);
         }
 
-        foreach (\Application\CLI::SYSTEM_SIGNALS as $SIGNAL => $code) {
+        foreach (self::SYSTEM_SIGNALS as $SIGNAL => $code) {
             if (method_exists($this, $SIGNAL)) { pcntl_signal($code, [$this, $SIGNAL]); }
         }
 
         $this->looper = true;
         $this->max_forks = $max;
-        $timeout = $opt & \Application\CLI::FORK_INFINITY ? $timeout : 0;
+        $timeout = $opt & self::FORK_INFINITY ? $timeout : 0;
         $empty_length = 0;
         $complete = false;
-        $waite_empty_results = !($opt & \Application\CLI::FORK_INFINITY);
+        $waite_empty_results = !($opt & self::FORK_INFINITY);
 
         while ( $this->looper ) {
             while ( count($this->forks) > $this->max_forks ) {
@@ -238,12 +238,12 @@ abstract class CLI
 
                     if (pcntl_wifexited($result) !== 0) {
                         $code = pcntl_wexitstatus($result);
-                        $complete = $complete || $code & \Application\CLI::FORK_COMPLETE;
-                        $empty_length = $code & \Application\CLI::FORK_EMPTY ? $empty_length + 1 : 0;
+                        $complete = $complete || $code & self::FORK_COMPLETE;
+                        $empty_length = $code & self::FORK_EMPTY ? $empty_length + 1 : 0;
                         if ($waite_empty_results && $max <= $empty_length) {
                             $this->max_forks = 0;
                             $this->looper = false;
-                        } else if ($code & \Application\CLI::FORK_RESULTSET && $this->max_forks < $max && !$timeout) {
+                        } else if ($code & self::FORK_RESULTSET && $this->max_forks < $max && !$timeout) {
                             if (!$complete) $this->max_forks++;
                         }
                         unset($this->forks[$child]);
@@ -269,9 +269,9 @@ abstract class CLI
      * @param $timeout
      * @return bool
      */
-    private function launcher(int $opt = \Application\CLI::FORK_DEFAULT, $timeout) {
+    private function launcher(int $opt = self::FORK_DEFAULT, $timeout) {
         $pid = pcntl_fork();
-        if (!$opt & \Application\CLI::FORK_INFINITY || $timeout > 0) $this->max_forks--;
+        if (!$opt & self::FORK_INFINITY || $timeout > 0) $this->max_forks--;
         if ($pid == -1) {
             trigger_error('Could not launch new job, exiting', E_USER_WARNING);
             return false;
