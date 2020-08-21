@@ -99,7 +99,7 @@ class PDA
      */
     final static function field(string $key): string
     {
-        preg_match('/([a-zA-Z0-9\._-]+)/', $key, $v);
+        preg_match('/([a-zA-Z0-9\.,_-]+)/', $key, $v);
         if ($v) return $v[1];
         return $key;
     }
@@ -170,22 +170,16 @@ class PDA
                     $exp = explode($key_original, $k);
                     $jsoned = FALSE;
 
-                    switch ( trim($exp[0]) ) {
-                        case '>>': ;
-                            $f = explode('.', $key_original);
-                            $i = array_pop($f);
-                            $prefix = implode('.', $f);
-                            $key_original = "$prefix->>'{$i}'";
-                            $jsoned = TRUE;
-                            break;
-                        case '#>': ;
-                            $f = explode('.', $key_original);
-                            $i = array_pop($f);
-                            $prefix = implode('.', $f);
-                            $key_original = "($prefix->>'{$i}')::int";
-                            $jsoned = TRUE;
-                            break;
-                        default:
+                    if (in_array(trim($exp[0]), ['>>', '#>'])) {
+                        $jsoned = TRUE;
+                        $f = explode(',', $key_original);
+                        $i = array_pop($f);
+                        $prefix = count($f) > 1 ? implode("->'", $f) . "'" : $f;
+                        switch ($exp[0]) {
+                            case '>>': $key_original = "$prefix->>'{$i}'"; break;
+                            case '#>': $key_original = "($prefix->>'{$i}')::int"; break;
+                            default:
+                        }
                     }
 
                     $glue = !empty($c) ? 'AND' : '';
