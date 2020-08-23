@@ -506,6 +506,18 @@ class PDA
     }
 
     /**
+     * fields_diff
+     *
+     * @param array $row
+     * @param array $idx
+     * @return array
+     */
+    final static function fields_diff(array $row, array $idx): array
+    {
+        return array_values(array_diff(array_keys($row), $idx));
+    }
+
+    /**
      * @function param_wraper
      *
      * @param $v - Value
@@ -513,7 +525,7 @@ class PDA
      * @param $a - Array
      * @return float|int|string
      */
-    public static function param_wraper($v) {
+    final static function param_wraper($v) {
         switch (gettype($v)) {
             case 'object':
                 if ($v instanceof DateTime) {
@@ -551,7 +563,7 @@ class PDA
      * @param bool $keys
      * @return string
      */
-    public static function array2insert(array $a, array $fiels = [], bool $keys = true):string
+    final static function array2insert(array $a, array $fiels = [], bool $keys = true):string
     {
         $query = '';
         $ds = !\Application\PHPRoll::is_assoc($a) ? $a : [$a];
@@ -573,7 +585,7 @@ class PDA
      * @param array $a - Key Value
      * @return string
      */
-    public static function array2update(array $a, array $exclude = []): string
+    final static function array2update(array $a, array $exclude = []): string
     {
         $p = array_diff_key($a, array_flip($exclude));
         return implode(',', array_map(function ($k, $v) { return "$k = " . \Application\PDA::param_wraper($v); }, array_keys($p), $p));
