@@ -84,9 +84,9 @@ class Parameter implements \JsonSerializable
 
         if (is_callable($this->required)) $this->required = call_user_func_array($this->required->bindTo($this), $this->arguments($this->required));
 
-        if ($this->required && (is_null($this->value) || $this->value === '')) {
-            $this->isValid = false;
-        } elseif (!empty($this->validator) && ($this->required || !empty($this->value))) {
+        $empty  = $this->value === null || $this->value === '';
+        if ($this->required && $empty) { $this->isValid = false; }
+        if ($this->isValid && ($this->validator && !$empty)) {
             if (is_callable($this->validator)) {
                 $this->isValid = call_user_func_array($this->validator->bindTo($this), $this->arguments($this->validator));
             } elseif (is_string($this->validator) && !preg_match($this->validator, $this->value)) {
@@ -96,12 +96,11 @@ class Parameter implements \JsonSerializable
 
         if ($this->isValid) {
             if (is_callable($this->after)) $this->value = call_user_func_array($this->after->bindTo($this), $this->arguments($this->after));
-
             $this->params[$this->alias ? $this->alias : $this->name] = $this;
             $this->original = $this->name;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
         } else {
-            $this->setMessage($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
+            $this->alert = \Application\PHPRoll::formatter($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
         }
     }
 
@@ -198,19 +197,6 @@ class Parameter implements \JsonSerializable
                     }
             } return $item->value;
         }, (new \ReflectionFunction($fn))->getParameters());
-    }
-
-    /**
-     * @function setMessage
-     * Set error message
-     *
-     * @param $e
-     */
-    public function setMessage($message, $opt):\Application\Parameter
-    {
-        $this->alert = \Application\PHPRoll::formatter($message ? $message: "Parameter error %(name)s!", $opt);
-        if (!$this->owner) trigger_error($this->alert, E_USER_WARNING);
-        return $this;
     }
 
     /**
