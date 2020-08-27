@@ -207,7 +207,7 @@ abstract class CLI
      * ps -efw | grep php | grep -v grep | awk '{print $2}' | xargs kill
      * netstat -anop
      */
-    final function fork(int $max = 5, int $opt = self::FORK_DEFAULT, int $timeout=0)
+    final function fork(int $max = 5, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
     {
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) {
 //            pcntl_signal_dispatch();
@@ -269,7 +269,7 @@ abstract class CLI
      * @param $timeout
      * @return bool
      */
-    private function launcher(int $opt = self::FORK_DEFAULT, $timeout) {
+    private function launcher(int $opt = \Application\CLI::FORK_DEFAULT, $timeout) {
         $pid = pcntl_fork();
         if (!$opt & self::FORK_INFINITY || $timeout > 0) $this->max_forks--;
         if ($pid == -1) {
