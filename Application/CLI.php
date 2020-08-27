@@ -207,8 +207,10 @@ abstract class CLI
      * ps -efw | grep php | grep -v grep | awk '{print $2}' | xargs kill
      * netstat -anop
      */
-    final function fork(int $max = 5, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
+    final function fork(int $max = 1, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
     {
+        if ($max == 1 && ($opt & \Application\CLI::FORK_DEFAULT) && $timeout == 0) return $this->job();
+
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) {
 //            pcntl_signal_dispatch();
             pcntl_async_signals(true);
