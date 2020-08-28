@@ -258,10 +258,10 @@ abstract class CLI
                 }
                 continue;
             }
-
             if ( $this->looper && !$complete ) $this->launcher($opt, $timeout);
         }
 
+        return self::FORK_COMPLETE;
     }
 
     /**
