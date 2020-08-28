@@ -209,7 +209,7 @@ abstract class CLI
      */
     final function fork(int $max = 1, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
     {
-        if ($max == 1 && ($opt & \Application\CLI::FORK_DEFAULT) && $timeout == 0) return $this->job();
+        if (defined('SINGLETON') && SINGLETON) return $this->job();
 
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) {
 //            pcntl_signal_dispatch();
