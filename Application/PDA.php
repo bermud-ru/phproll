@@ -364,7 +364,7 @@ class PDA
      */
     static function huge_paginator ( $p, array &$filter, int $limit = 101 ): string
     {
-        $page = intval(is_array($p) ? p['page'] : $p);
+        $page = intval(is_array($p) ? "{$p['page']}" : "$p");
         $offset = ($page > 4) ? ($page-5) * 10 : 0;
         $filter['limit'] = $offset + $limit;
         return ($page > 5) ? "(case when count(*) < {$filter['limit']} then count(*) else {$filter['limit']} end)" : 'count(*)';
