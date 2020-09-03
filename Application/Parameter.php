@@ -245,7 +245,7 @@ class Parameter implements \JsonSerializable
      */
     public function array_to_string (array $a, $opt=null): ?string
     {
-        $str = implode(',', array_map(function ($v) {
+        $str = implode(',', array_map(function ($v) use($opt) {
             return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : \Application\Parameter::ize($v);
         },  $a));
         return  (!$this->is_null($opt) && $opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
@@ -321,7 +321,7 @@ class Parameter implements \JsonSerializable
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return array_map(function ($v) { return \Application\Parameter::ize($v, $opt); }, $this->value);
+            return array_map(function ($v) use ($opt){ return \Application\Parameter::ize($v, $opt); }, $this->value);
         } else {
             if (is_string($this->value)) {
                 // JSON_OBJECT_AS_ARRAY | JSON_INVALID_UTF8_IGNORE

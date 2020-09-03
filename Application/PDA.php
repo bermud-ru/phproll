@@ -99,7 +99,7 @@ class PDA
      */
     final static function field(string $key): string
     {
-        preg_match('/([a-zA-Z0-9\.,_-]+)/', $key, $v);
+        preg_match('/([a-zA-Z]+[a-zA-Z0-9\._,]*)/', $key, $v);
         if ($v) return $v[1];
         return $key;
     }
@@ -112,7 +112,7 @@ class PDA
      */
     final static function queryParams(string $query): array
     {
-        preg_match_all('/:([a-zA-Z0-9\._]+)/', $query, $v);
+        preg_match_all('/:([a-zA-Z]+[a-zA-Z0-9\._]*)/', $query, $v);
         if (isset($v[1])) return array_flip($v[1]);
         return [];
     }
@@ -134,7 +134,7 @@ class PDA
                 unset($query[$k]);
             }
         } elseif ($query) {
-            preg_match_all('/:([a-zA-Z0-9\._]+)/', $query, $v);
+            preg_match_all('/:([a-zA-Z]+[a-zA-Z0-9\._]*)/', $query, $v);
             if (isset($v[1])) {
                 foreach ($v[1] as $k => $v) {
                     str_replace($v, $prefix . $v, $query);
@@ -170,14 +170,16 @@ class PDA
                     $exp = explode($key_original, $k);
                     $jsoned = FALSE;
 
-                    if (in_array(trim($exp[0]), ['>>', '#>'])) {
+                    if (in_array(trim($exp[0]), ['>>','#>','#2>','#4>','#8>'])) {
                         $jsoned = TRUE;
                         $f = explode(',', $key_original);
                         $i = array_pop($f);
                         $prefix = count($f) > 1 ? implode("->'", $f) . "'" : $f;
                         switch ($exp[0]) {
                             case '>>': $key_original = "$prefix->>'{$i}'"; break;
-                            case '#>': $key_original = "($prefix->>'{$i}')::int"; break;
+                            case '#>':  case '#4>': $key_original = "($prefix->>'{$i}')::int"; break;
+                            case '#2>': $key_original = "($prefix->>'{$i}')::int2"; break;
+                            case '#8>': $key_original = "($prefix->>'{$i}')::int8"; break;
                             default:
                         }
                     }
@@ -416,13 +418,13 @@ class PDA
      * @param array $opt,  $opt['params'] {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @return bool
      */
-    public function insert(string $table, array $fields, array $opt = []): bool
+    public function insert(string $table, array $fields, array $opt = [])
     {
         $self = $this;
         $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
         {
             return $self->prepare("INSERT INTO $table (".implode(',', $keys)
-                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).')',
+                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).') RETURNING *',
                 $opt['PDO'] ?? $self->opt);
         };
 
@@ -432,8 +434,8 @@ class PDA
             foreach ($keys as $v) {
                 $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
             }
-            return $this->status = $stmt->execute();
-
+            $this->status = $stmt->execute();
+            return $this->status ? $stmt : null;
         } elseif (isset($opt['params'])) {
             $keys = $fields ;
             $stmt = $prepare($keys, $opt);
@@ -442,7 +444,8 @@ class PDA
                 foreach ($keys as $v) {
                     $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
                 }
-                return $this->status = $stmt->execute();
+                $this->status = $stmt->execute();
+                return $this->status ? $stmt : null;
             }
         } else  {
             trigger_error("Application\PDA::insert(table=$table) нет данных!", E_USER_WARNING);
@@ -450,15 +453,17 @@ class PDA
         }
 
         $this->status = true;
+        $returning = [];
         foreach ($opt['params'] as $k=>$v){
             $params = array_intersect_key($v, array_flip($keys));
             foreach ($keys as $v) {
                 $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
             }
             $this->status = $this->status && $stmt->execute();
+            if ($returning) $returning[] = $stmt;
         }
 
-        return $this->status;
+        return $this->status ? $returning : null;
     }
 
     /**
@@ -471,7 +476,7 @@ class PDA
      * @param array $opt
      * @return bool
      */
-    public function update(string $table, array $fields, $where = null, array $opt = []): bool
+    public function update(string $table, array $fields, $where = null, array $opt = []): ?\PDOStatement
     {
         $params = []; $keys = $fields; $exta = isset($opt['params']) ? $opt['params'] : [];
         if (\Application\PHPRoll::is_assoc($fields)) {
@@ -497,12 +502,13 @@ class PDA
         if (!empty($w)) $w = " WHERE $w";
         if (isset($opt['where'])) $w .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
 
-        $stmt = $this->prepare("UPDATE $table SET $f $w", $opt['PDO'] ?? $this->opt);
+        $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $opt['PDO'] ?? $this->opt);
         foreach ($params as $k=>$v) {
             $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
         }
 
-        return $this->status = $stmt->execute();
+        $this->status = $stmt->execute();
+        return $this->status ? $stmt : null;
     }
 
     /**
