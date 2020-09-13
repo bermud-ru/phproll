@@ -357,16 +357,15 @@ class PDA
      * Part of query for huge data pagination
      * @function huge_paginator
      *
-     * @param int | array $paginator
+     * @param array $paginator
      * @param array $filter
-     * @param int | array $total
      * @return string
      */
-    static function huge_paginator ( $paginator, array &$filter, $total = 101 ): string
+    static function huge_paginator ( array $paginator, array &$filter): string
     {
-        $page = intval(is_array($paginator) ? "{$paginator['page']}" : "$paginator");
-        $limit = is_array($p) ? intval("{$p['limit']}") : 10;
-        $total = intval(is_array($total) ? "{$total['limit']}" : "$total");
+        $page = intval("{$paginator['page']}");
+        $limit = intval("{$paginator['limit']}");
+        $total = isset($paginator['total']) ? intval("{$paginator['total']}") : ($limit * 10 + 1);
         $offset = ($page > 4) ? ($page-5) * $limit : 0;
         $filter['limit'] = $offset + $total;
         return ($page > 5) ? "(case when count(*) < {$filter['limit']} then count(*) else {$filter['limit']} end)" : 'count(*)';
