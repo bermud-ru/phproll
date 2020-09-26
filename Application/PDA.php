@@ -56,7 +56,7 @@ class PDA
      * @return string|null
      *
      */
-    public static function escape_string(string $s): ?string
+    public static function pg_escape_string(string $s): ?string
     {
        return (function_exists('pg_escape_string')) ? pg_escape_string($s) : str_replace( "'", "''" , $s);
     }
@@ -87,19 +87,6 @@ class PDA
     {
         if ($this->pdo instanceof \PDO && method_exists($this->pdo, $name)) return call_user_func_array([$this->pdo, $name], $arguments);
         throw new \Exception(__CLASS__."->$name(...) method not foudnd");
-    }
-
-    /**
-     * PDO Native static method
-     *
-     * @param $name
-     * @param $arguments
-     * @return mixed
-     */
-    public static function __callStatic($name, $arguments)
-    {
-        if (method_exists(\PDO, $name)) return call_user_func_array([\PDO, $name], $arguments);
-        throw new \Exception(__CLASS__."::$name(...) method not foudnd");
     }
 
     /**
