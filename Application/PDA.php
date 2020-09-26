@@ -573,7 +573,7 @@ class PDA
                 break;
             case 'string':
             default:
-                $val = "'".filter_var($v, FILTER_SANITIZE_ADD_SLASHES)."'";
+                $val = "'".pg_escape_string($v)."'";
         }
         return $val;
     }

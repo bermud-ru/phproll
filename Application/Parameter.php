@@ -406,7 +406,7 @@ class Parameter implements \JsonSerializable
                 $val = $this->__toString();
                 if (!empty($val)) {
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) $val = "'$val'";
+                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) $val = "'".pg_escape_string($val)."'";
                 } elseif ($opt & \PDO::NULL_EMPTY_STRING) { $val = NULL; }
                 elseif (($val === NULL || $val === '') && !($opt & \PDO::NULL_EMPTY_STRING)) { $val = 'NULL'; }
         }
@@ -467,7 +467,7 @@ class Parameter implements \JsonSerializable
             default:
                 $val = strval($param);
                 if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-                if (($opt & \Application\PDA::QUERY_STRING_QUOTES) && $val !== null) $val = "'$val'";
+                if (($opt & \Application\PDA::QUERY_STRING_QUOTES) && $val !== null) $val = "'".pg_escape_string($val)."'";
         }
 
         return $val;
