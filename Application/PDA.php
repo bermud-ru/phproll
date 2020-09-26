@@ -51,6 +51,17 @@ class PDA
     }
 
     /**
+     * @function pg_escape_string
+     * @param string $s
+     * @return string|null
+     *
+     */
+    public static function escape_string(string $s): ?string
+    {
+       return (function_exists('pg_escape_string')) ? pg_escape_string($s) : str_replace( "'", "''" , $s);
+    }
+
+    /**
      * PDO Native property
      *
      * @param $name
@@ -573,7 +584,7 @@ class PDA
                 break;
             case 'string':
             default:
-                $val = "'".pg_escape_string($v)."'";
+                $val = "'".self::pg_escape_string($v)."'";
         }
         return $val;
     }
