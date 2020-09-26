@@ -191,7 +191,7 @@ class PDA
                         $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
                         if ($key != $k) unset($where[$k]);
                     } else {
-                        while (isset($params[$key])) { $key .= '_1'; }
+                        while (array_key_exists($key, $params)) { $key .= '_1'; }
                         $params[$key] = $vals[$k] ?? $source = [$k] ?? null;
                     }
 
@@ -204,10 +204,10 @@ class PDA
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original IS NOT NULL";
                         case '&^': ; // ( <параметр> == Parameter::ize(...) OR <параметр> is null )
-                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
                             return "$c $glue ($key_original = $val OR $key_original IS NULL)";
                         case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
-                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
                             if (!empty($val)) break;
                         case '^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
@@ -221,13 +221,13 @@ class PDA
                         case '~*': ;
                             return "$c $glue $key_original ILIKE :$key";
                         case '&': ;
-                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original & $val = $val";
                         case '==': ;
                             return "$c $glue LOWER($key_original) = LOWER(:$key)";
                         case '++': ;
-                            $val = isset($vals[$k]) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $val";
                         case '@': ;
@@ -250,7 +250,7 @@ class PDA
         $keys = self::queryParams($where);
         foreach ($keys as $k=>$v) {
             $key = str_replace('.','_', $k);
-            while (isset($params[$key])) { $key .= '_1'; }
+            while (array_key_exists($key, $params)) { $key .= '_1'; }
             $params[$key] = $source=[$k] ?? $params[$k] ?? null;
         }
 
@@ -345,9 +345,9 @@ class PDA
                 unset($params['page']);
             }
         } else {
-            if (isset($params['page'])) unset($params['page']);
-            if (isset($params['offset'])) unset($params['offset']);
-            if (isset($params['limit'])) unset($params['limit']);
+            if (array_key_exists('page', $params)) unset($params['page']);
+            if (array_key_exists('offset', $params)) unset($params['offset']);
+            if (array_key_exists('limit', $params)) unset($params['limit']);
         }
 
         return $offset . $limit;
@@ -514,7 +514,7 @@ class PDA
         } elseif (\Application\PHPRoll::is_assoc($where)) {
             $w = $this->where($where,$params);
         } elseif ($where) {
-            $a = []; foreach ($where as $k=>$v) { $a[$v] = isset($exta[$v]) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
+            $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $exta) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
             $w = $this->where($a,$params);
         }
         if (!empty($w)) $w = " WHERE $w";
