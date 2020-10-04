@@ -13,6 +13,8 @@
 
 namespace Application;
 
+use http\Encoding\Stream;
+
 if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 
 abstract class CLI
@@ -51,7 +53,7 @@ abstract class CLI
 
     const FORK_DEFAULT = 0;
     const FORK_INFINITY = 1;
-    const FORK_LAZYJOB = 2;
+    const FORK_EXCHANGE = 2;
     const FORK_EMPTY = 4;
     const FORK_RESULTSET = 8;
     const FORK_COMPLETE = 16;
@@ -66,7 +68,7 @@ abstract class CLI
      *
      * @param $config данные из файла конфигурации
      */
-    public function __construct($params, $bootstrap = null)
+    public function __construct(array $params, $bootstrap = null)
     {
         $this->path = pathinfo($bootstrap ?? __FILE__, PATHINFO_DIRNAME);
         $this->file = pathinfo($bootstrap ?? __FILE__, PATHINFO_BASENAME);
@@ -154,9 +156,8 @@ abstract class CLI
     public function __destruct() {
         $pidfile = null;
         if ($this->pidfile) $pidfile = $this->fork_idx == 0 ? $this->pidfile : $this->pidfile .":" . $this->fork_idx;
-        if (!$this->__running && $pidfile && file_exists($pidfile)) {
-            @unlink($pidfile);
-        }
+        if (!$this->__running && $pidfile && file_exists($pidfile)) { @unlink($pidfile); }
+
     }
 
     /**
@@ -190,9 +191,12 @@ abstract class CLI
 
     /**
      * @function job
+     * Payload part for multithreading tasks
+     *
+     * @param stream $io
      * @return int FORK_EMPTY | FORK_RESULTSET | FORK_COMPLETE
      */
-    public function job(): int { return self::FORK_COMPLETE; }
+    public function job( $io = null ): ?int { return self::FORK_COMPLETE; }
 
     /**
      * @function fork
@@ -226,18 +230,35 @@ abstract class CLI
         $empty_length = 0;
         $complete = false;
         $waite_empty_results = !($opt & self::FORK_INFINITY);
-
+        $write = $except = [];
         while ( $this->looper ) {
+            if ( $opt & self::FORK_EXCHANGE && count($this->forks) == $max ) {
+                $read = $this->forks;
+                if (stream_select($read, $write, $except, null)) {
+                    foreach ($read as $src) {
+                        $data = @fread($src, 1000);
+                        if (!$data) { //соединение было закрыто
+                            @fclose($src);
+                            continue;
+                        }
+                        foreach ($this->workers as $dest) {//пересылаем данные во все воркеры
+                            if (is_resource($dest) && ($dest !== $src)) {
+                                @fwrite($dest, $data);
+                            }
+                        }
+                    }
+                }
+            }
             while ( count($this->forks) > $this->max_forks ) {
-                foreach ( $this->forks as $pid => $FORK_num ) {
+                foreach ( $this->forks as $pid => $socket ) {
 //                    $child = pcntl_waitpid($pid, $result, WNOHANG|WUNTRACED); // слушаем статус детей
 //                    if ( $child == -1 || $child > 0 ) {
 //                        $code = pcntl_wexitstatus($result);
 //                        echo "=== STATUS: [ $code ] === $child : {$this->forks[$child]} ======\n\n";
+//                        @fclose($socket);
 //                        unset($this->forks[$pid]);
 //                    }
                     $child = pcntl_wait($result);
-
                     if (pcntl_wifexited($result) !== 0) {
                         $code = pcntl_wexitstatus($result);
                         $complete = $complete || $code & self::FORK_COMPLETE;
@@ -248,6 +269,7 @@ abstract class CLI
                         } else if ($code & self::FORK_RESULTSET && $this->max_forks < $max && !$timeout) {
                             if (!$complete) $this->max_forks++;
                         }
+                        @fclose($this->forks[$child]);
                         unset($this->forks[$child]);
 
                         if ( $this->max_forks == 0 && $timeout && $this->looper ) {
@@ -258,9 +280,8 @@ abstract class CLI
                 }
                 continue;
             }
-            if ( $this->looper && !$complete ) $this->launcher($opt, $timeout);
+            if ( $this->looper && !$complete ) list($pid, $fork_idx) = $this->launcher($opt, $timeout);
         }
-
         return self::FORK_COMPLETE;
     }
 
@@ -269,10 +290,12 @@ abstract class CLI
      *
      * @param int $opt
      * @param $timeout
-     * @return bool
+     * @return array PID , ForkIndex
      */
     private function launcher(int $opt = \Application\CLI::FORK_DEFAULT, $timeout) {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = pcntl_fork();
+
         if (!$opt & self::FORK_INFINITY || $timeout > 0) $this->max_forks--;
         if ($pid == -1) {
             trigger_error('Could not launch new job, exiting', E_USER_WARNING);
@@ -281,13 +304,16 @@ abstract class CLI
             $this->processPID = $pid;
             if ($this->pidfile) {
                 $pidfile = $this->fork_idx == 0 ? $this->pidfile : $this->pidfile . ":" . $this->fork_idx;
-                file_put_contents($pidfile, $this->processPID);
+                @file_put_contents($pidfile, $this->processPID);
             }
-            $this->fork_idx = $this->forks[$pid] = $this->max_forks; // храним список детей для прослушки
+            @fclose($pair[0]);
+            $this->forks[$pid] = $pair[1]; // храним список детей для прослушки
+            $this->fork_idx = $this->max_forks;
         } else {
-            exit( $this->job() );
+            @fclose($pair[1]);
+            exit( $this->job($pair[0]) );
         }
-        return true;
+        return [$pid, $this->fork_idx];
     }
 
 }

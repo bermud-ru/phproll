@@ -382,7 +382,7 @@ class PHPRoll extends \Application\Request
             case 'view':
                 header('Content-Description: html view');
 //                header('Content-Security-Policy: default-src "self"; frame-ancestors "self"');
-                header('Strict-Transport-Security: max-age=86400');
+                header('Strict-Transport-Security: max-age=86400; includeSubDomains');
                 header('X-XSS-Protection: 1; mode=block');
                 header('X-Content-Type-Options: nosniff');
                 header('Content-Type: text/html; charset=utf-8');
