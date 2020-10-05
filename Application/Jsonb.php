@@ -20,15 +20,15 @@ class Jsonb implements \JsonSerializable
     const JSON_STRICT = 1;
     const JSON_STRINGIFY = 2;
 
-    private $json = null;
-    private $error = JSON_ERROR_NONE;
-    private $assoc = false;
-    private $depth = 512;
-    private $options = 0;
-    private $mode = \Application\Jsonb::JSON_STRICT;
-    private $default = [];
-    private $owner = null;
-    private $params = [];
+    protected $json = null;
+    protected $error = JSON_ERROR_NONE;
+    protected $assoc = false;
+    protected $depth = 512;
+    protected $options = 0;
+    protected $mode = \Application\Jsonb::JSON_STRICT;
+    protected $default = [];
+    protected $owner = null;
+    protected $params = [];
 
     public $is_decoded = false;
 
@@ -83,7 +83,7 @@ class Jsonb implements \JsonSerializable
      * @return array|mixed|\stdClass|string|null
      * @throws \Exception
      */
-    private function getParam (&$fields=null, $obj, $default=null)
+    protected function getParam (&$fields=null, $obj, $default=null)
     {
         if (is_null($fields)) return $this->json;
 
@@ -137,7 +137,7 @@ class Jsonb implements \JsonSerializable
      * @param null $bind
      * @return mixed|string
      */
-    private function call(string $name, array $arguments, $context = null)
+    protected function call(string $name, array $arguments, $context = null)
     {
         $fn = $this->get($name);
 

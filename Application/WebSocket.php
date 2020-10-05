@@ -94,7 +94,7 @@ class WebSocket extends \Application\Socket
      * @param $data
      * @return string|null
      */
-    private function hybi10Decode($data): ?string
+    protected function hybi10Decode($data): ?string
     {
         $bytes = $data;
         $dataLength = '';
@@ -146,7 +146,7 @@ class WebSocket extends \Application\Socket
      * @param bool $masked
      * @return string
      */
-    private function hybi10Encode($payload, $type = 'text', $masked = true): string
+    protected function hybi10Encode($payload, $type = 'text', $masked = true): string
     {
         $frameHead = [];
         $frame = '';
@@ -230,7 +230,7 @@ class WebSocket extends \Application\Socket
      * @param bool $addNumbers
      * @return false|string
      */
-    private static function generateRandomString($length = 10, $addSpaces = true, $addNumbers = true)
+    protected static function generateRandomString($length = 10, $addSpaces = true, $addNumbers = true)
     {
         $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"§$%&/()=[]{}';
         $useChars = array();

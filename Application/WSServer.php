@@ -16,13 +16,13 @@ if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 
 abstract class WSServer extends \Application\CLI implements \Application\IWSServer
 {
-    private $ssl_mode = false;
-    private $context = null;
-    private $host = '127.0.0.1';
-    private $port = 8000;
-    private $server = null;
+    protected $ssl_mode = false;
+    protected $context = null;
+    protected $host = '127.0.0.1';
+    protected $port = 8000;
+    protected $server = null;
 
-    private $service = null;
+    protected $service = null;
     public $unix_socket = '/tmp/websocket.sock';
 
     public $read = [];
@@ -76,7 +76,7 @@ abstract class WSServer extends \Application\CLI implements \Application\IWSServ
      * "emailAddress" => "box@none.no"
      * ];
      */
-    private function SSLContext(string $pem_file, array $dn, ?string $pem_passphrase = null)
+    protected function SSLContext(string $pem_file, array $dn, ?string $pem_passphrase = null)
     {
         if (!file_exists($pem_file)) {
             $privkey = openssl_pkey_new();
@@ -89,7 +89,6 @@ abstract class WSServer extends \Application\CLI implements \Application\IWSServ
             file_put_contents($pem_file, $pem);
         }
     }
-
 
     public function start($thread)
     {

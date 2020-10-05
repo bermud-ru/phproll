@@ -378,7 +378,7 @@ class PDA
      * @param array $opt
      * @return string
      */
-    private function filtration(string $sql, array &$params, array $opt = []): string
+    protected function filtration(string $sql, array &$params, array $opt = []): string
     {
         $opt = array_merge(['wrap'=> false, 'paginator'=>true], $opt);
 

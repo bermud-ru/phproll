@@ -44,7 +44,7 @@ abstract class CLI
     public $threadfile = null;
     public $cron = null;
 
-    private $__running = false;
+    protected $__running = false;
     public $processPID = null;
 
     protected static $scriptID;
@@ -61,7 +61,7 @@ abstract class CLI
     public $looper = true;
     public $max_forks = 0;
     public $fork_idx = 0;
-    private $forks = [];
+    protected $forks = [];
 
     /**
      * Конструктор
@@ -292,7 +292,7 @@ abstract class CLI
      * @param $timeout
      * @return array PID , ForkIndex
      */
-    private function launcher(int $opt = \Application\CLI::FORK_DEFAULT, $timeout) {
+    protected function launcher(int $opt = \Application\CLI::FORK_DEFAULT, $timeout) {
         $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
         $pid = pcntl_fork();
 
@@ -311,7 +311,7 @@ abstract class CLI
             $this->fork_idx = $this->max_forks;
         } else {
             @fclose($pair[1]);
-            exit( $this->job($pair[0]) );
+            exit( $this->job( $pair[0]) );
         }
         return [$pid, $this->fork_idx];
     }

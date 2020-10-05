@@ -14,8 +14,8 @@
 namespace Application;
 
 class ContextException extends \Exception {
-    private $owner = null;
-    private $option = null;
+    protected $owner = null;
+    protected $option = null;
 
     /**
      * ContextException constructor.
