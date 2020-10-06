@@ -172,7 +172,7 @@ class PDA
                         $jsoned = TRUE;
                         $f = explode(',', $key_original);
                         $i = array_pop($f);
-                        $prefix = count($f) > 1 ? implode("->'", $f) . "'" : $f;
+                        $prefix = count($f) > 1 ? implode("->'", $f) . "'" : $f[0];
                         switch ($exp[0]) {
                             case '>>': $key_original = "$prefix->>'{$i}'"; break;
                             case '#>':  case '#4>': $key_original = "($prefix->>'{$i}')::int"; break;
