@@ -38,7 +38,7 @@ class Parameter implements \JsonSerializable
     public $value = null;
     public $original = null;
 
-    const MESSAGE = "Parameter error, %(name)s = %(value)s is wrong!";
+    const MESSAGE = "Parameter error, {name} = {value} is wrong!";
     /**
      * Parameter constructor
      *
@@ -100,7 +100,7 @@ class Parameter implements \JsonSerializable
             $this->original = $this->name;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
         } else {
-            $this->alert = \Application\PHPRoll::formatter($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
+            $this->alert = \Application\IO::replace($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
         }
     }
 

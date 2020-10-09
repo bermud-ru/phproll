@@ -89,31 +89,6 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * Форматированный вывод значений в строку
-     * formatter("Текст %(<имя переменной>)s",['<имя переменной>' => <значение>]);
-     *
-     * @param string $pattern
-     * @param array $properties
-     * @return bool|mixed
-     */
-    public static function formatter($pattern, array $properties)
-    {
-        if ($pattern && count($properties)) {
-            $keys = array_keys($properties);
-            $keysmap = array_flip($keys);
-            $values = array_values($properties);
-            while (preg_match('/%\(([a-zA-Z0-9_ -]+)\)/', $pattern, $m)) {
-                if (!isset($keysmap[$m[1]]))  $pattern = str_replace($m[0], '% - $', $pattern);
-                else $pattern = str_replace($m[0], '%' . ($keysmap[$m[1]] + 1) . '$', $pattern);
-            }
-            array_unshift($values, $pattern);
-            return call_user_func_array('sprintf', $values);
-        } else {
-            return $pattern;
-        }
-    }
-
-    /**
      * Проверяем является массив ассоциативным
      *
      * @param array $a

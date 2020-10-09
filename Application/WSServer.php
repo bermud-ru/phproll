@@ -14,8 +14,21 @@ namespace Application;
 
 if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 
-abstract class WSServer extends \Application\CLI implements \Application\IWSServer
+abstract class WSServer extends \Application\CLI
 {
+    const WEBSOCKET_RESPONSE_CODE = [
+        1000 => 'normal closure',
+        1001 => 'going away',
+        1002 => 'protocol error',
+        1003 => 'unknown data (opcode)',
+        1004 => 'frame too large',
+        1005 => 'Unknow rrmote host error',
+        1006 => 'Unknow rrmote host error',
+        1007 => 'utf8 expected',
+        1008 => 'message violates server policy',
+        1015 => 'Untrusted SSL certificate'
+    ];
+    
     protected $ssl_mode = false;
     protected $context = null;
     protected $host = '127.0.0.1';

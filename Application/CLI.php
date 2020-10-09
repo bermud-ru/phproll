@@ -13,7 +13,7 @@
 
 namespace Application;
 
-use http\Encoding\Stream;
+//use http\Encoding\Stream;
 
 if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 

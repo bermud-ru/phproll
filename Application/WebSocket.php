@@ -80,7 +80,7 @@ class WebSocket extends \Application\Socket
         if (!is_resource($this->socket)) return null;
 
         for ($written = 0; $written < strlen($string); $written += $fwrite) {
-            $fwrite = fwrite($this->socket, substr($string, $written));
+            $fwrite = @fwrite($this->socket, substr($string, $written));
             if ($fwrite === false) {
                 return $written;
             }

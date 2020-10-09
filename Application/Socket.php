@@ -18,9 +18,14 @@ class Socket implements \Application\ISocket
 
     public $type = false;
     public $socket = null;
+    private $index = null;
     protected $opt = false;
 
-    public function __construct(array $opt = [], $socket = null) { $this->opt = $opt; $this->socket = $socket; }
+    public function __construct(array $opt = [], $socket = null) {
+        $this->opt = $opt;
+        $this->socket = $socket;
+        if ($socket) $this->index = intval($socket);
+    }
 
     function __destruct() {
        if (is_resource($this->socket)) stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
@@ -28,7 +33,7 @@ class Socket implements \Application\ISocket
 
     function __invoke($socket = null, string $class = null) {
         if (class_exists($class)) return new $class($this->opt, $socket);
-        if ($socket) $this->socket = $socket;
+        if ($socket) { $this->socket = $socket; $this->index = intval($socket); }
         return $this;
     }
 
