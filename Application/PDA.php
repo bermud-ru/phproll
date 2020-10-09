@@ -155,7 +155,7 @@ class PDA
     static function where(&$where, array &$params=null, array $source=null):string
     {
         if (is_array($where)) {
-            if ($is_assoc = \Application\PHPRoll::is_assoc($where)) {
+            if ($is_assoc = \Application\Parameter::is_assoc($where)) {
                 $keys = array_keys($where);
                 $vals = $where;
             } else {
@@ -268,7 +268,7 @@ class PDA
     {
         $stmt = $this->prepare($sql, $opt['PDO'] ?? $this->opt);
         if ($keys = self::queryParams($sql)) {
-            if (\Application\PHPRoll::is_assoc($params)) {
+            if (\Application\Parameter::is_assoc($params)) {
                 foreach (array_intersect_key($params, $keys) as $k => $v) {
                     $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
                 }
@@ -302,7 +302,7 @@ class PDA
     {
         $query = $sql;
 
-        if (($fields = self::queryParams($sql)) && \Application\PHPRoll::is_assoc($params) ) {
+        if (($fields = self::queryParams($sql)) && \Application\Parameter::is_assoc($params) ) {
             foreach (array_intersect_key($params, $fields) as $k=>$v) {
 //                $query = str_replace(":$k", is_numeric($value) ? $value : ( $value === null ? 'NULL' :"'$value'"), $query);
                 $query = str_replace(':' . str_replace('.','_', $k), \Application\Parameter::ize($v,  \Application\PDA::ADDSLASHES | \Application\PDA::QUERY_STRING_QUOTES), $query);
@@ -444,7 +444,7 @@ class PDA
                 $opt['PDO'] ?? $self->opt);
         };
 
-        if (\Application\PHPRoll::is_assoc($fields)) {
+        if (\Application\Parameter::is_assoc($fields)) {
             $keys = array_keys($fields);
             $stmt = $prepare($keys, $opt);
             foreach ($keys as $v) {
@@ -455,7 +455,7 @@ class PDA
         } elseif (isset($opt['params'])) {
             $keys = $fields ;
             $stmt = $prepare($keys, $opt);
-            if (\Application\PHPRoll::is_assoc($opt['params'])) {
+            if (\Application\Parameter::is_assoc($opt['params'])) {
                 $params = array_intersect_key($opt['params'], array_flip($keys));
                 foreach ($keys as $v) {
                     $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
@@ -495,7 +495,7 @@ class PDA
     public function update(string $table, array $fields, $where = null, array $opt = []): ?\PDOStatement
     {
         $params = []; $keys = $fields; $exta = isset($opt['params']) ? $opt['params'] : [];
-        if (\Application\PHPRoll::is_assoc($fields)) {
+        if (\Application\Parameter::is_assoc($fields)) {
             $keys = array_keys($fields);
             $params = $fields;
         } elseif (isset($opt['params'])) {
@@ -509,7 +509,7 @@ class PDA
         $w = '';
         if (is_string($where)) {
             $w = $this->where($where, $params, $exta);
-        } elseif (\Application\PHPRoll::is_assoc($where)) {
+        } elseif (\Application\Parameter::is_assoc($where)) {
             $w = $this->where($where,$params);
         } elseif ($where) {
             $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $exta) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
@@ -621,7 +621,7 @@ class PDA
     final static function array2insert(array $a, array $fiels = [], bool $keys = true):string
     {
         $query = '';
-        $ds = !\Application\PHPRoll::is_assoc($a) ? $a : [$a];
+        $ds = !\Application\Parameter::is_assoc($a) ? $a : [$a];
 
         if ($keys) $query = ' (' . ( count($fiels) ? implode(',', array_keys(array_intersect_key($ds[0], array_flip($fiels)))) : implode(',', array_keys($ds[0]))) . ') ';
 

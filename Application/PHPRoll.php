@@ -89,33 +89,6 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * Проверяем является массив ассоциативным
-     *
-     * @param array $a
-     * @return bool
-     */
-    public static function is_assoc(array $a): bool
-    {
-        return array_keys($a) !== range(0, count($a) - 1);
-    }
-
-    /**
-     * Приводим ключи массива к нормализованному виду
-     *
-     * @param array $a
-     * @return array
-     */
-    public static function array_keys_normalization(array $a): array
-    {
-        $data = [];
-        foreach ($a as $k=>$v) {
-            $keys = explode(\Application\PHPRoll::KEY_SEPARATOR, $k);
-            $data[end($keys)] = $v;
-        }
-        return $data;
-    }
-
-    /**
      * Дерево прараметров в запросе разворачивает в массив ключ-значение,
      * создавая идекс вложенности
      *
@@ -209,7 +182,7 @@ class PHPRoll extends \Application\Request
     {
         $path = $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
         $is_set = is_array($pattern);
-        $is_assoc = $is_set ? \Application\PHPRoll::is_assoc($pattern) : false;
+        $is_assoc = $is_set ? \Application\Parameter::is_assoc($pattern) : false;
         if (!isset($options['include'])) $options['include'] = [];
 
         if ($is_assoc) {

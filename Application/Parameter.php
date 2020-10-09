@@ -114,7 +114,7 @@ class Parameter implements \JsonSerializable
      */
     public static function append(array $fields, array &$params):bool
     {
-        if (\Application\PHPRoll::is_assoc($fields)) {
+        if (self::is_assoc($fields)) {
             foreach ($fields as $k => $v) {
                new \Application\Parameter(['name'=>$k, 'default'=>$v],$params);
             }
@@ -212,6 +212,33 @@ class Parameter implements \JsonSerializable
         if (is_null($cb)) $cb = function($v) { return ($v instanceof \Application\Parameter) ? !$v->is_null(\PDO::NULL_EMPTY_STRING) : ($v !== null && $v !== ''); };
 
         return array_filter($a, $cb, $flag);
+    }
+
+    /**
+     * Приводим ключи массива к нормализованному виду
+     *
+     * @param array $a
+     * @return array
+     */
+    public static function array_keys_normalization(array $a): array
+    {
+        $data = [];
+        foreach ($a as $k=>$v) {
+            $keys = explode(\Application\PHPRoll::KEY_SEPARATOR, $k);
+            $data[end($keys)] = $v;
+        }
+        return $data;
+    }
+
+    /**
+     * Проверяем является массив ассоциативным
+     *
+     * @param array $a
+     * @return bool
+     */
+    public static function is_assoc(array $a): bool
+    {
+        return array_keys($a) !== range(0, count($a) - 1);
     }
 
     /**
