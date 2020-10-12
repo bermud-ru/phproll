@@ -16,6 +16,19 @@ class WebSocket extends \Application\Socket
 {
     const SOCKET_BUFFER_SIZE = 8192;
 
+    /**
+     * @function address
+     * Получить название локального или удалённого сокета
+     *
+     * @param bool $want_peer Если установлено в TRUE, то будет возвращено удалённое название сокета, если установлено
+     * в FALSE, то будет возвращено локальное название.
+     * @return string|null
+     */
+    public function address( bool $want_peer = true ): ?string
+    {
+        return is_resource($this->socket) ? stream_socket_get_name($this->socket, $want_peer) : null;
+    }
+
     public function read(): ?string
     {
         return $this->hybi10Decode($this->readBuffer());

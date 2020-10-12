@@ -270,7 +270,7 @@ class IO
      * @param $msg
      * @param string $prefix
      */
-    static function syslog($msg, $prefix = __DIR__ .'/../logs/')
+    static function syslog($msg, $prefix = __DIR__ . DIRECTORY_SEPARATOR . 'log')
     {
         $log_filename = $prefix . '-' . date('j.n.Y');
         $data = date('Y-m-d H:i:s') . ' - ' . $msg;

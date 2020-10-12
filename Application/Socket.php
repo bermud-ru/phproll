@@ -27,9 +27,7 @@ class Socket implements \Application\ISocket
         if ($socket) $this->index = intval($socket);
     }
 
-    function __destruct() {
-       if (is_resource($this->socket)) stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
-    }
+    function __destruct() { $this->close(); }
 
     function __invoke($socket = null, string $class = null) {
         if (class_exists($class)) return new $class($this->opt, $socket);
@@ -67,14 +65,40 @@ class Socket implements \Application\ISocket
         throw new \Exception(get_class($this) . "->$name(...) method not foudnd");
     }
 
+    /**
+     * @function meta
+     * Получает информацию о существующем потоке stream.
+     * 
+     * @return array|null
+     */
+    public function meta(): ?array
+    {
+        return is_resource($this->socket) ? stream_get_meta_data($this->socket) : null;
+    }
+
+    /**
+     * @param string $string
+     * @param array $opt
+     * @return int|null
+     */
     public function write(string $string, array $opt = []): ?int
     {
         return is_resource($this->socket) ? @fwrite($this->socket, $string) : null;
     }
 
+    /**
+     * @return string|null
+     */
     public function read(): ?string
     {
         return is_resource($this->socket) ? @fread($this->socket, self::SOCKET_BUFFER_SIZE) : null;
+    }
+
+    /**
+     * @param $socket
+     */
+    public function close() {
+        if (is_resource($this->socket)) stream_socket_shutdown($this->socket, STREAM_SHUT_RDWR);
     }
 
 }

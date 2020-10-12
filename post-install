@@ -1,11 +1,24 @@
-#!/bin/sh
-
-# @category install script
+#!/usr/bin/env bash
+#
+# @category Installation nginx with TLS 1.3 (CentOS 7.x, 8.x)
 # @author Андрей Новиков <andrey@novikov.be>
 # @data 07/12/2015
+#
+
+# Make sure only root can run our script
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
+
+######## CONFIG ##########################################################################
+project="phproll.server"
+SSL_path=$(pwd)/setup/SSL
+##########################################################################################
 
 vendor=vendor/bermud-ru/phproll
-echo "Post-install scripting ..."
+printf "Post-install scripting ...\n\n"
+printf "Folder structures\n"
 mkdir -p ./public/css
 mkdir -p ./public/js
 mkdir -p ./Application/view
@@ -27,9 +40,7 @@ do
 done
 cp -rf ./$vendor/Application/view/* ./Application/view/
 
-project="phproll.server"
-SSL_path=$(pwd)/setup/SSL
-
+printf "NGINX configuration\n"
 cat << EOF > ./setup/nginx/$project.conf
 server {
     # access_log /var/log/nginx/$project.access.log combined;
@@ -56,8 +67,11 @@ server {
     listen 443 ssl;
     ssl_certificate     $SSL_path/nginx.crt;
     ssl_certificate_key $SSL_path/nginx.key;
-    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_protocols TLSv1.3 TLSv1.2;
+    ssl_ciphers 'TLS-CHACHA20-POLY1305-SHA256:TLS-AES-256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384';
+    ssl_ecdh_curve X448:secp521r1:secp384r1:prime256v1;
+    ssl_session_cache shared:SSL:30m;
+    ssl_session_timeout 30m;
 
     set \$appenv dev;
 
@@ -73,14 +87,11 @@ server {
         try_files \$uri =404;
     }
 
-    location ~ \.(php|tmpl|wsdl|ws)\$ {
+    location ~ \.(php|tmpl)\$ {
         set \$fsn /\$app_bootstrap;
         fastcgi_param appenv \"dev\";
         fastcgi_index \$app_botstrap;
-        fastcgi_split_path_info ^(.+\.php|.+\.tmpl|.+\.wsdl|.+\.ws)(.*)\$;
-        #fastcgi_pass  unix:/tmp/php-fpm.sock;
-        #fastcgi_pass unix:/var/run/php5-fpm.sock;
-        #fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+        fastcgi_split_path_info ^(.+\.php|.+\.tmpl)(.*)\$;
         fastcgi_pass unix:/run/php-fpm/php7.0-fpm.sock;
 
         if (-f \$document_root\$fastcgi_script_name){
@@ -100,6 +111,46 @@ server {
         deny all;
         access_log off;
         log_not_found off;
+    }
+}
+EOF
+printf "NGINX webSocket configuration\n"
+cat << EOF > ./setup/nginx/$project.wss.conf
+upstream appserver {
+    server 127.0.0.1:8001; # appserver_ip:ws_port
+}
+
+server {
+    # client_wss_port
+    listen 8000;
+
+    ssl on;
+    ssl_certificate     $SSL_path/nginx.crt;
+    ssl_certificate_key $SSL_path/nginx.key;
+
+    #so_keepalive on;
+    tcp_nodelay on;
+
+    #websocket_pass appserver;
+    #websocket_buffer 1k;
+
+    location / {
+        # prevents 502 bad gateway error
+        proxy_buffers 8 32k;
+        proxy_buffer_size 64k;
+        proxy_pass http://appserver;
+        proxy_redirect off;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-NginX-Proxy true;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 86400;
     }
 }
 EOF

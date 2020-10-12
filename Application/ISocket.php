@@ -15,4 +15,5 @@ namespace Application;
 interface ISocket {
     public function write(string $string, array $opt = []): ?int;
     public function read(): ?string;
+    public function close();
 }

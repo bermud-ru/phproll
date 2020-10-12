@@ -1,8 +1,15 @@
-#!/bin/sh
-
-# @category install script
+#!/usr/bin/env bash
+#
+# @category Installation nginx with TLS 1.3 (CentOS 7.x, 8.x)
 # @author Андрей Новиков <andrey@novikov.be>
 # @data 07/12/2015
+#
+
+# Make sure only root can run our script
+if [ "$(id -u)" != "0" ]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
 
 echo "Post-update scripting ..."
 #cp ./vendor/bermud-ru/phproll/public/index.php ./public/
@@ -11,3 +18,4 @@ echo "Post-update scripting ..."
 #do
 # [ -f $js ] && cp -n $js ./public/js/
 #done
+exit

@@ -38,9 +38,9 @@ abstract class WSServer extends \Application\CLI
     protected $service = null;
     public $unix_socket = '/tmp/websocket.sock';
 
-    public $read = [];
-    public $write = [];
-    public $except = [];
+    protected $read = [];
+    protected $write = [];
+    protected $except = [];
 
     abstract public function handshake(\Application\ISocket $s);
     abstract public function open(\Application\ISocket $s, array $opt = []);
@@ -115,8 +115,8 @@ abstract class WSServer extends \Application\CLI
         if (!$this->server || $errorNumber || $error) return $this->stop();
         if ($this->server) stream_set_blocking($this->server, 0);
 
-        if ($this->server) $this->read[] = $this->server;
-        if ($this->service) $this->read[] = $this->service;
+        if (is_resource($this->server)) $this->read[] = $this->server;
+        if (is_resource($this->service)) $this->read[] = $this->service;
 
         return $this->fork($thread,self::FORK_EXCHANGE);
     }
