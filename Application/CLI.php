@@ -243,9 +243,7 @@ abstract class CLI
                             continue;
                         }
                         foreach ($this->forks as $dest) { //пересылаем данные во все воркеры
-                            if (is_resource($dest) && ($dest !== $src)) {
-                               $unix($dest)->write($data);
-                            }
+                            if ($dest !== $src) { $unix($dest)->write($data); }
                         }
                     }
                 }
