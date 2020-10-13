@@ -235,14 +235,16 @@ abstract class CLI
 
         while ( $this->looper ) {
             if ( $opt & self::FORK_EXCHANGE ) {
-                if (count($this->forks) && stream_select($this->forks, $write, $except, null)) {
-                    foreach ($this->forks as $src) {
+                $write = $read = $this->forks;
+                if (count($read)  && stream_select($read, $write, $except, null)) {
+                    $write = $this->forks;
+                    foreach ($read as $src) {
                         $data = $unix($src)->read();
                         if (!$data) { //соединение было закрыто
 //                            $unix($src)->close();
                             continue;
                         }
-                        foreach ($this->forks as $dest) { //пересылаем данные во все воркеры
+                        foreach ($write as $dest) { //пересылаем данные во все воркеры
                             if ($dest !== $src) { $unix($dest)->write($data); }
                         }
                     }
