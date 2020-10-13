@@ -282,7 +282,7 @@ class PHPRoll extends \Application\Request
                 header('Sec-WebSocket-Location:', false);
                 header('Upgrade: websocket', false);
                 header('Connection: Upgrade', false);
-                header('Sec-WebSocket-Accept: ' . base64_encode(pack('H*', sha1($this->header['Sec-Websocket-Key'] . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'))), false);
+                header('Sec-WebSocket-Accept: ' . \Application\WebSocket::accept($this->header['Sec-Websocket-Key']), false);
                 if(isset($params['Sec-WebSocket-Protocol']) || isset($this->header['Sec-WebSocket-Protocol']) && !empty($this->header['Sec-WebSocket-Protocol'])) {
                     header('Sec-WebSocket-Protocol: ' . $params['Sec-WebSocket-Protocol'] ?? $this->header['Sec-WebSocket-Protocol']);
                 }

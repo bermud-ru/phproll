@@ -123,6 +123,10 @@ abstract class WSServer extends \Application\CLI
 
     public function stop()
     {
+        $socket = new \Application\Socket();
+        foreach ( array_merge($this->read, $this->write, $this->except) as $client ) {
+            if (is_resource($client)) $socket($client)->close();
+        }
         if (is_resource($this->server)) stream_socket_shutdown($this->server, STREAM_SHUT_RDWR);
         if (is_resource($this->service)) {
             stream_socket_shutdown($this->service, STREAM_SHUT_RDWR);
