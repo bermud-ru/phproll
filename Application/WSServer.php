@@ -118,7 +118,7 @@ abstract class WSServer extends \Application\CLI
         if (is_resource($this->server)) $this->read[] = $this->server;
         if (is_resource($this->service)) $this->read[] = $this->service;
 
-        return $this->fork($thread,self::FORK_EXCHANGE);
+        return $this->fork($thread, self::FORK_EXCHANGE);
     }
 
     public function stop()

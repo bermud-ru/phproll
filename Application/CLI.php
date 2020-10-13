@@ -234,9 +234,9 @@ abstract class CLI
         $unix = new \Application\Socket();
 
         while ( $this->looper ) {
-            if ( $opt & self::FORK_EXCHANGE ) {
+            if ( $opt & self::FORK_EXCHANGE && count($this->forks) == $max ) {
                 $write = $read = $this->forks;
-                if (count($read)  && stream_select($read, $write, $except, null)) {
+                if (stream_select($read, $write, $except, null)) {
                     $write = $this->forks;
                     foreach ($read as $src) {
                         $data = $unix($src)->read();
@@ -281,7 +281,7 @@ abstract class CLI
                 }
                 continue;
             }
-            if ( $this->looper && !$complete ) list($pid, $fork_idx) = $this->launcher($opt, $timeout);
+            if ( $this->looper && !$complete && count($this->forks) < $max) list($pid, $fork_idx) = $this->launcher($opt, $timeout);
         }
         return self::FORK_COMPLETE;
     }
@@ -312,7 +312,7 @@ abstract class CLI
             $this->fork_idx = $this->max_forks;
         } else {
             @fclose($pair[1]);
-            exit( $this->job( $pair[0]) );
+            exit( $this->job($pair[0]));
         }
         return [$pid, $this->fork_idx];
     }

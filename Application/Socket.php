@@ -21,7 +21,7 @@ class Socket implements \Application\ISocket
     private $index = null;
     protected $opt = false;
 
-    public function __construct(array $opt = [], $socket = null) {
+    public function __construct(array $opt = [], &$socket = null) {
         $this->opt = $opt;
         $this->socket = $socket;
         if ($socket) $this->index = intval($socket);
@@ -68,7 +68,7 @@ class Socket implements \Application\ISocket
     /**
      * @function meta
      * Получает информацию о существующем потоке stream.
-     * 
+     *
      * @return array|null
      */
     public function meta(): ?array
