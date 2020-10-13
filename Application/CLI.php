@@ -231,19 +231,20 @@ abstract class CLI
         $complete = false;
         $waite_empty_results = !($opt & self::FORK_INFINITY);
         $write = $except = [];
+        $unix = new \Application\Socket();
+
         while ( $this->looper ) {
-            if ( $opt & self::FORK_EXCHANGE && count($this->forks) == $max ) {
-                $read = $this->forks;
-                if (stream_select($read, $write, $except, null)) {
-                    foreach ($read as $src) {
-                        $data = @fread($src, 1000);
+            if ( $opt & self::FORK_EXCHANGE ) {
+                if (count($this->forks) && stream_select($this->forks, $write, $except, null)) {
+                    foreach ($this->forks as $src) {
+                        $data = $unix($src)->read();
                         if (!$data) { //соединение было закрыто
-                            @fclose($src);
+//                            $unix($src)->close();
                             continue;
                         }
-                        foreach ($this->workers as $dest) {//пересылаем данные во все воркеры
+                        foreach ($this->forks as $dest) { //пересылаем данные во все воркеры
                             if (is_resource($dest) && ($dest !== $src)) {
-                                @fwrite($dest, $data);
+                               $unix($dest)->write($data);
                             }
                         }
                     }
