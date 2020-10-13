@@ -31,7 +31,7 @@ class WebSocket extends \Application\Socket
 
     public function read(): ?string
     {
-        return $this->hybi10Decode($this->readBuffer());
+        return ($data = $this->readBuffer()) ? $this->hybi10Decode($data) : null;
     }
 
     public function write(string $string, array $opt = []): ?int
