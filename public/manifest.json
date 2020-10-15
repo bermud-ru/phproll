@@ -1,0 +1,73 @@
+{
+  "name": "PHP Roll Framework",
+  "short_name": "phpRoll 2020",
+  "description": "© Andrey Novikov",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f5f5f5",
+  "theme_color": "#29434d",
+  "icons": [
+    {
+      "src": "/icons/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/icons/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/apple-touch-icon–180x180.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    },
+    {
+      "src": "/icons/apple-touch-icon–152x152.png",
+      "type": "image/png",
+      "sizes": "152x152"
+    },
+    {
+      "src": "/icons/apple-touch-icon–120x120.png",
+      "type": "image/png",
+      "sizes": "120x120"
+    },
+    {
+      "src": "/icons/apple-touch-icon–76x76.png",
+      "type": "image/png",
+      "sizes": "76x76"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    },
+    {
+      "src": "/icons/favicon-32x32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/icons/favicon-16x16.png",
+      "type": "image/png",
+      "sizes": "16x16"
+    },
+    {
+      "src": "/icons/mstile-150x150.png",
+      "type": "image/png",
+      "sizes": "150x150"
+    }
+  ],
+  "related_applications": [{
+    "platform": "web"
+  }],
+  "author": {
+    "name": "Andrey Novikov",
+    "website": "https://novikov.be",
+    "github": "https://github.com/bermud-ru",
+    "source-repo": "https://github.com/bermud-ru/jsroll"
+  },
+  "gcm_sender_id": "847244712742",
+  "gcm_user_visible_only": true
+}

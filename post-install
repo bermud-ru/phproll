@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# @category Installation nginx with TLS 1.3 (CentOS 7.x, 8.x)
+# @category Installation PHPRoll Framework (CentOS 7.x, 8.x)
 # @author Андрей Новиков <andrey@novikov.be>
 # @data 07/12/2015
 #
@@ -11,9 +11,47 @@ if [ "$(id -u)" != "0" ]; then
    exit 1
 fi
 
+JQ=$(which jq)
+if [ -z "$JQ" ]; then
+#  wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-1.6.tar.gz
+#  tar -xzf jq-1.6.tar.gz
+#  cd jq-1.6
+#  autoreconf -fi
+#  ./configure && make && sudo make install​
+OS="`uname`"
+case $OS in
+  'Linux')
+    OS='Linux'
+    if  [ -f /etc/debian_version ]; then
+        OS='Debian'
+        apt-get install jq
+    elif [ -f /etc/redhat-release ]; then
+        OS="Red Hat"
+        yum install jq -y
+    fi
+    ;;
+  'FreeBSD')
+    OS='FreeBSD'
+    pkg install jq -y
+    ;;
+  'WindowsNT')
+    OS='Windows'
+    ;;
+  'Darwin').
+    OS='Mac'
+    ;;
+  'SunOS')
+    OS='Solaris'
+    pacman -S install jq
+    ;;
+  'AIX') ;;
+  *) ;;
+esac
+fi
+
 ######## CONFIG ##########################################################################
-project="phproll.server"
-SSL_path=$(pwd)/setup/SSL
+project=$(jq .install.project ./composer.json)
+SSL_path=$(pwd)/etc/ssl
 ##########################################################################################
 
 vendor=vendor/bermud-ru/phproll
@@ -24,11 +62,7 @@ mkdir -p ./public/js
 mkdir -p ./Application/view
 mkdir -p ./setup/nginx
 mkdir -p ./setup/SSL
-cp -rf ./$vendor/public/401.html ./public/
-cp -rf ./$vendor/public/500.html ./public/
-cp -rf ./$vendor/public/favicon.ico ./public/
-cp -rf ./$vendor/public/index.php ./public/
-cp -rf ./$vendor/public/robots.txt ./public/
+cp -rf ./$vendor/public/*./public/
 cp -rf ./$vendor/config.php ./
 cp -rf ./$vendor/.gitignore ./
 cp -rf ./$vendor/.hgignore ./
@@ -57,7 +91,7 @@ server {
     error_log /var/log/nginx/$project.error.log warn;
 
     server_name $project www.$project;
-    set \$host_path /srv/\$project;
+    set \$host_path /srv/$project;
     root \$host_path/public;
     set \$app_bootstrap \"index.php\";
     index \$app_bootstrap;
@@ -74,17 +108,32 @@ server {
     ssl_session_timeout 30m;
 
     set \$appenv dev;
+    client_body_buffer_size 32K;
 
     location / {
+        auth_basic "Restricted Area";
+        auth_basic_user_file $host_path/htpasswd;
+        error_page 401 $host_path/public/401.html;
+        location = /401.html {
+            allow all;
+            auth_basic off;
+            if ($http_xhr_version) {
+              add_header Content-Type application/json;
+              return 401 '{"result": "warning", "message": "Under constraction!"}';
+            }
+        }
+        error_page 500 502 503 504 $host_path/public/500.html
         try_files \$uri \$uri/ /\$app_bootstrap?\$args;
     }
 
-    location ~ ^/(protected|application|framework|themes/\w+/views) {
-        deny  all;
-    }
-
-    location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)\$ {
-        try_files \$uri =404;
+    error_page 502 /502.html
+    location = /502.html {
+        if ($http_xhr_version) {
+          add_header Content-Type application/json;
+          return 502 '{"result": "error", "message": "Oops! system error!"}';
+        }
+        root /srv/$project/public;
+        index 502.html;
     }
 
     location ~ \.(php|tmpl)\$ {
@@ -92,7 +141,7 @@ server {
         fastcgi_param appenv \"dev\";
         fastcgi_index \$app_botstrap;
         fastcgi_split_path_info ^(.+\.php|.+\.tmpl)(.*)\$;
-        fastcgi_pass unix:/run/php-fpm/php7.0-fpm.sock;
+        fastcgi_pass unix:/run/php-fpm/www.sock;
 
         if (-f \$document_root\$fastcgi_script_name){
             set \$fsn \$fastcgi_script_name;
@@ -105,6 +154,22 @@ server {
 
         fastcgi_param  PATH_INFO        \$fastcgi_path_info;
         fastcgi_param  PATH_TRANSLATED  \$document_root\$fsn;
+    }
+
+    location ~* \.(eot|ttf|woff|woff2)$ {
+      expires max;
+      access_log off;
+      add_header Cache-Control public;
+      add_header Access-Control-Allow-Origin *;
+      fastcgi_hide_header Set-Cookie;
+    }
+
+    location ~* \.(css|js|txt|xml)$ {
+      charset utf-8;
+      expires max;
+      access_log off;
+      add_header Cache-Control public;
+      fastcgi_hide_header Set-Cookie;
     }
 
     location ~ /\. {
