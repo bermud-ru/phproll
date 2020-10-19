@@ -50,8 +50,14 @@
   "require": {
     "php": ">=7.0.0",
     "ext-json": "*",
-    "ext-PDO": "*",
-    "ext-mbstring": "*"
+    "ext-pdo": "*",
+    "ext-mbstring": "*",
+    "ext-opcache": "*",
+    "ext-fpm": "*",
+    "ext-process": "*",
+    "ext-cli": "*",
+    "ext-pgsql": "*",
+    "ext-devel": "*"
   },
 
   "scripts": {

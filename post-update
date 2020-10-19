@@ -11,6 +11,15 @@ if [ "$(id -u)" != "0" ]; then
    exit 1
 fi
 
+######## CONFIG ##########################################################################
+export vendor=vendor/bermud-ru/phproll
+export serverRoot=$(pwd)
+export PROJECT=${PWD##*/}
+export DOMAIN=$(jq .install.project ./composer.json)
+export ADDRESS=$(jq .install.address ./composer.json)
+export SSL_path=$(pwd)/etc/pki
+##########################################################################################
+
 echo "Post-update scripting ..."
 #cp ./vendor/bermud-ru/phproll/public/index.php ./public/
 #cp -n ./vendor/bermud-ru/phproll/public/js/* ./public/js/
@@ -18,4 +27,9 @@ echo "Post-update scripting ..."
 #do
 # [ -f $js ] && cp -n $js ./public/js/
 #done
+
+printf "WEB context resotre\n"
+chcon -R -t httpd_sys_content_t $serverRoot
+semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
+
 exit
