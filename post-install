@@ -87,11 +87,17 @@ $ADDRESS   $DOMAIN
 EOF
 fi
 
+mkdir -p ./etc/pki
+mkdir -p /etc/pki/tls
+if [ ! -f /etc/pki/tls/openssl.cnf ]; then
+touch /etc/pki/tls/openssl.cnf
+fi
+
 printf "SSL creation\n"
 #sudo openssl req -nodes -x509 -newkey rsa:2048 -keyout ./etc/pki/nginx.key -out ./etc/pki/nginx.crt -days 365 \
 #  -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$commonname/emailAddress=$email" \
 #  -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf <(printf "[SAN]\nsubjectAltName=IP:127.0.0.1,DNS:phprest.server"))
-
+if [ ! -f ./etc/pki/sertificat.cnf ]; then
 cat << EOF > ./etc/pki/sertificat.cnf
 #
 # OpenSSL configuration file.
@@ -173,7 +179,9 @@ subjectAltName          = @alt_names
 basicConstraints			  = CA:FALSE
 subjectKeyIdentifier		= hash
 EOF
+fi
 
+if [ ! -f ./etc/pki/make ]; then
 cat << EOF > ./etc/pki/make
 #!/usr/bin/env bash
 #
@@ -204,8 +212,10 @@ openssl req -nodes -x509 -newkey rsa:2048 -keyout ./nginx.key -out ./nginx.crt -
 exit
 EOF
 chmod +x ./etc/pki/make
+fi
 sudo ./etc/pki/make
 
+if [ ! -f ./etc/nginx/$project.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
 export SALT=$( openssl rand 1000 | strings | grep -io '[0-9A-Za-z\.\/]' | head -n 16 | tr -d '\n')
 cat << EOF > $serverRoot/htpasswd
@@ -316,51 +326,6 @@ server {
     }
 }
 EOF
-printf "NGINX webSocket configuration\n"
-cat << EOF > ./etc/nginx/$project.wss.conf
-upstream appserver {
-    server 127.0.0.1:8001; # appserver_ip:ws_port
-}
-
-server {
-    # client_wss_port
-    listen 8000;
-
-    ssl on;
-    ssl_certificate     $SSL_path/nginx.crt;
-    ssl_certificate_key $SSL_path/nginx.key;
-
-    #so_keepalive on;
-    tcp_nodelay on;
-
-    #websocket_pass appserver;
-    #websocket_buffer 1k;
-
-    location / {
-        # prevents 502 bad gateway error
-        proxy_buffers 8 32k;
-        proxy_buffer_size 64k;
-        proxy_pass http://appserver;
-        proxy_redirect off;
-
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-NginX-Proxy true;
-
-        # WebSocket support
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection $connection_upgrade;
-        proxy_read_timeout 86400;
-    }
-}
-EOF
-mkdir -p ./etc/pki
-mkdir -p /etc/pki/tls
-if [ ! -f /etc/pki/tls/openssl.cnf ]; then
-touch /etc/pki/tls/openssl.cnf
-fi
 
 printf "NGINX configs context resotre\n"
 if [ ! -f /etc/nginx/conf.d/${DOMAIN}.conf ]; then
@@ -371,6 +336,7 @@ ln -s $serverRoot/etc/nginx/$PROJECT.cnf /etc/nginx/conf.d/$PROJECT.cnf
 ln -s $serverRoot/etc/nginx/$DOMAIN.conf /etc/nginx/conf.d/$DOMAIN.conf
 chown -h root:wheel /etc/nginx/conf.d/*
 restorecon -vF /etc/nginx/conf.d/*
+fi
 fi
 
 printf "WEB context resotre\n"
