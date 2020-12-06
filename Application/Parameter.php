@@ -32,12 +32,13 @@ class Parameter implements \JsonSerializable
     protected $formatter = null;
     protected $raw = null;
     protected $restore = false;
+    protected $glue = ',';
 
     public $isValid = true;
     public $params = null;
     public $value = null;
     public $original = null;
-
+    
     const MESSAGE = "Parameter error, {name} = {value} is wrong!";
     /**
      * Parameter constructor
@@ -272,7 +273,7 @@ class Parameter implements \JsonSerializable
      */
     public function array_to_string (array $a, $opt=null): ?string
     {
-        $str = implode(',', array_map(function ($v) use($opt) {
+        $str = implode($this->glue, array_map(function ($v) use($opt) {
             return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : \Application\Parameter::ize($v);
         },  $a));
         return  (!$this->is_null($opt) && $opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
