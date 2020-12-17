@@ -72,7 +72,7 @@
   },
 
   "autoload": {
-    "classmap": ["Application/"]
+    "classmap": ["./Application/"]
   },
 
   "download": "https://github.com/bermud-ru/phproll/archive/master.zip"
