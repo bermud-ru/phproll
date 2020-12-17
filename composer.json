@@ -52,7 +52,6 @@
     "ext-json": "*",
     "ext-pdo": "*",
     "ext-mbstring": "*",
-    "ext-opcache": "*",
     "ext-fpm": "*",
     "ext-process": "*",
     "ext-cli": "*",
