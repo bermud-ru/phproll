@@ -364,6 +364,25 @@ class PHPRoll extends \Application\Request
     }
 
     /**
+     * @function crash
+     *
+     * @param \Exception $e
+     * @param false $is_view
+     *
+     */
+    public function crash(\Exception $e, $is_view = false)
+    {
+        if ($is_view)
+        {
+            $this->response_header['Action-Status'] = 'SYSTEM ERROR';
+            \Application\IO::console_error($e, ['{%','%}']);
+        } else {
+            echo $this->response('json', ['result' => 'error', 'code' => 500, 'message' => $e->getMessage()]);
+            exit;
+        }
+    }
+
+    /**
      * Сборка и генерация контента
      *
      * @param array $opt
