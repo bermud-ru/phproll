@@ -1,6 +1,6 @@
 {
   "name": "bermud-ru/phproll",
-  "version": "2.1.2b",
+  "version": "2.1.2",
   "type": "project",
   "description": "Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend",
   "keywords": [
@@ -49,10 +49,10 @@
 
   "require": {
     "php": ">=7.0.0",
+    "ext-zend-opcache": "*",
     "ext-json": "*",
     "ext-pdo": "*",
     "ext-mbstring": "*",
-    "ext-opcache": "*",
     "ext-fpm": "*",
     "ext-process": "*",
     "ext-cli": "*",
@@ -60,6 +60,12 @@
     "ext-devel": "*"
   },
 
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  
   "scripts": {
     "post-install-cmd": [
       "mkdir -p public/js",
