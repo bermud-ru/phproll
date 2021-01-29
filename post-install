@@ -87,7 +87,7 @@ cp -rf ./$vendor/Application/extra/* ./Application/extra/
 if [ ! -z "$ADDRESS" ]; then
 printf "Resolv domain\n"
 cat << EOF >> /etc/hosts
-$ADDRESS   $DOMAIN
+${ADDRESS}   ${DOMAIN}
 EOF
 fi
 
