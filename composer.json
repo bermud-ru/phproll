@@ -64,12 +64,12 @@
 
   "scripts": {
     "post-install-cmd": [
-      "bash ./vendor/bermud-ru/jsroll/post-install"
     ],
     "post-package-install": [
+      "bash ./post-install"
     ],
     "post-update-cmd": [
-      "bash ./vendor/bermud-ru/jsroll/post-update"
+      "bash ./post-update"
     ],
     "post-package-update": [
     ]
