@@ -221,7 +221,7 @@ bash ./etc/pki/make
 if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
 export SALT=$( openssl rand 1000 | strings | grep -io '[0-9A-Za-z\.\/]' | head -n 16 | tr -d '\n')
-cat << EOF > $serverRoot/htpasswd
+cat << EOF > $serverRoot/public/.htpasswd
 $nginxbasicuser:$(perl -le 'print crypt("$ENV{'nginxbasicpass'}", "$ENV{'SALT'}")')
 EOF
 
@@ -264,8 +264,8 @@ server {
 
     location / {
         auth_basic "Restricted Area";
-        auth_basic_user_file \$host_path/htpasswd;
-        error_page 401 \$host_path/public/401.html;
+        auth_basic_user_file \$root/.htpasswd;
+        error_page 401 \$root/401.html;
         location = /401.html {
             allow all;
             auth_basic off;
@@ -274,7 +274,7 @@ server {
               return 401 '{"result": "warning", "message": "Under constraction!"}';
             }
         }
-        error_page 500 502 503 504 \$host_path/public/500.html;
+        error_page 500 502 503 504 \$root/500.html;
         try_files \$uri \$uri/ /\$app_bootstrap?\$args;
     }
 
