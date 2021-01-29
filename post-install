@@ -237,10 +237,10 @@ server {
 }
 
 server {
-    access_log /var/log/nginx/$PROJECT.access.log combined;
-    error_log /var/log/nginx/$PROJECT.error.log warn;
+    access_log /var/log/nginx/$DOMAIN.access.log combined;
+    error_log /var/log/nginx/$DOMAIN.error.log warn;
 
-    server_name $PROJECT www.$PROJECT;
+    server_name $DOMAIN www.$DOMAIN;
     set \$host_path /srv/$PROJECT;
     root \$host_path/public;
     set \$app_bootstrap \"index.php\";
