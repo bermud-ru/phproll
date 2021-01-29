@@ -53,7 +53,6 @@
     "ext-json": "*",
     "ext-pdo": "*",
     "ext-mbstring": "*",
-    "ext-process": "*",
     "ext-cli": "*",
     "ext-pgsql": "*",
     "ext-devel": "*"
