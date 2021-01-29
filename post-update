@@ -15,7 +15,7 @@ fi
 export vendor=vendor/bermud-ru/phproll
 export serverRoot=$(pwd)
 export PROJECT=${PWD##*/}
-export DOMAIN=$(jq .install.project ./composer.json)
+export DOMAIN=$(jq .install.domain ./composer.json)
 export ADDRESS=$(jq .install.address ./composer.json)
 export SSL_path=$(pwd)/etc/pki
 ##########################################################################################
