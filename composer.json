@@ -53,7 +53,6 @@
     "ext-json": "*",
     "ext-pdo": "*",
     "ext-mbstring": "*",
-    "ext-fpm": "*",
     "ext-process": "*",
     "ext-cli": "*",
     "ext-pgsql": "*",
@@ -65,7 +64,7 @@
     "preferred-install": "dist",
     "sort-packages": true
   },
-  
+
   "scripts": {
     "post-install-cmd": [
       "mkdir -p public/js",
