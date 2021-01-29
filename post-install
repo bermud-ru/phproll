@@ -272,11 +272,11 @@ server {
               return 401 '{"result": "warning", "message": "Under constraction!"}';
             }
         }
-        error_page 500 502 503 504 \$host_path/public/500.html
+        error_page 500 502 503 504 \$host_path/public/500.html;
         try_files \$uri \$uri/ /\$app_bootstrap?\$args;
     }
 
-    error_page 502 /502.html
+    error_page 502 /502.html;
     location = /502.html {
         if (\$http_xhr_version) {
           add_header Content-Type application/json;
