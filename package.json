@@ -11,10 +11,10 @@
 
   "scripts": {
     "post-install-cmd": [
-      "sudo ./vendor/bermud-ru/jsroll/post-install"
+      "bash ./vendor/bermud-ru/jsroll/post-install"
     ],
     "post-update-cmd": [
-      "sudo ./vendor/bermud-ru/jsroll/post-update"
+      "bash ./vendor/bermud-ru/jsroll/post-update"
     ]
   }
 }

@@ -215,30 +215,30 @@ chmod +x ./etc/pki/make
 fi
 sudo ./etc/pki/make
 
-if [ ! -f ./etc/nginx/$project.conf ]; then
+if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
 export SALT=$( openssl rand 1000 | strings | grep -io '[0-9A-Za-z\.\/]' | head -n 16 | tr -d '\n')
 cat << EOF > $serverRoot/htpasswd
 $nginxbasicuser:$(perl -le 'print crypt("$ENV{'nginxbasicpass'}", "$ENV{'SALT'}")')
 EOF
 
-cat << EOF > ./etc/nginx/$project.conf
+cat << EOF > ./etc/nginx/$PROJECT.conf
 server {
-    # access_log /var/log/nginx/$project.access.log combined;
-    # error_log /var/log/nginx/$project.error.log warn;
+    # access_log /var/log/nginx/$PROJECT.access.log combined;
+    # error_log /var/log/nginx/$PROJECT.error.log warn;
 
-    server_name $project.server www.$project.server;
+    server_name $PROJECT.server www.$PROJECT.server;
 
     listen 80;
     return 302 https://\$server_name\$request_uri;
 }
 
 server {
-    access_log /var/log/nginx/$project.access.log combined;
+    access_log /var/log/nginx/$PROJECT.access.log combined;
     error_log /var/log/nginx/$project.error.log warn;
 
-    server_name $project www.$project;
-    set \$host_path /srv/$project;
+    server_name $PROJECT www.$PROJECT;
+    set \$host_path /srv/$PROJECT;
     root \$host_path/public;
     set \$app_bootstrap \"index.php\";
     index \$app_bootstrap;
@@ -279,7 +279,7 @@ server {
           add_header Content-Type application/json;
           return 502 '{"result": "error", "message": "Oops! system error!"}';
         }
-        root /srv/$project/public;
+        root /srv/$PROJECT/public;
         index 502.html;
     }
 

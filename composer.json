@@ -64,12 +64,14 @@
 
   "scripts": {
     "post-install-cmd": [
-      "mkdir -p public/js",
-      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
+    ],
+    "post-package-install": [
+      "bash ./vendor/bermud-ru/jsroll/post-install"
     ],
     "post-update-cmd": [
-      "mkdir -p public/js",
-      "cp -R vendor/bermud-ru/jsroll/build/*.js public/js/"
+    ],
+    "post-package-update": [
+      "bash ./vendor/bermud-ru/jsroll/post-update"
     ]
   },
 
