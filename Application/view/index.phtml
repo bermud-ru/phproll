@@ -1,97 +1,89 @@
 <?php
-namespace Application;
 
-$date = date('Y');
-$canonical = $this->cfg->app;
-$title = "Многопользовательская информационная сиcтема - Автоматизированное рабочее место (вресия {$this->cfg->version})";
-$this->is('GET') && $page['GET']['header'][] = <<<EOT
+namespace Application;
+if (in_array($_SERVER['REQUEST_METHOD'], array('POST','PUT'))) {
+    if ($error) $json(array('result'=>'error', 'message'=> $error['message']));
+}
+
+$title = 'Simple PHP backend script for RIA (Rich Internet Application) / SPA (Single-page Application) frontend';
+$page['GET']['header'][] = <<<EOT
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="referrer" content="strict-origin">
-<!--    <meta http-equiv="Content-Security-Policy" content="default-src 'self';">-->
-    <link rel="canonical" href="$canonical">
-    <meta name="description" content="Департамент информационных технологий г. Москвы, $date">
-    <meta name="author" content="Андрей Новиков <novikovab@it.mos.ru>">
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!--<meta http-equiv="Content-Security-Policy" content="default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'">-->
-    <meta http-equiv="Link" content="</fonts/FontAwesome.otf>; rel=preload; as=font">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta name="theme-color" content="#29434d">
-    <meta name="msapplication-TileColor" content="#29434d">
-    <meta name="msapplication-TileImage" content="/icons/mstile-150x150.png">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="$title">
-    <meta name="application-name" content="$title">
-    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
-    <link href="/favicon.ico" rel="icon" type="image/x-icon">
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel=“apple-touch-icon” sizes=“76x76” href=“/icons/apple-touch-icon–76x76.png”>
-    <link rel=“apple-touch-icon” sizes=“120x120” href=“/icons/apple-touch-icon–120x120.png”>
-    <link rel=“apple-touch-icon” sizes=“152x152” href=“/icons/apple-touch-icon–152x152.png”>
-    <link rel=“apple-touch-icon” sizes=“180x180” href=“/icons/apple-touch-icon–180x180.png”>
-    <link rel="icon" type="image/png" href="/icons/favicon-32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/icons/favicon-16x16.png" sizes="16x16">
-    <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/index.css?z=25">
-    <title>$title</title>
-    <script id="typeahead-tmpl" type="text/x-template"><ul class="dropdown-menu list fade" display="block">
-    <% for(var i in data) { %>
-    <li class="dropdown-item" value="<%= i %>" title="<%= typeof data[i][field] === "string" ? data[i][field].replace(/"/g,"&quot;"): data[i][field] %>"><%= typeof data[i][field] === "string" ? data[i][field].replace(/"/g,"&quot;"): data[i][field] %></li>
-    <% } %>
-    </ul></script>
-    <script id="alert-box" type="text/x-template" after="var self=this; self.ui.el('.close').ui.on('click',function(e){clearTimeout(self.timer); self.fade = true;});">
-    {% var opt = {message: 'Упс ;( ошибка приложения!'}; opt = Object.assign(opt, arguments[0]); %}
-    <button type="button" class="close">&times;</button>
-    {% var msg = (typeof opt.message === "string" ) ? {caption: opt.message} : opt.message, m = [], caption = null; 
-       for(var i in msg) if (i == 'caption') caption = '<h1 style="font-size: 1em; ">'+msg[i]+'</h1>'; else m.push(i+': '+msg[i]); %}
-    <div class="row"><span class="alert-box">{%= caption %}{% if(m.length){ %}{%= "<ul><li>"+m.join("</li><li>")+"</li></ul>" %}{% } %}</span></div>
+    <meta charset="utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="description" content="git@github.com:bermud-ru/phproll.git"/>
+    <meta name="author" content="Андрей Новиков <andrey (at) novikov (dot) be>"/>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/css/index.css" rel="stylesheet" />
+    <title>{$title}</title>
+    <script id="alert-box" type="text/x-template">
+    {% var opt = {error:'ОШИБКА', message: 'spa приложения!'}; for (i in arguments) opt = Object.assign(opt, arguments[i]); %}
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    <span class="result">{%=opt.error %}</span> <span class="message">{%=opt.message %}</span>
     </script>
 </head>
 EOT;
+$date = date('Y');
 $inc = '';
-if ($this->is('GET') && isset($include) && is_array($include)) array_walk_recursive($include, function($cnx, $tpl) use (&$inc) { $inc .= $cnx; });
-$this->is('GET') && $page['GET']['body'][] = <<<EOT
-<body xmlns="">
+if (!empty($include)) array_walk_recursive($include, function($cnx, $tpl) use (&$inc) { $inc .= $cnx;});
+$page['GET']['body'][] = <<<EOT
+<body>
 <div id="app" role="application">
-    <div role="workspace"> $inc </div>
+    <div class="container" role="workspace">
+  
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed">
+                    <span class="sr-only">Toggle navigation</span>
+                </button>
+                <a class="navbar-brand" href="//{$self->header['Host']}" ><span class="glyphicon glyphicon-list-alt"></span >&nbsp; PHPRoll framework</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-right">
+                <ul class="nav navbar-nav">
+                    <!-- li><a href="#help">Справка</a></li -->
+                    <li class="dropdown"><a class="dropdown-toggle" href="#">
+                        <span class="glyphicon glyphicon glyphicon-log-in"></span>&nbsp; Авторизоваться <span class="caret"></span></a>
+                        <ul class="dropdown-menu"><?php /*
+                            <!--<li class="disabled"><a href="#section41">Настройки</a></li>-->
+                            <!--<li class="disabled"><a href="#section41">Сменить пароль</a></li>--> */ ?>
+                            <li><a href="#" role="logout">Выход</a></li><?php /*
+                            <!--<li role="separator" class="divider"></li>-->
+                            <!--<li role="help" data-href="{$self->config['root']}/help.html"><a target="_blank">Справка</a></li>-->
+                            <!--<li class="disabled"><a href="#section41">Сообщить о проблеме</a></li>--> */ ?>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    $inc
+    
+    <div class="navbar-fixed-bottom row-fluid">
+        <div class="navbar-inner">
+            <div class="container">
+                <div class="copyright">&copy; Все права, Андрей Новиков $date</div>
+            </div>
+        </div>
+    </div>
+    
 </div>
-<div class="alert alert-danger fade"></div>
-<div class="b-popup fade">
+</div>
+<div class="alert alert-danger message" style="display: none;"></div>
+<div class="b-popup" style="display: none;">
     <div class="b-popup-content"></div>
 </div>
-<div class="locker spinner" style="display: none"></div>
-<script type="text/javascript">
-window.onload = function (event) { 
-    if (typeof window.app === 'undefined') window.location.href='/notsupport.html';
-    return false;
-}
-window.onunload = function (event) {
-  if (!navigator.sendBeacon || !navigator.onLine) return;
-  // var url = "/logout";
-  // // Create the data to send
-  // var data = "state=" + event.type + "&location=" + location.href;
-  // // Send the beacon
-  // var status = navigator.sendBeacon(url, data);
-  // // Log the data and result
-  // console.log("; data = ", data, "; status = ", status);
-  return false;
-};
-</script>
-<script type="text/javascript" src="/dev/jsroll.js?z=21" charset="UTF-8"></script>
-<script type="text/javascript" src="/dev/jsroll.ui.js?z=1" charset="UTF-8"></script>
-<!--<script type="text/javascript" src="/js/jsroll.min.js?t=109" charset="UTF-8" integrity="sha384-LImp+JtrKdd8+3sUnsqrksP3HWwUEimEIFq/4KJ//H6dZavBneES01KLNnruLdVL" crossorigin="anonymous"></script>-->
-<script type="text/javascript" src="/js/jsroll.app.min.js?t=109" charset="UTF-8" integrity="sha384-JiNVihWtIua0d8UMVT03ZngtqKVKn92lDNWAZfhL8cudIBtV+AiLGduRWp9Vlz2b" crossorigin="anonymous"></script>
-<script type="text/javascript" src="/js/main.js?z=3" charset="UTF-8"></script>
-EOT;
-$this->is('GET') && $page['GET']['footer'][] = <<<EOT
+<div class="locker spinner" style="display: none;"></div>
+<script type="text/javascript" src="/js/jsroll.min.js" charset="UTF-8"></script>
+<script type="text/javascript" src="/js/jsroll.app.js" charset="UTF-8"></script>
 </body>
+EOT;
+$page['GET']['footer'][] = <<<EOT
 </html>
 EOT;
-
-if (isset($page[$_SERVER['REQUEST_METHOD']])) array_walk_recursive($page[$_SERVER['REQUEST_METHOD']], function($item){ echo $item; });
+array_walk_recursive($page[$_SERVER['REQUEST_METHOD']], function($item){ echo $item; });
+?>
