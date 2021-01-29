@@ -347,7 +347,7 @@ fi
 fi
 
 printf "WEB context resotre\n"
-chgrp -R nginx $serverRoot
+chown -R nginx:nginx $serverRoot
 chmod 755 $serverRoot
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
