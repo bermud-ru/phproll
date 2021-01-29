@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+<link href="/favicon.ico" rel="icon" type="image/x-icon" />
+<meta name="description" content="Департамент информационных технологий г. Москвы, 2018" />
+<meta name="author" content="Андрей Новиков <novikovab@it.mos.ru>" />
+<title>Внимание! Техническое обслуживание информационной системы</title>
+<link rel="stylesheet" href="//stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<style>
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+body > .container {
+    padding: 60px 15px 0;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+    background-color: #f5f5f5;
+}
+
+.footer > .container {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+[role="main"] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <main role="main" class="container">
+        <div class="jumbotron" align="center">
+            <h2><i class="fa fa-exclamation-triangle"></i> Проводится регламентное техническое обслуживание.</h2>
+            <p>Ресурс возобновит работу в ближайшее время.</p>
+        </div>
+    </main>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <span class="text-muted" id="status-bar" name="status-bar"></span>
+    </div>
+</footer>
+<script type="text/javascript">
+    function status() {
+        document.getElementById("status-bar").innerHTML = '&copy; Департамент информационных технологий г. Москвы, ' + (new Date().getFullYear());
+    }
+    window.onload = status;
+</script>
+</body>
+</html>

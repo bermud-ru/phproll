@@ -1,0 +1,83 @@
+
+
+<style type="text/css">
+    @media (max-width: 575px) {
+        .login-form.fade .modal-content {
+            width: 520px !important;
+        }
+    }
+
+    @media (min-width: 576px) and (max-width: 767px) {
+        .login-form.fade .modal-content {
+            width: 700px !important;
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 991px) {
+        .login-form.fade .modal-content{
+            width: 700px !important;
+        }
+    }
+
+    @media (min-width: 992px) and (max-width: 1199px) {
+        .login-form.fade .modal-content{
+            width: 700px !important;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .login-form.fade .modal-content {
+            width: 700px !important;
+        }
+    }
+
+    @media (max-height: 350px) {
+        .login-form .modal-header {
+            display: none;!important;
+        }
+        .login-form .modal-footer {
+            padding: 0;
+        }
+
+        .login-form .modal-body textarea {
+            height: 2em;
+        }
+    }
+
+    .login-form.fade .modal-content {
+        width: 700px !important;
+    }
+</style>
+
+<div class="login-form modal fade"></div>
+<script id="tmpl-login" type="text/x-template">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa fa-sign-in"></i> Авторизация</h5>
+            </div>
+
+            <div class="modal-body">
+                <form action="/login" method="GET" role="login-form" class="form-signin needs-validation">
+
+                    <div class="form-label-group">
+                        <input tabindex="1" class="col form-control" type="email" name="email" id="email" value="" required placeholder="Email пользователя" autofocus >
+                        <label class="required" for="email">Email пользователя</label>
+                    </div>
+
+                    <div class="form-label-group">
+                        <input tabindex="2" class="col form-control" type="password" name="passwd" id="passwd" value="" pattern=".{5,}" required placeholder="Пароль" >
+                        <label class="required" for="passwd">Пароль</label>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button tabindex="3" type="button" class="btn btn-primary" role="login-submit" style="z-index: 1000000">
+                    <i class="fa fa-sign-in"></i> Войти
+                </button>
+            </div>
+        </div>
+    </div>
+</script>

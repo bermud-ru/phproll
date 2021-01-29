@@ -66,19 +66,23 @@ mkdir -p ./public/css
 mkdir -p ./public/js
 mkdir -p ./Application/cli
 mkdir -p ./Application/view
+mkdir -p ./Application/extra
 mkdir -p ./etc/nginx
 mkdir -p ./etc/pki
-cp -rf ./$vendor/public/*./public/
+ln -s /$vendor/public/maintenance ./public/maintenance
+ln -s /$vendor/public/icons ./public/icons
+cp -rf ./$vendor/public/* ./public/
 cp -rf ./$vendor/config.php ./
 cp -rf ./$vendor/.gitignore ./
 cp -rf ./$vendor/.hgignore ./
 cp -n ./$vendor/public/css/* ./public/css/
-#cp -rf ./$vendor/public/js/* ./public/js/
+cp -rf ./$vendor/public/* ./public/
 for js in ./$vendor/public/js/*
 do
  [ -f $js ] && cp -rf $js ./public/js/
 done
 cp -rf ./$vendor/Application/view/* ./Application/view/
+cp -rf ./$vendor/Application/extra/* ./Application/extra/
 
 if [ ! -z "$ADDRESS" ]; then
 printf "Resolv domain\n"
@@ -211,9 +215,8 @@ openssl req -nodes -x509 -newkey rsa:2048 -keyout ./nginx.key -out ./nginx.crt -
   -config ./sertificat.cnf
 exit
 EOF
-chmod +x ./etc/pki/make
 fi
-sudo ./etc/pki/make
+sudo bash ./etc/pki/make
 
 if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
