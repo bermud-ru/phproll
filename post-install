@@ -238,7 +238,7 @@ server {
 
 server {
     access_log /var/log/nginx/$PROJECT.access.log combined;
-    error_log /var/log/nginx/$project.error.log warn;
+    error_log /var/log/nginx/$PROJECT.error.log warn;
 
     server_name $PROJECT www.$PROJECT;
     set \$host_path /srv/$PROJECT;
@@ -335,8 +335,10 @@ if [ ! -f /etc/nginx/conf.d/${DOMAIN}.conf ]; then
 chown -R root:root $serverRoot/etc/nginx
 restorecon -vF $serverRoot/etc/nginx/*
 chcon -t httpd_config_t $serverRoot/etc/nginx/*
-ln -s $serverRoot/etc/nginx/$PROJECT.cnf /etc/nginx/conf.d/$PROJECT.cnf
-ln -s $serverRoot/etc/nginx/$DOMAIN.conf /etc/nginx/conf.d/$DOMAIN.conf
+if [ ! -f /etc/nginx/conf.d/${PROJECT}.conf ]; then
+ln -s $serverRoot/etc/nginx/$PROJECT.conf /etc/nginx/conf.d/$PROJECT.conf
+fi
+#ln -s $serverRoot/etc/nginx/$DOMAIN.conf /etc/nginx/conf.d/$DOMAIN.conf
 chown -h root:wheel /etc/nginx/conf.d/*
 restorecon -vF /etc/nginx/conf.d/*
 fi
