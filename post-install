@@ -333,7 +333,6 @@ server {
 EOF
 
 printf "NGINX configs context resotre\n"
-if [ ! -f /etc/nginx/conf.d/${DOMAIN}.conf ]; then
 chown -R root:root $serverRoot/etc/nginx
 restorecon -vF $serverRoot/etc/nginx/*
 chcon -t httpd_config_t $serverRoot/etc/nginx/*
@@ -344,10 +343,10 @@ fi
 chown -h root:wheel /etc/nginx/conf.d/*
 restorecon -vF /etc/nginx/conf.d/*
 fi
-fi
 
 printf "WEB context resotre\n"
 chown -R nginx:nginx $serverRoot
+chmod -R 644 $serverRoot/
 chmod 755 $serverRoot
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
