@@ -64,12 +64,12 @@
 
   "scripts": {
     "post-install-cmd": [
+      "sudo bash ./post-install"
     ],
     "post-package-install": [
-      "bash ./post-install"
     ],
     "post-update-cmd": [
-      "bash ./post-update"
+      "sudo bash ./post-update"
     ],
     "post-package-update": [
     ]
