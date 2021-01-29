@@ -69,8 +69,8 @@ mkdir -p ./Application/view
 mkdir -p ./Application/extra
 mkdir -p ./etc/nginx
 mkdir -p ./etc/pki
-ln -s /$vendor/public/maintenance ./public/maintenance
-ln -s /$vendor/public/icons ./public/icons
+ln -s ../vendor/public/maintenance ./public/maintenance
+ln -s ../vendor/public/icons ./public/icons
 cp -rf ./$vendor/public/* ./public/
 cp -rf ./$vendor/config.php ./
 cp -rf ./$vendor/.gitignore ./
@@ -216,7 +216,7 @@ openssl req -nodes -x509 -newkey rsa:2048 -keyout ./nginx.key -out ./nginx.crt -
 exit
 EOF
 fi
-sudo bash ./etc/pki/make
+bash ./etc/pki/make
 
 if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
