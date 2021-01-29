@@ -264,8 +264,8 @@ server {
 
     location / {
         auth_basic "Restricted Area";
-        auth_basic_user_file .htpasswd;
-        error_page 401 401.html;
+        auth_basic_user_file $serverRoot/public/.htpasswd;
+        error_page 401 /401.html;
         location = /401.html {
             allow all;
             auth_basic off;
@@ -274,11 +274,11 @@ server {
               return 401 '{"result": "warning", "message": "Under constraction!"}';
             }
         }
-        error_page 500 502 503 504 500.html;
+        error_page 500 502 503 504 /500.html;
         try_files \$uri \$uri/ /\$app_bootstrap?\$args;
     }
 
-    error_page 502 502.html;
+    error_page 502 /502.html;
     location = /502.html {
         if (\$http_xhr_version) {
           add_header Content-Type application/json;
@@ -290,7 +290,7 @@ server {
 
     location ~ \.(php|tmpl)\$ {
         set \$fsn /\$app_bootstrap;
-        fastcgi_param appenv \"dev\";
+        fastcgi_param appenv "dev";
         fastcgi_index \$app_botstrap;
         fastcgi_split_path_info ^(.+\.php|.+\.tmpl)(.*)\$;
         fastcgi_pass unix:/run/php-fpm/www.sock;
