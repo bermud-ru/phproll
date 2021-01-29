@@ -53,8 +53,8 @@ fi
 export vendor=vendor/bermud-ru/phproll
 export serverRoot=$(pwd)
 export PROJECT=${PWD##*/}
-export DOMAIN=$(jq .install.domain ./composer.json)
-export ADDRESS=$(jq .install.address ./composer.json)
+export DOMAIN=$(jq -r .install.domain ./composer.json)
+export ADDRESS=$(jq -r .install.address ./composer.json)
 export SSL_path=$(pwd)/etc/pki
 export nginxbasicuser="alfatest"
 export nginxbasicpass="beta456"
@@ -241,7 +241,7 @@ server {
     error_log /var/log/nginx/$DOMAIN.error.log warn;
 
     server_name $DOMAIN www.$DOMAIN;
-    set \$host_path /srv/$PROJECT;
+    set \$host_path $serverRoot;
     root \$host_path/public;
     set \$app_bootstrap \"index.php\";
     index \$app_bootstrap;
