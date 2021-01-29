@@ -347,6 +347,9 @@ fi
 fi
 
 printf "WEB context resotre\n"
+chgrp -R nginx .
+grep nginx /var/log/audit/audit.log | audit2allow -M nginx
+semodule -i nginx.pp
 chcon -R -t httpd_sys_content_t $serverRoot
 semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
 exit
