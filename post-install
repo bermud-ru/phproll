@@ -242,13 +242,13 @@ server {
 
     server_name $DOMAIN www.$DOMAIN;
     set \$host_path $serverRoot;
-    root \$host_path/public;
+    root \$host_path/public/;
     set \$app_bootstrap index.php;
     index \$app_bootstrap;
 
     charset utf-8;
 
-    listen 443 ssl;
+    listen 443 ssl http2;
     ssl_certificate     $SSL_path/nginx.crt;
     ssl_certificate_key $SSL_path/nginx.key;
     ssl_protocols TLSv1.3 TLSv1.2;
@@ -284,15 +284,15 @@ server {
           add_header Content-Type application/json;
           return 502 '{"result": "error", "message": "Oops! system error!"}';
         }
-        root $serverRoot/public;
+        root $serverRoot/public/;
         index 502.html;
     }
 
     location ~ \.(php|tmpl)\$ {
         set \$fsn /\$app_bootstrap;
-        fastcgi_param appenv "dev";
+        fastcgi_param appenv dev;
         fastcgi_index \$app_botstrap;
-        fastcgi_split_path_info ^(.+\.php|.+\.tmpl)(.*)\$;
+        fastcgi_split_path_info ^(.+\.php|.+\.tmpl)(.*)$;
         fastcgi_pass unix:/run/php-fpm/www.sock;
 
         if (-f \$document_root\$fastcgi_script_name){
@@ -345,9 +345,9 @@ restorecon -vF /etc/nginx/conf.d/*
 fi
 
 printf "WEB context resotre\n"
-chown -R nginx:nginx $serverRoot
-chmod -R 644 $serverRoot/
-chmod 755 $serverRoot
+chown -R nginx:nginx $serverRoot/public
+chmod -R 644 $serverRoot/public
+chmod 755 $serverRoot/public
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
 chcon -R -t httpd_sys_content_t $serverRoot
