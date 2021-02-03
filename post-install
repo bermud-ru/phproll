@@ -53,11 +53,11 @@ fi
 export vendor=vendor/bermud-ru/phproll
 export serverRoot=$(pwd)
 export PROJECT=${PWD##*/}
-export DOMAIN=$(jq -r .install.domain ./composer.json)
-export ADDRESS=$(jq -r .install.address ./composer.json)
+export DOMAIN=$(jq -r '.install.domain' ./composer.json)
+export ADDRESS=$(jq -r '.install.address' ./composer.json)
 export SSL_path=$(pwd)/etc/pki
-export nginxbasicuser="alfatest"
-export nginxbasicpass="beta456"
+export nginxbasicuser=$(jq -r '.install.basicuser // alfatest' ./composer.json)
+export nginxbasicpass=$(jq -r '.install.basicpass // beta456' ./composer.json)
 ##########################################################################################
 
 printf "Post-install scripting ...\n\n"
@@ -84,11 +84,14 @@ done
 cp -rf ./$vendor/Application/view/* ./Application/view/
 cp -rf ./$vendor/Application/extra/* ./Application/extra/
 
-if [ ! -z "$ADDRESS" ]; then
-printf "Resolv domain\n"
+if [ ! -z "$ADDRESS" ] && [ ! -z "$DOMAIN" ]; then
+printf "Resolve domain\n"
+hostupdate=$(grep -q "$DOMAIN" /etc/hosts && echo $?)
+if [ ! $hostupdate -eq 0 ]; then
 cat << EOF >> /etc/hosts
 ${ADDRESS}   ${DOMAIN}
 EOF
+fi
 fi
 
 mkdir -p ./etc/pki
