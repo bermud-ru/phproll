@@ -69,14 +69,14 @@ mkdir -p ./Application/view
 mkdir -p ./Application/extra
 mkdir -p ./etc/nginx
 mkdir -p ./etc/pki
-#ln -s ../$vendor/public/maintenance ./public/maintenance
-#ln -s ../$vendor/public/icons ./public/icons
-cp -rf ./$vendor/public/* ./public/
+cp -ru ./$vendor/public/* ./public/
 cp -rf ./$vendor/config.php ./
 cp -rf ./$vendor/.gitignore ./
 cp -rf ./$vendor/.hgignore ./
-cp -n ./$vendor/public/css/* ./public/css/
-#cp -rf ./$vendor/public/* ./public/
+cp -rf ./$vendor/public/css/* ./public/css/
+#cp -af ./$vendor/public/* ./public/
+ln -sfn ./$vendor/public/maintenance ./public/maintenance
+ln -sfn ./$vendor/public/icons ./public/icons
 for js in ./$vendor/public/js/*
 do
  [ -f $js ] && cp -rf $js ./public/js/
