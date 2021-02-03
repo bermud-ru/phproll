@@ -140,22 +140,30 @@ default_bits			= 2048			# Size of keys
 default_keyfile		= key.pem		# name of generated keys
 default_md				= md5			  # message digest algorithm
 string_mask				= nombstr		# permitted characters
+prompt            = no
 distinguished_name	= req_distinguished_name
 req_extensions			= v3_req
+x509_extensions   = x509_ext
+
+[ x509_ext ]
+authorityKeyIdentifier  = keyid,issuer
+basicConstraints        = CA:FALSE
+keyUsage                = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName          = @alt_names
 
 [ req_distinguished_name ]
 # Variable name				Prompt string
 #-------------------------	  ----------------------------------
 0.organizationName		= Organization Name (company)
 organizationalUnitName	= Organizational Unit Name (department, division)
-emailAddress			= Email Address
+emailAddress			= box@$DOMAIN
 emailAddress_max	= 40
 localityName			= Locality Name (city, district)
 stateOrProvinceName		= State or Province Name (full name)
-countryName				= Country Name (2 letter code)
+countryName				= RU
 countryName_min		= 2
 countryName_max		= 2
-commonName				= Common Name (hostname, IP, or your name)
+commonName				= $DOMAIN
 commonName_max		= 64
 
 # Default values for the above, for consistency and less typing.
@@ -166,12 +174,13 @@ localityName_default		= My Town
 stateOrProvinceName_default	= State or Providence
 countryName_default			= RU
 
-[alt_names]
+[ alt_names ]
 # Variable name				Prompt string
 #-------------------------	  ----------------------------------
-DNS.1                   = phprest.com
-DNS.2                   = phprest1.com
-DNS.3                   = phprest2.com
+DNS.1                   = $DOMAIN
+#DNS.2                   = phprest1.com
+#DNS.3                   = phprest2.com
+IP.1                    = $ADDRESS
 
 [ v3_ca ]
 basicConstraints			  = CA:TRUE
@@ -217,6 +226,9 @@ exit
 EOF
 fi
 bash ./etc/pki/make
+printf "NGINX pki test\n"
+#openssl verify -CAfile myCA.pem -verify_hostname bar.mydomain.com mydomain.com.crt
+openssl s_server -key ./etc/pki/nginx.key -cert ./etc/pki/nginx.crt -www
 
 if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
@@ -332,6 +344,8 @@ server {
 }
 EOF
 
+NGINX=$(which nginx)
+if [ ! -z "$NGINX" ]; then
 printf "NGINX configs context resotre\n"
 chown -R root:root $serverRoot/etc/nginx
 restorecon -vF $serverRoot/etc/nginx/*
@@ -344,13 +358,18 @@ chown -h root:wheel /etc/nginx/conf.d/*
 restorecon -vF /etc/nginx/conf.d/*
 fi
 
-printf "WEB context resotre\n"
+printf "WEB context right resotre\n"
 chown -R nginx:nginx $serverRoot/public
 chmod -R 644 $serverRoot/public
 chmod 755 $serverRoot/public
+SELinux=$(sestatus)
+if [ ! -z "$SELinux" ]; then
+printf "SELinux context resotre\n"
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
 chcon -R -t httpd_sys_content_t $serverRoot
 semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
+fi
 echo "systemctl start nginx.service"
+fi
 exit
