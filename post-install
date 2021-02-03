@@ -273,6 +273,7 @@ server {
     #ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
     ssl_ecdh_curve auto;
+    ssl_dhparam $SSL_path/dhparams.pem;
 
     set \$appenv dev;
     client_body_buffer_size 32K;
@@ -349,6 +350,9 @@ EOF
 
 NGINX=$(which nginx)
 if [ ! -z "$NGINX" ]; then
+if [ ! -f $SSL_path/dhparams.pem ]; then
+openssl dhparam -out $SSL_path/dhparams.pem 4096
+fi
 printf "NGINX configs context resotre\n"
 chown -R root:root $serverRoot/etc/nginx
 restorecon -vF $serverRoot/etc/nginx/*
