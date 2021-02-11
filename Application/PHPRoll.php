@@ -178,19 +178,19 @@ class PHPRoll extends \Application\Request
      * @return false|mixed|null|string
      * @throws ContextException
      */
-    public function context($pattern, array &$options = [], &$assoc_index = false)
+    public function context($pattern, array &$options = [], &$assoc_index = false, $depth = 0)
     {
         $path = $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
         $is_set = is_array($pattern);
         $is_assoc = $is_set ? \Application\Parameter::is_assoc($pattern) : false;
-        if (!isset($options['include'])) $options['include'] = [];
+        if (!isset($options['include'][$depth])) $options['include'][$depth] = [];
 
         if ($is_assoc) {
             $bound = range(0, count($pattern) - 1);
             $keys = [];
             foreach ($pattern as $x => $y) {
                 $keys[] = $key = isset($bound[$x]) ? $y : $x;
-                $options['include'][$key] = $this->context($y, $options, $x);
+                $options['include'][$depth][$key] = $this->context($y, $options, $x, ++$depth);
             }
             return $this->context($keys, $options);
         } else {
@@ -209,7 +209,8 @@ class PHPRoll extends \Application\Request
             if ($file && is_file($file)) {
                 extract($options); ob_start(); require($file);
                 $context = ob_get_clean();
-                $context = array_key_exists('grinder', $options) && is_callable($options['grinder']) ? call_user_func_array($options['grinder']->bindTo($this), ['contex'=>$context]):$context;
+                $context = array_key_exists('grinder', $options) && is_callable($options['grinder']) ?
+                    call_user_func_array($options['grinder']->bindTo($this), ['file'=>$f, 'contex'=>$context, 'depth'=>$depth, 'assoc_index'=>$assoc_index]) : $context;
             } else {
                 if (!$assoc_index) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
             }
@@ -218,8 +219,8 @@ class PHPRoll extends \Application\Request
                 if (!isset($options[$assoc_index])) $options[$assoc_index] = [];
                 $options[$assoc_index][$f] = $context;
             } else {
-                if ($is_set &&  $k < $count) {
-                    $options['include'][$f] = $context;
+                if ($is_set && $k < $count) {
+                    $options['include'][$depth][$f] = $context;
                 } else {
                     return $context;
                 }
@@ -227,6 +228,22 @@ class PHPRoll extends \Application\Request
         }
         
         return $assoc_index ? $options[$assoc_index] : $context;
+    }
+
+    /**
+     * @param array $a
+     * @param array $opt
+     * @return string|null
+     */
+    public function wring(array $a, array $opt = []): ?string
+    {
+        $res = ''; $counter = 0;
+        array_walk_recursive($a, function($cnx, $key, &$counter) use (&$res, $opt) {
+            $counter++;
+            $res .= $cnx;
+        }, $counter);
+
+        return $res;
     }
 
     /**
@@ -304,7 +321,7 @@ class PHPRoll extends \Application\Request
                 switch (gettype($params)) {
                     case 'object':
                     case 'array':
-                        return json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        return json_encode($params, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
                     case 'string':
                     default:
                         return $params;
@@ -339,10 +356,9 @@ class PHPRoll extends \Application\Request
                 $pattern = isset($params['pattern']) && !empty($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     try {
-                        $option = ['json' => function (array $params) { echo $this->response('json', $params); exit(1); }];
-                        $context = $this->context($pattern, $option);
+                        $context = $this->context($pattern, $params);
                     } catch (\Application\ContextException $e) {
-                        $context = $this->context($this->cfg->get('404','index.phtml'), $option);
+                        $context = $this->context($this->cfg->get('404','index.phtml'), $params);
                     }
                     $this->set_response_header();
                     return $context;
@@ -364,18 +380,18 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * @function crash
+     * @function exceptionInfo
      *
      * @param \Exception $e
-     * @param false $is_view
+     * @param false|int $is_view
      *
      */
-    public function crash(\Exception $e, $is_view = false)
+    public function exceptionInfo(\Exception $e, $is_view = 0)
     {
         if ($is_view)
         {
             $this->response_header['Action-Status'] = 'SYSTEM ERROR';
-            \Application\IO::console_error($e, ['{%','%}']);
+            \Application\IO::console_error($e, [1=>['<script>','</script>'],2=>['{%','%}'],3=>['<%','%>']][$is_view]);
         } else {
             echo $this->response('json', ['result' => 'error', 'code' => 500, 'message' => $e->getMessage()]);
             exit;
@@ -394,9 +410,7 @@ class PHPRoll extends \Application\Request
             return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
-        if ($content) return $content;
-
-        return $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml']+$opt)]);
+        return $content ?? $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml']+$opt)]);
     }
 }
 ?>

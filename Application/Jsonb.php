@@ -193,7 +193,7 @@ class Jsonb implements \JsonSerializable
      */
     public function jsonSerialize()
     {
-        return serialize($this->json);
+        return $this->assoc ? $this->json : json_decode($this->json, true);
     }
 
     /**
@@ -203,7 +203,7 @@ class Jsonb implements \JsonSerializable
      */
     public function __sleep(): array
     {
-        return $this->assoc ? $this->json : [$this->json];
+        return $this->assoc ? $this->json : json_decode($this->json, true);
     }
 
     /**
@@ -212,7 +212,7 @@ class Jsonb implements \JsonSerializable
      * @return array
      */
     public function __debugInfo() {
-        return $this->assoc ? $this->json : [$this->json];
+        return $this->assoc ? $this->json : json_decode($this->json, true);
     }
 
 }

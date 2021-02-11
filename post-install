@@ -348,6 +348,21 @@ server {
 }
 EOF
 
+cat << EOF > ./etc/nginx/$PROJECT.maintenance.conf
+access_log /var/log/nginx/$PROJECT.maintenance.access.log combined;
+error_log /var/log/nginx/$PROJECT.maintenance.error.log warn;
+root $serverRoot/public//maintenance;
+location / {
+    index index.html;
+    try_files \$uri /index.html;
+
+    if (\$http_xhr_version) {
+        add_header Content-Type application/json;
+        return 200 '{"result":"warning", "message":"Проводится регламентное техническое обслуживание"}';
+    }
+}
+EOF
+
 NGINX=$(which nginx)
 if [ ! -z "$NGINX" ]; then
 if [ ! -f $SSL_path/dhparams.pem ]; then
