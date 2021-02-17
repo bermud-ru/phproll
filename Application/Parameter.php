@@ -286,11 +286,9 @@ class Parameter implements \JsonSerializable
      */
     public function __toString(): ?string
     {
-
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
         }
-
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
             return $this->array_to_string($this->value, $this->opt);

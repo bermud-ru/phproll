@@ -39,7 +39,7 @@ class Jsonb implements \JsonSerializable
      * @param array $opt
      */
 
-    public function __construct( &$source, $opt = [] )
+    public function __construct( $source, $opt = [] )
     {
         foreach ($opt as $k => $v) {
             switch (strtolower($k)) {
@@ -184,6 +184,18 @@ class Jsonb implements \JsonSerializable
     public function __call($name, $arguments)
     {
         return $this->call($name, $arguments, $this->owner);
+    }
+
+    /**
+     * @function __toString
+     *
+     * @return string | null
+     */
+    public function __toString(): ?string
+    {
+        return json_encode($this->assoc ?
+            $this->json : json_decode($this->json, true),
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /**
