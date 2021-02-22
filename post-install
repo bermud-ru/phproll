@@ -363,28 +363,30 @@ location / {
 }
 EOF
 
-NGINX=$(which nginx)
+export SELinux=$(sestatus)
+export NGINX=$(which nginx)
 if [ ! -z "$NGINX" ]; then
 if [ ! -f $SSL_path/dhparams.pem ]; then
 openssl dhparam -out $SSL_path/dhparams.pem 4096
 fi
 printf "NGINX configs context resotre\n"
 chown -R root:root $serverRoot/etc/nginx
-restorecon -vF $serverRoot/etc/nginx/*
-chcon -t httpd_config_t $serverRoot/etc/nginx/*
 if [ ! -f /etc/nginx/conf.d/${PROJECT}.conf ]; then
 ln -s $serverRoot/etc/nginx/$PROJECT.conf /etc/nginx/conf.d/$PROJECT.conf
 fi
 #ln -s $serverRoot/etc/nginx/$DOMAIN.conf /etc/nginx/conf.d/$DOMAIN.conf
 chown -h root:wheel /etc/nginx/conf.d/*
+if [ ! -z "$SELinux" ]; then
+restorecon -vF $serverRoot/etc/nginx/*
+chcon -t httpd_config_t $serverRoot/etc/nginx/*
 restorecon -vF /etc/nginx/conf.d/*
+fi
 fi
 
 printf "WEB context right resotre\n"
-chown -R nginx:nginx $serverRoot/public
-chmod -R 644 $serverRoot/public
-chmod 755 $serverRoot/public
-SELinux=$(sestatus)
+#chown -R nginx:nginx $serverRoot/public
+#chmod -R 644 $serverRoot/public
+#chmod 755 $serverRoot/public
 if [ ! -z "$SELinux" ]; then
 printf "SELinux context resotre\n"
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
