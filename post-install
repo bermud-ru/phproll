@@ -222,16 +222,16 @@ commonname=$DOMAIN
 #Email Address []:
 email=box@$DOMAIN
 ########################################################################################################################
-openssl req -nodes -x509 -newkey rsa:2048 -keyout ./etc/pki/nginx.key -out ./etc/pki/nginx.crt -days 365 \
-  -subj "/C=\$country/ST=\$state/L=\$locality/O=\$organization/OU=\$organizationalunit/CN=\$commonname/emailAddress=\$email" \
-  -config ./etc/pki/sertificat.cnf
+openssl req -nodes -x509 -newkey rsa:2048 -keyout $SSL_path/nginx.key -out $SSL_path/nginx.crt -days 365 \
+-subj "/C=\$country/ST=\$state/L=\$locality/O=\$organization/OU=\$organizationalunit/CN=\$commonname/emailAddress=\$email" \
+-config $SSL_path/sertificat.cnf
 exit
 EOF
 fi
 bash ./etc/pki/make
 printf "NGINX pki test\n"
 #openssl verify -CAfile myCA.pem -verify_hostname bar.mydomain.com mydomain.com.crt
-openssl s_server -key ./etc/pki/nginx.key -cert ./etc/pki/nginx.crt -www
+#openssl s_server -key ./etc/pki/nginx.key -cert ./etc/pki/nginx.crt -www
 
 if [ ! -f ./etc/nginx/$PROJECT.conf ]; then
 printf "NGINX configuration TLSv1.3 TLSv1.2\n"
