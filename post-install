@@ -56,8 +56,8 @@ export PROJECT=${PWD##*/}
 export DOMAIN=$(jq -r '.install.domain' ./composer.json)
 export ADDRESS=$(jq -r '.install.address' ./composer.json)
 export SSL_path=$(pwd)/etc/pki
-export nginxbasicuser=$(jq -r '.install.basicuser // alfatest' ./composer.json)
-export nginxbasicpass=$(jq -r '.install.basicpass // beta456' ./composer.json)
+export nginxbasicuser=$(jq -r '.install.basicuser // "alfatest"' ./composer.json)
+export nginxbasicpass=$(jq -r '.install.basicpass // "beta456"' ./composer.json)
 ##########################################################################################
 
 printf "Post-install scripting ...\n\n"
@@ -111,17 +111,17 @@ cat << EOF > ./etc/pki/sertificat.cnf
 #
 
 # Establish working directory.
-dir	= ./etc/pki
+dir	= /etc/ssl
 
 [ ca ]
 default_ca			= CA_default
 
 [ CA_default ]
-serial					= $dir/serial
-database				= $dir/nginxindex.txt
-new_certs_dir		= $dir/certs
-certificate			= $dir/nginx.crt
-private_key			= $dir/nginx.key
+serial					= /etc/ssl/serial
+database				= /etc/ssl/nginxindex.txt
+new_certs_dir		= /etc/ssl/certs
+certificate			= /etc/ssl/nginx.crt
+private_key			= /etc/ssl/nginx.key
 default_days		= 365
 default_md			= md5
 preserve				= no
@@ -146,13 +146,6 @@ string_mask				= nombstr		# permitted characters
 prompt            = no
 distinguished_name	= req_distinguished_name
 req_extensions			= v3_req
-x509_extensions   = x509_ext
-
-[ x509_ext ]
-authorityKeyIdentifier  = keyid,issuer
-basicConstraints        = CA:FALSE
-keyUsage                = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-subjectAltName          = @alt_names
 
 [ req_distinguished_name ]
 # Variable name				Prompt string
@@ -162,7 +155,7 @@ organizationalUnitName	= Organizational Unit Name (department, division)
 emailAddress			= box@$DOMAIN
 emailAddress_max	= 40
 localityName			= Locality Name (city, district)
-stateOrProvinceName		= State or Province Name (full name)
+stateOrProvinceName	= State or Province Name (full name)
 countryName				= RU
 countryName_min		= 2
 countryName_max		= 2
@@ -181,8 +174,8 @@ countryName_default			= RU
 # Variable name				Prompt string
 #-------------------------	  ----------------------------------
 DNS.1                   = $DOMAIN
-#DNS.2                   = phprest1.com
-#DNS.3                   = phprest2.com
+#DNS.2                  = phprest1.com
+#DNS.3                  = phprest2.com
 IP.1                    = $ADDRESS
 
 [ v3_ca ]
@@ -194,6 +187,12 @@ authorityKeyIdentifier	= keyid:always,issuer:always
 subjectAltName          = @alt_names
 basicConstraints			  = CA:FALSE
 subjectKeyIdentifier		= hash
+
+[ x509_ext ]
+authorityKeyIdentifier  = keyid,issuer
+basicConstraints        = CA:FALSE
+keyUsage                = digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment
+subjectAltName          = @alt_names
 EOF
 fi
 
