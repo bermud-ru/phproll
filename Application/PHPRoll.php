@@ -61,7 +61,6 @@ class PHPRoll extends \Application\Request
         {
             parent::__construct($params);
             $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
-            $this->params = new \Application\Jsonb($this->params, ['owner'=>$this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
         }
     }
 
@@ -86,6 +85,16 @@ class PHPRoll extends \Application\Request
     protected function setParent(&$parent)
     {
         return $this->parent = $parent;
+    }
+
+    /**
+     * Получаем значение параменных в запросе
+     *
+     */
+    public function initParams()
+    {
+        $params = (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) ? $_POST : parent::initParams();
+        $this->params = new \Application\Jsonb($params, ['owner'=> $this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
     }
 
     /**
