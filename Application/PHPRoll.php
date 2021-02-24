@@ -244,10 +244,10 @@ class PHPRoll extends \Application\Request
      * @param array $opt
      * @return string|null
      */
-    public function wring(array $a, array $opt = []): ?string
+    public function wring(?array $a, array $opt = []): ?string
     {
         $res = ''; $counter = 0;
-        array_walk_recursive($a, function($cnx, $key, &$counter) use (&$res, $opt) {
+        if ($a) array_walk_recursive($a, function($cnx, $key, &$counter) use (&$res, $opt) {
             $counter++;
             $res .= $cnx;
         }, $counter);
@@ -419,7 +419,8 @@ class PHPRoll extends \Application\Request
             return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
-        return $content ?? $this->response('view', ['pattern'=>$this->getPattern(['script'=>'index','ext'=>'.phtml']+$opt)]);
+        return $content ?? $this->response('view', ['pattern' => ['index.phtml' => '404.phtml']]);
+
     }
 }
 ?>
