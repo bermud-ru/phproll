@@ -588,7 +588,7 @@ class PDA
                     break;
                 }
             case 'array':
-                $val = "'" . json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
+                $val = "'" . json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK | JSON_PRESERVE_ZERO_FRACTION) . "'";
                 break;
             case 'NULL':
                 $val = 'NULL';
@@ -596,6 +596,7 @@ class PDA
             case 'boolean':
                 $val = boolval($v) ? 1 : 0;
                 break;
+            case 'float':
             case 'double':
                 $val = floatval($v);
                 break;
@@ -604,7 +605,11 @@ class PDA
                 break;
             case 'string':
             default:
+            if ( is_numeric($v) ) {
+                $val = floatval($v); $val = $folat != intval($folat) ? $folat : intval($v);
+            } else {
                 $val = "'".self::pg_escape_string($v)."'";
+            }
         }
         return $val;
     }
