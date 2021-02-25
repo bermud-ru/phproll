@@ -151,17 +151,36 @@ class IO
     {
         if (!filter_var($url, FILTER_VALIDATE_URL)) return ['result'=>'error', 'message'=>'Wrong URL!'];
         if (!in_array(strtoupper($method),['GET','DELETE','POST','PUT'])) return ['result'=>'error', 'message'=>'Wrong Method!'];
-        $options = array_merge($opt, [
+        
+        if (isset($opt['http']) && isset($opt['http']['header']) && is_array($opt['http']['header'])) { $opt['http']['header'] = implode("\r\n", $opt['http']['header']); }
+
+        $is_json = true;
+        if (is_array($data)) {
+            if ( isset( $opt['http']) && isset( $opt['http']['header']) && strpos('json', $opt['http']['header']) === false) {
+                $is_json = false;
+                if (in_array($method,['GET','DELETE'])) {
+                    $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data);
+                    $data = '';
+                } else {
+                    $data = http_build_query($data);
+                }
+            } else {
+                $data = json_encode($data,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
+        }
+
+        $options = array_replace_recursive([
             'http' => [
 //                'header'  => "Content-type: application/x-www-form-urlencoded" . "\r\n",
-                'header' => implode("\r\n", [
-                    "Content-type: application/json",
-                ]),
+//                'header' => implode("\r\n", [
+//                    "Content-type: application/json",
+//                ]),
+                'header' => "Content-type: application/json",
 //                'max_redirects' => '0',
 //                'ignore_errors' => '1',
                 'method' => strtoupper($method),
 //                'content' => http_build_query($data),
-                'content' => is_string($data) ? $data : json_encode($data,JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'content' => $data,
 //                'protocol_version' => '1.1',
             ],
 //            'ssl'  => [ // here comes the actual SSL part...
@@ -179,15 +198,17 @@ class IO
 ////                'CN_match' =>  'bingo2020.vegas',
 ////                'disable_compression' => true,
 //            ]
-        ]);
+        ], $opt);
 
         try {
             $context = stream_context_create($options);
             $result = file_get_contents($url, NULL, $context) ;
-            if ( $result ) {
+            if ( $result ) if ( $is_json ) {
                 $json = json_decode($result, true);
                 $err = json_last_error();
                 return  $err === JSON_ERROR_NONE ? $json : ['result' => 'error', 'code'=> $err, 'content' => $result];
+            } else {
+                return $result;
             }
             return ['result' => 'error', 'message' => (error_get_last())['message']];
         } catch (\Exception $e) {

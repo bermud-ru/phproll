@@ -372,7 +372,8 @@ class PHPRoll extends \Application\Request
                     $this->set_response_header();
                     return $context;
                 }
-
+                
+            case 'xml':
             default:
                 header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION, false);
                 header('Content-Type: Application/xml; charset=utf-8');

@@ -588,7 +588,7 @@ class PDA
                     break;
                 }
             case 'array':
-                $val = "'" . json_encode($v, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
+                $val = "'" . json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "'";
                 break;
             case 'NULL':
                 $val = 'NULL';

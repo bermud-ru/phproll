@@ -91,7 +91,8 @@ abstract class Request
      */
     protected function initParams()
     {
-        if (strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== FALSE) {
+
+        if (strpos($_SERVER['CONTENT_TYPE'], 'json') !== FALSE) {
             $this->params = json_decode($this->request, true);
         } else {
             mb_parse_str($this->request, $this->params);
