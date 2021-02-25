@@ -25,7 +25,7 @@ namespace Application;
 class PHPRoll extends \Application\Request
 {
     const FRAMEWORK = 'PHPRoll';
-    const VERSION = '2.1.1b';
+    const VERSION = '2.1.2b';
     const KEY_SEPARATOR = '.';
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
     const HTTP_RESPONSE_CODE = [
@@ -91,7 +91,7 @@ class PHPRoll extends \Application\Request
      * Получаем значение параменных в запросе
      *
      */
-    public function initParams()
+    protected function initParams()
     {
         $params = (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) ? $_POST : parent::initParams();
         $this->params = new \Application\Jsonb($params, ['owner'=> $this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);

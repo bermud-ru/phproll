@@ -72,7 +72,7 @@ abstract class Request
     /**
      * @return array|false|int|string|null
      */
-    final function RAWRequet()
+    protected function RAWRequet()
     {
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'PUT':
@@ -89,9 +89,13 @@ abstract class Request
      * Получаем значение параменных в запросе
      *
      */
-    public function initParams()
+    protected function initParams()
     {
-        mb_parse_str($this->request,$this->params);
+        if (strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== FALSE) {
+            $this->params = json_decode($this->request, true);
+        } else {
+            mb_parse_str($this->request, $this->params);
+        }
         return $this->params;
     }
 
