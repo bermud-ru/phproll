@@ -159,13 +159,13 @@ class IO
             if ( isset( $opt['http']) && isset( $opt['http']['header']) && strpos('json', $opt['http']['header']) === false) {
                 $is_json = false;
                 if (in_array($method,['GET','DELETE'])) {
-                    $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data);
+                    $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data,'','&',PHP_QUERY_RFC3986);
                     $data = '';
                 } else {
-                    $data = http_build_query($data);
+                    $data = http_build_query($data); //,'','&',PHP_QUERY_RFC3986);
                 }
             } else {
-                $data = json_encode($data,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $data = json_encode($data,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
             }
         }
 
@@ -202,7 +202,7 @@ class IO
 
         try {
             $context = stream_context_create($options);
-            $result = file_get_contents($url, NULL, $context) ;
+            $result = @file_get_contents($url, NULL, $context) ;
             if ( $result ) if ( $is_json ) {
                 $json = json_decode($result, true);
                 $err = json_last_error();
