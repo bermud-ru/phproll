@@ -165,7 +165,7 @@ class IO
                     $data = http_build_query($data); //,'','&',PHP_QUERY_RFC3986);
                 }
             } else {
-                $data = json_encode($data,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                $data = json_encode($data,JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
             }
         }
 

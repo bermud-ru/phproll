@@ -475,7 +475,7 @@ class Parameter implements \JsonSerializable
                     if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
                 } else {
 //                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_NUMERIC_CHECK);
-                    $val = json_encode($param, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                    $val = json_encode($param, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
                 }
                 break;
             case 'string':
