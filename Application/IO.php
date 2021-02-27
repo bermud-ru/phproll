@@ -149,66 +149,68 @@ class IO
      */
     static function rest(string $method, string $url, $data, $opt=[])
     {
+        if ($method == 'RAW') return @file_get_contents($url . (strpos('?', $url) === FALSE ? '?' : '&') . \Application\Request::http_build_query($data));
         if (!filter_var($url, FILTER_VALIDATE_URL)) return ['result'=>'error', 'message'=>'Wrong URL!'];
-        if (!in_array(strtoupper($method),['GET','DELETE','POST','PUT'])) return ['result'=>'error', 'message'=>'Wrong Method!'];
-        
-        if (isset($opt['http']) && isset($opt['http']['header']) && is_array($opt['http']['header'])) { $opt['http']['header'] = implode("\r\n", $opt['http']['header']); }
-
-        $is_json = true;
-        if (is_array($data)) {
-            if ( isset( $opt['http']) && isset( $opt['http']['header']) && strpos('json', $opt['http']['header']) === false) {
-                $is_json = false;
-                if (in_array($method,['GET','DELETE'])) {
-                    $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data,'','&',PHP_QUERY_RFC3986);
-                    $data = '';
-                } else {
-                    $data = http_build_query($data); //,'','&',PHP_QUERY_RFC3986);
-                }
-            } else {
-                $data = json_encode($data,JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+            if (!in_array(strtoupper($method), ['GET', 'DELETE', 'POST', 'PUT'])) return ['result' => 'error', 'message' => 'Wrong Method!'];
+            if (isset($opt['http']) && isset($opt['http']['header']) && is_array($opt['http']['header'])) {
+                $opt['http']['header'] = implode("\r\n", $opt['http']['header']);
             }
-        }
+            $is_json = true;
+            if (is_array($data)) {
+                if (isset($opt['http']) && isset($opt['http']['header']) && strpos('json', $opt['http']['header']) === false) {
+                    $is_json = false;
+                    if (in_array($method, ['GET', 'DELETE'])) {
+                        $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data); //,'Prefix','&',PHP_QUERY_RFC3986);
+                        $data = '';
+                    } else {
+                        $data = http_build_query($data); //,'','&',PHP_QUERY_RFC3986);
+                    }
+                } else {
+                    $data = json_encode($data, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
+            }
 
-        $options = array_replace_recursive([
-            'http' => [
-//                'header'  => "Content-type: application/x-www-form-urlencoded" . "\r\n",
-//                'header' => implode("\r\n", [
-//                    "Content-type: application/json",
-//                ]),
-                'header' => "Content-type: application/json",
-//                'max_redirects' => '0',
-//                'ignore_errors' => '1',
-                'method' => strtoupper($method),
-//                'content' => http_build_query($data),
-                'content' => $data,
-//                'protocol_version' => '1.1',
-            ],
-//            'ssl'  => [ // here comes the actual SSL part...
-////                'local_cert'        => '/path/to/key.pem',
-////                'peer_fingerprint'  => openssl_x509_fingerprint(file_get_contents('/path/to/key.crt')),
-//                "verify_peer"       => false, // Self signed! option
-//                "verify_peer_name"  => false, // Self signed! option
-//                'allow_self_signed' => true,  // Self signed! option
-////                'verify_depth'      => 0,
-////                'verify_peer'   => true,
-////                'cafile'        => __DIR__ . '/cacert.pem',
-////                'verify_depth'  => 5,
-////                'CN_match'      => $url
-////                'ciphers' => 'HIGH:TLSv1.2:TLSv1.1:TLSv1.0:!SSLv3:!SSLv2',
-////                'CN_match' =>  'bingo2020.vegas',
-////                'disable_compression' => true,
-//            ]
-        ], $opt);
+            $options = array_replace_recursive([
+                'http' => [
+    //                'header'  => "Content-type: application/x-www-form-urlencoded" . "\r\n",
+    //                'header' => implode("\r\n", [
+    //                    "Content-type: application/json",
+    //                ]),
+                    'header' => "Content-type: application/json",
+    //                'max_redirects' => '0',
+    //                'ignore_errors' => '1',
+                    'method' => strtoupper($method),
+    //                'content' => http_build_query($data),
+                    'content' => $data,
+    //                'protocol_version' => '1.1',
+                ],
+    //            'ssl'  => [ // here comes the actual SSL part...
+    ////                'local_cert'        => '/path/to/key.pem',
+    ////                'peer_fingerprint'  => openssl_x509_fingerprint(file_get_contents('/path/to/key.crt')),
+    //                "verify_peer"       => false, // Self signed! option
+    //                "verify_peer_name"  => false, // Self signed! option
+    //                'allow_self_signed' => true,  // Self signed! option
+    ////                'verify_depth'      => 0,
+    ////                'verify_peer'   => true,
+    ////                'cafile'        => __DIR__ . '/cacert.pem',
+    ////                'verify_depth'  => 5,
+    ////                'CN_match'      => $url
+    ////                'ciphers' => 'HIGH:TLSv1.2:TLSv1.1:TLSv1.0:!SSLv3:!SSLv2',
+    ////                'CN_match' =>  'bingo2020.vegas',
+    ////                'disable_compression' => true,
+    //            ]
+            ], $opt);
+
 
         try {
             $context = stream_context_create($options);
-            $result = @file_get_contents($url, NULL, $context) ;
-            if ( $result ) if ( $is_json ) {
-                $json = json_decode($result, true);
-                $err = json_last_error();
-                return  $err === JSON_ERROR_NONE ? $json : ['result' => 'error', 'code'=> $err, 'content' => $result];
+            $response = @file_get_contents($url, NULL, $context) ;
+            if ( $response ) if ( $is_json ) {
+                $json = json_decode($response, true);
+                $error = json_last_error();
+                return  $error === JSON_ERROR_NONE ? $json : ['result' => 'error', 'code'=> $error, 'content' => $response];
             } else {
-                return $result;
+                return $response;
             }
             return ['result' => 'error', 'message' => (error_get_last())['message']];
         } catch (\Exception $e) {

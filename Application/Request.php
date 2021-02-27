@@ -101,6 +101,23 @@ abstract class Request
     }
 
     /**
+     * http_build_query — Генерирует строку запроса
+     *
+     * @param $a
+     * @param string $prefix
+     * @param string $separator
+     * @return string
+     */
+    public static function http_build_query($a, $prefix = '', $separator = '&'): string
+    {
+        if (is_array($a)) {
+            $res = []; foreach($a as $key => $value) $res[] = "$prefix$key=$value";
+            return implode($separator, $res);
+        }
+        return (string) $a;
+    }
+
+    /**
      * run Abstract method
      *
      * @return mixed
