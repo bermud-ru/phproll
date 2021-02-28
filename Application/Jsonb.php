@@ -191,7 +191,7 @@ class Jsonb implements \JsonSerializable
      *
      * @return string | null
      */
-    public function __toString(): ?string
+    public function __toString(): string
     {
         return json_encode($this->assoc ?
             $this->json : json_decode($this->json, true),

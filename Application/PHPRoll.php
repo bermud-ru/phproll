@@ -247,7 +247,7 @@ class PHPRoll extends \Application\Request
     public function wring(?array $a, array $opt = []): ?string
     {
         $res = ''; $counter = 0;
-        if ($a) array_walk_recursive($a, function($cnx, $key, &$counter) use (&$res, $opt) {
+        if ($a) array_walk_recursive($a, function($cnx, $key, $counter) use (&$res, $opt) {
             $counter++;
             $res .= $cnx;
         }, $counter);

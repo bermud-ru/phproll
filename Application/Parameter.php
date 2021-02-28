@@ -284,7 +284,7 @@ class Parameter implements \JsonSerializable
      *
      * @return string | null
      */
-    public function __toString(): ?string
+    public function __toString(): string
     {
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
