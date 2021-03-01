@@ -93,7 +93,13 @@ class PHPRoll extends \Application\Request
      */
     protected function initParams()
     {
-        $params = (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) ? $_POST : parent::initParams();
+        if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) {
+            $params = $_POST;
+        } else if (strpos($_SERVER['CONTENT_TYPE'], 'json') !== FALSE) {
+            $params = json_decode($this->request, true);
+        } else {
+            mb_parse_str($this->request, $params);
+        }
         $this->params = new \Application\Jsonb($params, ['owner'=> $this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
     }
 

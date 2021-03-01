@@ -91,13 +91,19 @@ abstract class Request
      */
     protected function initParams()
     {
-
-        if (strpos($_SERVER['CONTENT_TYPE'], 'json') !== FALSE) {
-            $this->params = json_decode($this->request, true);
-        } else {
-            mb_parse_str($this->request, $this->params);
+        $pairs = explode( '&', $this->request);
+        $params = [];
+        for ($i=0; $i < count($pairs); $i++) {
+            $kv = explode('=', $pairs[$i]);
+            if (!array_key_exists($kv[0], $params)) {
+                $params[$kv[0]] = $kv[1];
+            } else if (is_array($params[$kv[0]])) {
+                $params[$kv[0]][] = $kv[1];
+            } else {
+                $params[$kv[0]] = [$params[$kv[0]], $kv[1]];
+            }
         }
-        return $this->params;
+        return $this->params = $params;
     }
 
     /**
