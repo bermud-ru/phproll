@@ -36,10 +36,18 @@ class ContextException extends \Exception {
      * @return mixed
      */
     public function context($tmpl=null) {
-        if ( $tmpl || isset($this->config['404']) ) return $this->owner->context($tmpl??$this->config['404'], $this->option);
+        $context = '';
+        if ( $tmpl || isset($this->config['404']) )  {
+            $context = $this->owner->context($tmpl??$this->config['404'], $this->option);
+        } else {
+            trigger_error("Application\ContextException::context() template or config['404'] not exist!", E_USER_WARNING);
+        }
 
-        trigger_error("Application\ContextException::context() template or config['404'] not exist!", E_USER_WARNING);
-        return '';
+        if (array_key_exists('grinder', $options) && is_callable($options['grinder'])) {
+            $context = call_user_func_array($options['grinder']->bindTo($this->owner), ['file' => $tmpl, 'contex' => $context,]);
+        }
+
+        return $context;
     }
 }
 

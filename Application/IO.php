@@ -265,6 +265,30 @@ class IO
         $len = strlen($cn);
         return class_exists($cn) ? unserialize(preg_replace('/^O:\d+:"[^"]++"/',"O:$len:\"$cn\"", serialize($src))) : $src;
     }
+
+    /**
+     * Дерево прараметров в запросе разворачивает в массив ключ-значение,
+     * создавая идекс вложенности
+     *
+     * @param array $a
+     * @param $r
+     * @param null $key
+     * @return array
+     */
+    static function rebuildParams(array $a, &$r, $key = null):array
+    {
+        function rebuild(array $a, &$r, $key = null)
+        {
+            foreach ($a as $k => $v)
+                if (!is_array($v))
+                    $r[$key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k] = $v;
+                else
+                    rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
+        }
+        rebuild($a, $r, $key); //rebuild($params, $this->params);
+
+        return $r;
+    }
     
     /**
      * @function console_error

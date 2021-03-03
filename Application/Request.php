@@ -19,6 +19,7 @@ abstract class Request
     public $header = [];
     public $params = [];
     public $request = null;
+    public $uri = null;
 
     /**
      * Конструктор
@@ -28,6 +29,7 @@ abstract class Request
     public function __construct($params)
     {
         $this->cfg = new \Application\Jsonb($params, ['owner' => $this]);
+        $this->uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $this->header = (function_exists('getallheaders')) ? getallheaders() : $this->__getAllHeaders($_SERVER);
         $this->request = $this->RAWRequet();
         $this->initParams();

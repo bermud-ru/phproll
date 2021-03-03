@@ -60,7 +60,7 @@ class PHPRoll extends \Application\Request
         else
         {
             parent::__construct($params);
-            $this->path = array_filter(explode("/", substr(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), 1)));
+            $this->path = array_filter(explode("/", substr($this->uri, 1)));
         }
     }
 
@@ -104,30 +104,6 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * Дерево прараметров в запросе разворачивает в массив ключ-значение,
-     * создавая идекс вложенности
-     *
-     * @param array $a
-     * @param $r
-     * @param null $key
-     * @return array
-     */
-    static function rebuildParams(array $a, &$r, $key = null):array
-    {
-        function rebuild(array $a, &$r, $key = null)
-        {
-            foreach ($a as $k => $v)
-                if (!is_array($v))
-                    $r[$key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k] = $v;
-                else
-                    rebuild($v, $r, $key ? $key . \Application\PHPRoll::KEY_SEPARATOR . $k : $k);
-        }
-        rebuild($a, $r, $key); //rebuild($params, $this->params);
-
-        return $r;
-    }
-
-    /**
      * Алгоритм формирования последовательносит шаблонов,
      * использование скрипта мастера $script
      * или если передана строка использовать как название скрипта
@@ -159,6 +135,7 @@ class PHPRoll extends \Application\Request
             }
             if ($script && !in_array($script, $param)) array_unshift($name, $script . $ext); elseif ($script !== null) $name[] = $script . $ext;
         }
+
         return $name;
     }
 
@@ -181,6 +158,7 @@ class PHPRoll extends \Application\Request
             default:
                 $result = $this->tpl($this->path, $opt);
         }
+
         return $result;
     }
 
@@ -195,7 +173,7 @@ class PHPRoll extends \Application\Request
      */
     public function context($pattern, array &$options = [], &$assoc_index = false, $depth = 0)
     {
-        $path = $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
+        $path = isset($options['path']) ? $options['path'] : $this->cfg->get('view',__DIR__ . DIRECTORY_SEPARATOR );
         $is_set = is_array($pattern);
         $is_assoc = $is_set ? \Application\Parameter::is_assoc($pattern) : false;
         if (!isset($options['include'][$depth])) $options['include'][$depth] = [];
@@ -222,12 +200,17 @@ class PHPRoll extends \Application\Request
 
             $context = null;
             if ($file && is_file($file)) {
-                extract($options); ob_start(); require($file);
+                extract($options);
+                ob_start();
+                require($file);
                 $context = ob_get_clean();
-                $context = array_key_exists('grinder', $options) && is_callable($options['grinder']) ?
-                    call_user_func_array($options['grinder']->bindTo($this), ['file'=>$f, 'contex'=>$context, 'depth'=>$depth, 'assoc_index'=>$assoc_index]) : $context;
+                if (array_key_exists('grinder', $options) && is_callable($options['grinder'])) {
+                    $context = call_user_func_array($options['grinder']->bindTo($this), ['file' => $f, 'contex' => $context, 'depth' => $depth, 'assoc_index' => $assoc_index]);
+                }
             } else {
-                if (!$assoc_index) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
+                // Transformatin wiews
+                if (!$assoc_index && $is_set) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
+                else trigger_error("VIEW: $pattern not found!", E_USER_WARNING);
             }
 
             if ($assoc_index) {
@@ -290,11 +273,12 @@ class PHPRoll extends \Application\Request
     public function response(string $type, $params)
     {
         $code = $params['code'] ?? 200;
+        $context = null;
         if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
             header("HTTP/1.1 {$code} " . \Application\PHPRoll::HTTP_RESPONSE_CODE[$code], false);
         }
         http_response_code(intval($code));
-        header('Expires: 0', false);
+        header('Expires: '. date('r'), false);
 //        header("Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
 //        header("X-Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
 //        header("X-Webkit-CSP: default-src *; connect-src *; script-src 'unsafe-inline' 'unsafe-eval' *; object-src *;", false);
@@ -307,7 +291,8 @@ class PHPRoll extends \Application\Request
             header('Pragma: public', false);
         }
 
-        switch ($type) {
+        switch ($type)
+        {
             case 'websocket':
                 header('Access-Control-Max-Age: 0', false);
                 header('Sec-WebSocket-Origin:', false);
@@ -336,10 +321,11 @@ class PHPRoll extends \Application\Request
                 switch (gettype($params)) {
                     case 'object':
                     case 'array':
-                        return json_encode($params, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
+                        $context = json_encode($params, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
+                        break;
                     case 'string':
                     default:
-                        return $params;
+                        $context = $params;
                 }
                 break;
 
@@ -368,21 +354,21 @@ class PHPRoll extends \Application\Request
                 header('Content-Type: text/html; charset=utf-8');
                 header('Content-Encoding: utf-8');
 
-                $pattern = isset($params['pattern']) && !empty($params['pattern']) ? $params['pattern'] : 'index.phtml';
+                $pattern = isset($params['pattern']) ? $params['pattern'] : 'index.phtml';
                 if ( $pattern ) {
                     try {
                         $context = $this->context($pattern, $params);
                     } catch (\Application\ContextException $e) {
+                        $params['error'] = $e->getMessage();
                         $context = $this->context($this->cfg->get('404','index.phtml'), $params);
                     }
                     $this->set_response_header();
-                    return $context;
                 }
-                
+                break;
             case 'xml':
             default:
-                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION, false);
-                header('Content-Type: Application/xml; charset=utf-8');
+//                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION, false);
+                header('Content-Type: text/xml; charset=utf-8');
                 header('Content-Encoding: utf-8');
                 header('Access-Control-Allow-Origin: *');
                 header('Referer-Policy: origin-when-cross-origin');
@@ -390,9 +376,21 @@ class PHPRoll extends \Application\Request
                 header('X-XSS-Protection: 1; mode=block');
                 header('X-Content-Type-Options: nosniff');
                 header('Timing-Allow-Origin: *');
+                $pattern = isset($params['file']) ? $params['file'] : $params['pattern'];
+                if ( $pattern ) {
+                    try {
+                        $context = $this->context($pattern, $params);
+                        
+                    } catch (\Application\ContextException $e) {
+                        $params['error'] = $e->getMessage();
+                        $context = $this->context($this->cfg->get('404','index.phtml'), $params);
+                    }
+                    $this->set_response_header();
+                }
+                break;
                 $this->set_response_header();
         }
-        return $params;
+        return $context;
     }
 
     /**
@@ -426,8 +424,8 @@ class PHPRoll extends \Application\Request
             return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
 
         $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
-        return $content ?? $this->response('view', ['pattern' => ['index.phtml' => '404.phtml']]);
 
+        return $content ?? $this->response('view', ['pattern' => ['index.phtml' => '404.phtml']]);
     }
 }
 ?>
