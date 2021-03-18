@@ -89,7 +89,7 @@ cp -rf ./$vendor/Application/extra/* ./Application/extra/
 if [ ! -z "$ADDRESS" ] && [ ! -z "$DOMAIN" ]; then
 printf "Resolve domain\n"
 hostupdate=$(grep -q "$DOMAIN" /etc/hosts && echo $?)
-if [ ! $hostupdate -eq 0 ]; then
+if [ ! ${hostupdate:-0} -eq 0 ]; then
 cat << EOF >> /etc/hosts
 ${ADDRESS}   ${DOMAIN}
 EOF
