@@ -393,7 +393,10 @@ printf "SELinux context resotre\n"
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
 chcon -R -t httpd_sys_content_t $serverRoot
+CONTEXT=$(semanage fcontext -l | grep -i "${serverRoot}/(/.*)?")
+if [ -z "$CONTEXT" ]; then
 semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
+fi
 fi
 echo "systemctl start nginx.service"
 fi
