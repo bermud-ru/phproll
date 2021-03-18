@@ -53,8 +53,10 @@ fi
 export vendor=vendor/bermud-ru/phproll
 export serverRoot=$(pwd)
 export PROJECT=${PWD##*/}
-export DOMAIN=$(jq -r '.install.domain' ./composer.json)
-export ADDRESS=$(jq -r '.install.address' ./composer.json)
+dm="$PROJECT.server"
+export DOMAIN=$(jq -r '.install.domain // "$dm"' ./composer.json)
+local=$(hostname --all-ip-addresses | awk '{print $1}')
+export ADDRESS=$(jq -r '.install.address // "$local"' ./composer.json)
 export SSL_path=$(pwd)/etc/pki
 export nginxbasicuser=$(jq -r '.install.basicuser // "alfatest"' ./composer.json)
 export nginxbasicpass=$(jq -r '.install.basicpass // "beta456"' ./composer.json)
