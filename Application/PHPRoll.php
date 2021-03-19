@@ -40,6 +40,7 @@ class PHPRoll extends \Application\Request
 
     public $response_header = [];
     public $path = [];
+    public $query_type = '';
     public $ACL = null;
     
     protected $parent = null;
@@ -60,7 +61,9 @@ class PHPRoll extends \Application\Request
         else
         {
             parent::__construct($params);
+            $this->query_type = isset($this->header['Xhr-Version']) ? ($this->header['Content-Type'] === 'text/x-template' ? '#': '@') : '';
             $this->path = array_filter(explode("/", substr($this->uri, 1)));
+
         }
     }
 
@@ -200,12 +203,11 @@ class PHPRoll extends \Application\Request
 
             $context = null;
             if ($file && is_file($file)) {
-                extract($options);
-                ob_start();
-                require($file);
-                $context = ob_get_clean();
                 if (array_key_exists('grinder', $options) && is_callable($options['grinder'])) {
                     $context = call_user_func_array($options['grinder']->bindTo($this), ['file' => $f, 'contex' => $context, 'depth' => $depth, 'assoc_index' => $assoc_index]);
+                } else {
+                    extract($options); ob_start(); require_once($file);
+                    $context = ob_get_clean();
                 }
             } else {
                 // Transformatin wiews
@@ -229,18 +231,34 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * @param array $a
-     * @param array $opt
-     * @return string|null
+     * @function wring
+     *
+     * @param array|null $a
+     * @param string|null $brench
+     * @param bool $build
+     * @return array|string|null
      */
-    public function wring(?array $a, array $opt = []): ?string
+    public function wring(?array $a, ?string $brench = null, bool $context = true)
     {
-        $res = ''; $counter = 0;
-        if ($a) array_walk_recursive($a, function($cnx, $key, $counter) use (&$res, $opt) {
-            $counter++;
-            $res .= $cnx;
-        }, $counter);
-
+        $res = null;
+        if ($a) {
+            if ($brench) {
+                function recursive(&$z, $b, &$r) {
+                    if (is_array($z)) {
+                        if (array_key_exists($b, $z)) $r[] = $z[$b];
+                        foreach ($z as &$sub) recursive($sub, $b, $r);
+                    }
+                }
+                $res = []; recursive($a, $brench,$res);
+                $a = $res;
+            }
+            if ($context) {
+                $res = ''; $counter = 0;
+                array_walk_recursive($a, function ($cnx, $key, $counter) use (&$res) {
+                    $counter++;  $res .= $cnx;
+                }, $counter);
+            }
+        }
         return $res;
     }
 
