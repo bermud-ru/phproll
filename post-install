@@ -89,7 +89,7 @@ cp -rf ./$vendor/Application/extra/* ./Application/extra/
 if [ ! -z "$ADDRESS" ] && [ ! -z "$DOMAIN" ]; then
 printf "Resolve domain\n"
 hostupdate=$(grep -q "$DOMAIN" /etc/hosts && echo $?)
-if [ ! ${hostupdate:-0} -eq 0 ]; then
+if [ ! ${hostupdate:-1} -eq 0 ]; then
 cat << EOF >> /etc/hosts
 ${ADDRESS}   ${DOMAIN}
 EOF
@@ -393,7 +393,10 @@ printf "SELinux context resotre\n"
 grep nginx /var/log/audit/audit.log | audit2allow -M nginx
 semodule -i nginx.pp
 chcon -R -t httpd_sys_content_t $serverRoot
+CONTEXT=$(semanage fcontext -l | grep -i "${serverRoot}/(/.*)?")
+if [ -z "$CONTEXT" ]; then
 semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
+fi
 fi
 echo "systemctl start nginx.service"
 fi
