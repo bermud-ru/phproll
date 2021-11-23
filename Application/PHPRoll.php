@@ -38,12 +38,9 @@ class PHPRoll extends \Application\Request
         500 => 'Internal Server Error', 501 => 'Not Implemented', 502 => 'Bad Gateway', 503 => 'Service Unavailable', 504 => 'Gateway Timeout', 505 => 'HTTP Version Not Supported'
     ];
 
-    public $response_header = [];
-    public $path = [];
     public $query_type = '';
     public $ACL = null;
-    
-    protected $parent = null;
+
     protected $file = null;
 
     /**
@@ -53,18 +50,10 @@ class PHPRoll extends \Application\Request
      */
     public function __construct($params)
     {
+        parent::__construct($params);
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
-        if ($params instanceof \Application\PHPRoll)
-        {
-            $this->setParent($params);
-        }
-        else
-        {
-            parent::__construct($params);
-            $this->query_type = isset($this->header['Xhr-Version']) ? ($this->header['Content-Type'] === 'text/x-template' ? '#': '@') : '';
-            $this->path = array_filter(explode("/", substr($this->uri, 1)));
-
-        }
+        $this->query_type = isset($this->header['Xhr-Version']) ? ($this->header['Content-Type'] === 'text/x-template' ? '#': '@') : '';
+//            $this->path = array_filter(explode("/", substr($this->uri, 1)));
     }
 
     /**
@@ -73,21 +62,12 @@ class PHPRoll extends \Application\Request
      * @param $params
      * @return mixed
      */
-    protected function route($params, array $opt = [])
+    protected function route(array $opt = [])
     {
-        return $this->cfg->route($params, $opt);
-    }
+        if (isset($opt['route']) && is_callable($opt['route']))
+            return call_user_func_array($opt['route']->bindTo($this), @is_array($opt['params']) ? $opt['params'] : []);
 
-    /**
-     * Наследуем родителя для использования его свойств в сложных
-     * ветвлениях при выполнении сценария
-     *
-     * @param $parent
-     * @return mixed
-     */
-    protected function setParent(&$parent)
-    {
-        return $this->parent = $parent;
+        return $this->cfg->route($opt);
     }
 
     /**
@@ -99,10 +79,11 @@ class PHPRoll extends \Application\Request
         if (strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE) {
             $params = $_POST;
         } else if (strpos($_SERVER['CONTENT_TYPE'], 'json') !== FALSE) {
-            $params = json_decode($this->request, true);
+            $params = json_decode($this->RAWRequet(), true);
         } else {
-            mb_parse_str($this->request, $params);
+            mb_parse_str($this->RAWRequet(), $params);
         }
+
         $this->params = new \Application\Jsonb($params, ['owner'=> $this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);
     }
 
@@ -152,13 +133,10 @@ class PHPRoll extends \Application\Request
     {
         switch ($_SERVER['REQUEST_METHOD'])
         {
-            case 'PUT':
-            case 'POST':
+            case 'PUT': case 'POST':
                 $result = $this->tpl(key($this->params->get()), $opt);
                 break;
-            case 'GET':
-            case 'DELETE':
-            default:
+            case 'GET': case 'DELETE': default:
                 $result = $this->tpl($this->path, $opt);
         }
 
@@ -203,16 +181,15 @@ class PHPRoll extends \Application\Request
 
             $context = null;
             if ($file && is_file($file)) {
+                extract($options); ob_start(); require_once($file);
+                $context = ob_get_clean();
                 if (array_key_exists('grinder', $options) && is_callable($options['grinder'])) {
                     $context = call_user_func_array($options['grinder']->bindTo($this), ['file' => $f, 'contex' => $context, 'depth' => $depth, 'assoc_index' => $assoc_index]);
-                } else {
-                    extract($options); ob_start(); require_once($file);
-                    $context = ob_get_clean();
                 }
             } else {
                 // Transformatin wiews
-                if (!$assoc_index && $is_set) throw new \Application\ContextException($this, $pattern, $options+['code'=>404]);
-                else trigger_error("VIEW: $pattern not found!", E_USER_WARNING);
+                if (!$assoc_index && $is_set) throw new \Application\ContextException($this, $f, $options+['code'=>404]);
+                else trigger_error("VIEW: $f not found!", E_USER_WARNING);
             }
 
             if ($assoc_index) {
@@ -259,27 +236,8 @@ class PHPRoll extends \Application\Request
                 }, $counter);
             }
         }
-        return $res;
-    }
 
-    /**
-     * Установка параметров заголовка ответа
-     * @param $extra array - injection items for response headers
-     */
-    final function set_response_header(array $extra = [])
-    {
-        $a = array_merge($extra, $this->response_header);
-        array_walk($a, function ($v, $k) {
-            if (is_scalar($v)) {
-                $o = trim(preg_replace('/\s+/', ' ', addslashes($v)));
-                header("$k: $o");
-            } elseif (is_array($v) && count($v)) {
-                $o = $v[0];
-                $replace = isset($v[1]) ? boolval($v[1]) : TRUE;
-                $http_response_code = isset($v[2]) ? intval($v[2]) : 200;
-                header("$k: $o", $replace, $http_response_code);
-            }
-        });
+        return $res;
     }
 
     /**
@@ -288,10 +246,9 @@ class PHPRoll extends \Application\Request
      * @param $params
      * @return mixed
      */
-    public function response(string $type, $params)
+    public function response(string $type, $params = null)
     {
         $code = $params['code'] ?? 200;
-        $context = null;
         if (array_key_exists($code, \Application\PHPRoll::HTTP_RESPONSE_CODE))  {
             header("HTTP/1.1 {$code} " . \Application\PHPRoll::HTTP_RESPONSE_CODE[$code], false);
         }
@@ -309,6 +266,7 @@ class PHPRoll extends \Application\Request
             header('Pragma: public', false);
         }
 
+        $context = null;  
         switch ($type)
         {
             case 'websocket':
@@ -339,7 +297,7 @@ class PHPRoll extends \Application\Request
                 switch (gettype($params)) {
                     case 'object':
                     case 'array':
-                        $context = json_encode($params, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
+                        $context = json_encode($params,JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
                         break;
                     case 'string':
                     default:
@@ -383,6 +341,7 @@ class PHPRoll extends \Application\Request
                     $this->set_response_header();
                 }
                 break;
+
             case 'xml':
             default:
 //                header('Content-Description: ' . \Application\PHPRoll::FRAMEWORK . ' '. \Application\PHPRoll::VERSION, false);
@@ -403,11 +362,10 @@ class PHPRoll extends \Application\Request
                         $params['error'] = $e->getMessage();
                         $context = $this->context($this->cfg->get('404','index.phtml'), $params);
                     }
-                    $this->set_response_header();
                 }
-                break;
                 $this->set_response_header();
         }
+
         return $context;
     }
 
@@ -438,12 +396,7 @@ class PHPRoll extends \Application\Request
      */
     public function run(array $opt=[])
     {
-        if (isset($opt['method']) && method_exists($this, $opt['method']))
-            return call_user_func_array([$this, $opt['method']], [$opt['params'] ?? []]);
-
-        $content = $this->route(isset($this->path) ? $this->path : ['default'], $opt);
-
-        return $content ?? $this->response('view', ['pattern' => ['index.phtml' => '404.phtml']]);
+        return $this->route($opt) ?? $this->response('unknown', $opt);
     }
 }
 ?>

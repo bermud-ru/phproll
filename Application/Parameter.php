@@ -296,7 +296,7 @@ class Parameter implements \JsonSerializable
             return $matches ? $matches[1] : $this->value;
         }
 
-        return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : null;
+        return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : '';
     }
 
     /**

@@ -74,6 +74,7 @@ class Jsonb implements \JsonSerializable
         } else {
             $this->json = $this->assoc ? [] : new \stdClass();
         }
+
     }
 
     /**
@@ -195,7 +196,7 @@ class Jsonb implements \JsonSerializable
     {
         return json_encode($this->assoc ?
             $this->json : json_decode($this->json, true),
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /**

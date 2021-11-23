@@ -149,16 +149,15 @@ class IO
      */
     static function rest(string $method, string $url, $data, $opt=[])
     {
-        if ($method == 'RAW') return @file_get_contents($url . (strpos('?', $url) === FALSE ? '?' : '&') . \Application\Request::http_build_query($data));
+        if ($method === 'RAW') return @file_get_contents($url . (strpos('?', $url) === FALSE ? '?' : '&') . \Application\Request::http_build_query($data));
         if (!filter_var($url, FILTER_VALIDATE_URL)) return ['result'=>'error', 'message'=>'Wrong URL!'];
             if (!in_array(strtoupper($method), ['GET', 'DELETE', 'POST', 'PUT'])) return ['result' => 'error', 'message' => 'Wrong Method!'];
             if (isset($opt['http']) && isset($opt['http']['header']) && is_array($opt['http']['header'])) {
                 $opt['http']['header'] = implode("\r\n", $opt['http']['header']);
             }
-            $is_json = true;
+            $is_json = isset($opt['http']) && isset($opt['http']['header']) ? strpos('json', $opt['http']['header']) !== false : false;
             if (is_array($data)) {
-                if (isset($opt['http']) && isset($opt['http']['header']) && strpos('json', $opt['http']['header']) === false) {
-                    $is_json = false;
+                if (!$is_json) {
                     if (in_array($method, ['GET', 'DELETE'])) {
                         $url .= (strpos('?', $url) === FALSE ? '?' : '&') . http_build_query($data); //,'Prefix','&',PHP_QUERY_RFC3986);
                         $data = '';
@@ -166,7 +165,7 @@ class IO
                         $data = http_build_query($data); //,'','&',PHP_QUERY_RFC3986);
                     }
                 } else {
-                    $data = json_encode($data, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                    $data = json_encode($data,JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
                 }
             }
 
@@ -176,7 +175,8 @@ class IO
     //                'header' => implode("\r\n", [
     //                    "Content-type: application/json",
     //                ]),
-                    'header' => "Content-type: application/json",
+                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+//                    'header' => "Content-type: application/json\r\n",
     //                'max_redirects' => '0',
     //                'ignore_errors' => '1',
                     'method' => strtoupper($method),
@@ -201,7 +201,7 @@ class IO
     //            ]
             ], $opt);
 
-
+//var_dump([$url, $options]);exit;
         try {
             $context = stream_context_create($options);
             $response = @file_get_contents($url, NULL, $context) ;
@@ -211,6 +211,9 @@ class IO
                 return  $error === JSON_ERROR_NONE ? $json : ['result' => 'error', 'code'=> $error, 'content' => $response];
             } else {
                 return $response;
+            } else {
+                preg_match('{HTTP\/\S*\s(\d{3})}', $http_response_header[0], $match);
+                return ['result' => 'error', 'code'=> $match[1], 'message' => \Application\PHPRoll::HTTP_RESPONSE_CODE[intval($match[1])]];
             }
             return ['result' => 'error', 'message' => (error_get_last())['message']];
         } catch (\Exception $e) {
