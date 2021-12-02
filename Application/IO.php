@@ -141,6 +141,46 @@ class IO
     }
 
     /**
+     * @function crypt
+     *
+     * @param string $key
+     * @param string $msg
+     * @return string
+     */
+    static function crypt(string $key, string $msg): string
+    {
+        $textToChars = function($txt) {
+            return array_map(function($i) {
+                return mb_detect_encoding($i) === 'UTF-8' ? (ord($i[0]) - 192) * 64 + (ord($i[1]) - 128) : ord($i);
+            }, mb_str_split($txt));// str_split($txt));
+        };
+        $salt = $textToChars($key);
+        $charSet = $textToChars($msg);
+        array_walk($charSet, function(&$i) use ($salt) {
+            $ch = dechex(array_reduce($salt, function($a, $b) { return $a ^ $b; }, $i));
+            $i = str_pad($ch, 3, '0', STR_PAD_LEFT);
+        });
+        return implode('', $charSet);
+    }
+
+    /**
+     * @function decrypt
+     *
+     * @param string $key
+     * @param string $msg
+     * @return string
+     */
+    static function decrypt(string $key, string $msg): string
+    {
+        $salt = array_map(function($i){ return ord($i); }, str_split($key));
+        preg_match_all('/.{1,3}/', $msg, $charSet);
+        array_walk($charSet[0], function(&$i) use ($salt) {
+            $i = array_reduce($salt, function($a, $b) { return $a ^ $b; }, intval($i, 16));
+        });
+        return implode('', array_map(function($i) { return mb_chr($i); }, $charSet[0]));
+    }
+
+    /**
      * @param string $method
      * @param string $url
      * @param $data
