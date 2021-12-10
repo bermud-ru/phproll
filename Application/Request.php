@@ -58,6 +58,18 @@ abstract class Request
     }
 
     /**
+     * COOKIE
+     *
+     * @param $param
+     * @param null $def
+     * @return mixed|null
+     */
+    public static function cookie($param, $def = null)
+    {
+        return isset($_COOKIE[$param]) ? $_COOKIE[$param] : $def;;
+    }
+
+    /**
      * Если нет getallheaders()
      * @param $params
      * @return array
