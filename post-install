@@ -288,7 +288,7 @@ server {
             auth_basic off;
             if (\$http_xhr_version) {
               add_header Content-Type application/json;
-              return 401 '{"result": "warning", "message": "Under constraction!"}';
+              return 401 '{"result": "warn", "message": "Under constraction!"}';
             }
         }
         error_page 500 502 503 504 /500.html;
@@ -359,7 +359,7 @@ location / {
 
     if (\$http_xhr_version) {
         add_header Content-Type application/json;
-        return 200 '{"result":"warning", "message":"Проводится регламентное техническое обслуживание"}';
+        return 200 '{"result":"warn", "message":"Проводится регламентное техническое обслуживание"}';
     }
 }
 EOF
