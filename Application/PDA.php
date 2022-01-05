@@ -318,7 +318,7 @@ class PDA
      * @param bool $is_paginator
      * @return string
      */
-    static function query_paginator (&$params, $is_paginator = true): string
+    static function query_paginator (array &$params, $is_paginator = true): string
     {
         $offset = '';
         $limit = '';

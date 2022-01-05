@@ -33,7 +33,7 @@ class Jsonb implements \JsonSerializable
     public $is_decoded = false;
 
     /**
-     * Parameter constructor
+     * @constructor
      *
      * @param $parent \Application\Rest
      * @param array $opt
@@ -78,6 +78,8 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method getParam
+     *
      * @param null $fields
      * @param $obj
      * @param null $default
@@ -109,6 +111,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method get
      * Get value by recusion name
      *
      * @param $fields
@@ -131,7 +134,54 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
-     * call
+     * @method find
+     *
+     * @param sting $pattern regex
+     * @param string|null $with
+     * @return mixed|null
+     */
+    public function find ($pattern, string $with = null)
+    {
+        if ( $this->assoc ) {
+            $a = $with && array_key_exists($with, $this->json)? $this->json[$with] : $this->json;
+            $keys = array_values(preg_grep($pattern, array_keys($a)));
+            if (count($keys)) return array($a[$keys[0]],$keys[0]);
+        } else {
+            $a = get_object_vars($this->json);
+            $keys = array_values(preg_grep($pattern, $a));
+            if (count($keys)) return array($this->json->{$keys[0]},$keys[0]) ;
+        }
+        return null;
+    }
+
+    /**
+     * @method delete
+     *
+     * @param $key
+     */
+    public function delete ($key)
+    {
+        if ( $this->assoc ) {
+            if (array_key_exists($key, $this->json)) unset($this->json[$key]);
+        } else if (property_exists($this->json, $key) || method_exists($this->json, $key)) {
+            unset($this->json->{$key});
+        }
+    }
+
+    /**
+     * @magicmethod
+     *
+     * @param null $fields
+     * @param null $default
+     * @return array|callable|\stdClass|string|null
+     */
+    public function __invoke($fields=null, $default=null)
+    {
+        return $this->get($fields, $default);
+    }
+
+    /**
+     * @magicmethod call
      *
      * @param string $name
      * @param array $arguments
@@ -151,20 +201,20 @@ class Jsonb implements \JsonSerializable
         return $fn;
     }
 
-//    /**
-//     * Native property
-//     *
-//     * @param $name
-//     * @return mixed
-//     * @throws \Exception
-//     */
-//    public function __set ($name, $value)
-//    {
-//        if ($this->assoc) $this->json[$name] = $value; else $this->json->{$name} = $value;
-//    }
+    /**
+     * @magicmethod __set Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __set ($name, $value)
+    {
+        if ($this->assoc) $this->json[$name] = $value; else $this->json->{$name} = $value;
+    }
 
     /**
-     * Native property
+     * @magicmethod __get Native property
      *
      * @param $name
      * @return mixed
@@ -176,7 +226,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
-     * Native method
+     * @magicmethod __call Native method
      *
      * @param $name
      * @param $arguments
@@ -188,7 +238,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
-     * @function __toString
+     * @method __toString
      *
      * @return string | null
      */
@@ -200,6 +250,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method jsonSerialize
      * \JsonSerializable interface release
      *
      * @return mixed|null
@@ -210,6 +261,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method __sleep
      * serialize rule
      *
      * @return array
@@ -220,6 +272,7 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method __debugInfo
      * Prepare for vardump() resutl;
      *
      * @return array
