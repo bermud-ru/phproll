@@ -449,7 +449,7 @@ class Parameter implements \JsonSerializable
     public static function ize ($param, $opt = \PDO::NULL_NATURAL)
     {
         if (is_callable($param)) return $param;
-        
+
         if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === NULL ? ($opt | \Application\PDA::ADDSLASHES) : $param->opt );
 
         switch (gettype($param)) {
