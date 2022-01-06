@@ -120,12 +120,12 @@ class Jsonb implements \JsonSerializable
     public function get ($fields=null, $default=null, bool $excludeEmpty=false)
     {
         if (is_string($fields)) {
-            return $this->getParam($fields, $this->__json, $default);
+            return \Application\Parameter::ize($this->getParam($fields, $this->__json, $default));
         } elseif (is_array($fields)) {
             $fields = array_flip($fields);
             foreach ($fields as $k => $v) {
-                $fields[$k] = $this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null);
-                if ($excludeEmpty && empty($fields[$k])) unset($fields[$k]);
+                $fields[$k] = \Application\Parameter::ize($this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null));
+                if ($excludeEmpty && (is_null($fields[$k]) || $fields[$k] === '')) unset($fields[$k]);
             }
             return $fields;
         }
