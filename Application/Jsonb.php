@@ -20,22 +20,20 @@ class Jsonb implements \JsonSerializable
     const JSON_STRICT = 1;
     const JSON_STRINGIFY = 2;
 
-    protected $json = null;
-    protected $error = JSON_ERROR_NONE;
-    protected $assoc = false;
-    protected $depth = 512;
-    protected $options = 0;
-    protected $mode = \Application\Jsonb::JSON_STRICT;
-    protected $default = [];
-    protected $owner = null;
-    protected $params = [];
+    protected $__json = null;
+    protected $__error = JSON_ERROR_NONE;
+    protected $__assoc = false;
+    protected $__depth = 512;
+    protected $__options = 0;
+    protected $__mode = self::JSON_STRICT;
+    protected $__owner = null;
 
     public $is_decoded = false;
 
     /**
      * @constructor
      *
-     * @param $parent \Application\Rest
+     * @param array $source
      * @param array $opt
      */
 
@@ -44,13 +42,13 @@ class Jsonb implements \JsonSerializable
         foreach ($opt as $k => $v) {
             switch (strtolower($k)) {
                 case 'owner':
-                    $this->owner = is_null($v) ? $this : $v;
+                    $this->__owner = is_null($v) ? $this : $v;
                     break;
                 case 'assoc':
-                    $this->assoc = boolval($v);
+                    $this->__assoc = boolval($v);
                     break;
                 case 'depth': case 'options': case 'mode':
-                    $this->{$k} = intval($v);
+                    $this->{'__'.$k} = intval($v);
                     break;
                 default:
                     if (property_exists($this, $k)) $this->{$k} = $v;
@@ -58,53 +56,54 @@ class Jsonb implements \JsonSerializable
         }
 
         if ( is_null($source) || is_string($source) ) {
-            $this->json = json_decode($source, $this->assoc, $this->depth, $this->options);
-            $this->error = json_last_error();
-            $this->is_decoded = $this->error !== JSON_ERROR_NONE;
+            $this->__json = json_decode($source, $this->__assoc, $this->__depth, $this->__options);
+            $this->__error = json_last_error();
+            $this->is_decoded = $this->__error !== JSON_ERROR_NONE;
         } elseif ( is_object($source) ) {
-            $this->assoc = false;
-            $this->json = $source;
+            $this->__assoc = false;
+            $this->__json = $source;
         } elseif ( is_array($source) ) {
-            $this->assoc = true;
-            $this->json = $source;
+            $this->__assoc = true;
+            $this->__json = $source;
         }
 
-        if ($this->error !== JSON_ERROR_NONE) if ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
-            throw new \Exception(__CLASS__." $source can't build JSON " . ($this->assoc ? "assoc array!" : "object!"));
+        if ($this->__error !== JSON_ERROR_NONE) if ( $this->__mode & self::JSON_STRICT ) {
+            throw new \Exception(__CLASS__." $source can't build JSON " . ($this->__assoc ? "assoc array!" : "object!"));
         } else {
-            $this->json = $this->assoc ? [] : new \stdClass();
+            $this->__json = $this->__assoc ? [] : new \stdClass();
         }
 
     }
 
     /**
      * @method getParam
+     * Get value by recusion name
      *
-     * @param null $fields
-     * @param $obj
+     * @param $fields
+     * @param object $obj
      * @param null $default
      * @return array|mixed|\stdClass|string|null
      * @throws \Exception
      */
-    protected function getParam (&$fields=null, $obj, $default=null)
+    protected function getParam ($fields, $src, $default=null)
     {
-        if (is_null($fields)) return $this->json;
+//        if (is_null($fields)) return $this->__json;
 
         $fx = is_array($fields) ? $fields : explode(\Application\PHPRoll::KEY_SEPARATOR, $fields);
 
         if (count($fx) > 1) {
             $field = array_shift($fx);
-            if ( $this->assoc ? array_key_exists($field, $obj) : property_exists($obj, $field) ) {
-                return $this->getParam($fx, $this->assoc ? $obj[$field] : $obj->{$field}, $default);
-            } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
-                throw new \Exception("\Application\Jsonb params  ($field) not foudnd!");
+            if ( $this->__assoc ? array_key_exists($field, $src) : property_exists($src, $field) ) {
+                return $this->getParam($fx, $this->__assoc ? $src[$field] : $src->{$field}, $default);
+            } elseif ( $this->__mode & self::JSON_STRICT ) {
+                throw new \Exception("\Application\Jsonb param($field) not foudnd!");
             }
             return $default;
         }
        
-        if ( $this->assoc ? array_key_exists($fx[0], $obj) : property_exists($obj, $fx[0]) ) {
-            return $this->assoc ? $obj[$fx[0]] : $obj->{$fx[0]};
-        } elseif ( $this->mode & \Application\Jsonb::JSON_STRICT ) {
+        if ( $this->__assoc ? array_key_exists($fx[0], $src) : property_exists($src, $fx[0]) ) {
+            return $this->__assoc ? $src[$fx[0]] : $src->{$fx[0]};
+        } elseif ( $this->__mode & self::JSON_STRICT ) {
             throw new \Exception("\Application\Jsonb param ({$fx[0]}) not foudnd!");
         }
         return $default;
@@ -112,44 +111,44 @@ class Jsonb implements \JsonSerializable
 
     /**
      * @method get
-     * Get value by recusion name
      *
-     * @param $fields
-     * @param string|null $default
-     * @return string
+     * @param array|string|null $fields
+     * @param mixed|null $default
+     * @param bool $excludeEmpty
+     * @return mixed
      */
-    public function get ($fields=null, $default=null)
+    public function get ($fields=null, $default=null, bool $excludeEmpty=false)
     {
-        $item = $this->getParam($fields, $this->json, $default);
-
-        if (is_callable($item) || is_null($fields)) return $item;
-
-        $key = is_array($fields) ? \Application\PHPRoll::array_keys_normalization($fields) : strval($fields);
-        if (array_key_exists($key, $this->params) && is_array($this->params[$key])) {
-            $this->params[$key]['name'] = $key;
-            $item = (new \Application\Parameter($this->params[$key], [$key=>$item]))->setOwner($this->owner);
+        if (is_string($fields)) {
+            return $this->getParam($fields, $this->__json, $default);
+        } elseif (is_array($fields)) {
+            $fields = array_flip($fields);
+            foreach ($fields as $k => $v) {
+                $fields[$k] = $this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null);
+                if ($excludeEmpty && empty($fields[$k])) unset($fields[$k]);
+            }
+            return $fields;
         }
-
-        return $item;
+        return $this->__json;
     }
 
     /**
      * @method find
      *
-     * @param sting $pattern regex
+     * @param regex $pattern 
      * @param string|null $with
      * @return mixed|null
      */
     public function find ($pattern, string $with = null)
     {
-        if ( $this->assoc ) {
-            $a = $with && array_key_exists($with, $this->json)? $this->json[$with] : $this->json;
+        if ( $this->__assoc ) {
+            $a = $with && array_key_exists($with, $this->__json) ? $this->__json[$with] : $this->__json;
             $keys = array_values(preg_grep($pattern, array_keys($a)));
             if (count($keys)) return array($a[$keys[0]],$keys[0]);
         } else {
-            $a = get_object_vars($this->json);
+            $a = get_object_vars($this->__json);
             $keys = array_values(preg_grep($pattern, $a));
-            if (count($keys)) return array($this->json->{$keys[0]},$keys[0]) ;
+            if (count($keys)) return array($this->__json->{$keys[0]},$keys[0]) ;
         }
         return null;
     }
@@ -161,10 +160,10 @@ class Jsonb implements \JsonSerializable
      */
     public function delete ($key)
     {
-        if ( $this->assoc ) {
-            if (array_key_exists($key, $this->json)) unset($this->json[$key]);
-        } else if (property_exists($this->json, $key) || method_exists($this->json, $key)) {
-            unset($this->json->{$key});
+        if ( $this->__assoc ) {
+            if (array_key_exists($key, $this->__json)) unset($this->__json[$key]);
+        } else if (property_exists($this->__json, $key) || method_exists($this->__json, $key)) {
+            unset($this->__json->{$key});
         }
     }
 
@@ -181,27 +180,6 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
-     * @magicmethod call
-     *
-     * @param string $name
-     * @param array $arguments
-     * @param null $bind
-     * @return mixed|string
-     */
-    protected function call(string $name, array $arguments, $context = null)
-    {
-        $fn = $this->get($name);
-
-        if ( is_callable($fn) ) {
-            return is_null($context) ? call_user_func_array($fn, $arguments) : call_user_func_array($fn->bindTo($context), $arguments);
-        } else {
-            throw new \Exception("\Application\Jsonb->$name() method not foudnd!");
-        }
-
-        return $fn;
-    }
-
-    /**
      * @magicmethod __set Native property
      *
      * @param $name
@@ -210,7 +188,7 @@ class Jsonb implements \JsonSerializable
      */
     public function __set ($name, $value)
     {
-        if ($this->assoc) $this->json[$name] = $value; else $this->json->{$name} = $value;
+        if ($this->__assoc) $this->__json[$name] = $value; else $this->__json->{$name} = $value;
     }
 
     /**
@@ -234,7 +212,13 @@ class Jsonb implements \JsonSerializable
      */
     public function __call($name, $arguments)
     {
-        return $this->call($name, $arguments, $this->owner);
+        $fn = $this->get($name);
+
+        if ( is_callable($fn) ) {
+            return is_null($this->__owner) ? call_user_func_array($fn, $arguments) : call_user_func_array($fn->bindTo($this->__owner), $arguments);
+        }
+
+        throw new \Exception("\Application\Jsonb->$name() method not foudnd!");
     }
 
     /**
@@ -244,8 +228,8 @@ class Jsonb implements \JsonSerializable
      */
     public function __toString(): string
     {
-        return json_encode($this->assoc ?
-            $this->json : json_decode($this->json, true),
+        return json_encode($this->__assoc ?
+            $this->__json : json_decode($this->__json, true),
             JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
@@ -257,7 +241,7 @@ class Jsonb implements \JsonSerializable
      */
     public function jsonSerialize()
     {
-        return $this->assoc ? $this->json : json_decode($this->json, true);
+        return $this->__assoc ? $this->__json : json_decode($this->__json, true);
     }
 
     /**
@@ -268,7 +252,7 @@ class Jsonb implements \JsonSerializable
      */
     public function __sleep(): array
     {
-        return $this->assoc ? $this->json : json_decode($this->json, true);
+        return $this->__assoc ? $this->__json : json_decode($this->__json, true);
     }
 
     /**
@@ -278,7 +262,7 @@ class Jsonb implements \JsonSerializable
      * @return array
      */
     public function __debugInfo() {
-        return $this->assoc ? $this->json : json_decode($this->json, true);
+        return $this->__assoc ? $this->__json : json_decode($this->__json, true);
     }
 
 }
