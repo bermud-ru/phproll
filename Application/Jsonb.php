@@ -129,7 +129,7 @@ class Jsonb implements \JsonSerializable
             }
             return $fields;
         }
-        
+
         return $excludeEmpty && is_array($this->__json) ? array_filter($this->__json, function($i) {
             $v = \Application\Parameter::ize($i);
             return !is_null($v) && $v !== '';
