@@ -35,12 +35,14 @@ class Parameter implements \JsonSerializable
     protected $glue = ',';
 
     public $isValid = true;
-    public $params = null;
+    public $params = [];
+    public $key = null;
     public $value = null;
-    public $original = null;
+//    public $original = null;
     
     const MESSAGE = "Parameter error, {name} = {value} is wrong!";
     const KEY_SEPARATOR = '.';
+
     /**
      * Parameter constructor
      *
@@ -98,8 +100,8 @@ class Parameter implements \JsonSerializable
 
         if ($this->isValid) {
             if (is_callable($this->after)) $this->value = call_user_func_array($this->after->bindTo($this), $this->arguments($this->after));
-            $this->params[$this->alias ? $this->alias : $this->name] = $this;
-            $this->original = $this->name;
+            $this->params[$this->key = $this->alias ?? $this->name] = $this;
+//            $this->original = $this->name;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
         } else {
             $this->alert = \Application\IO::replace($opt['message'] ?? self::MESSAGE, ['name' => $this->name, 'value' => $this->value]);

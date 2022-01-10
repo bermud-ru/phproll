@@ -169,13 +169,14 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
-     * @magicmethod
+     * @magicmethod __invoke
      *
+     * @param null $excludeEmpty
      * @param null $fields
      * @param null $default
      * @return array|callable|\stdClass|string|null
      */
-    public function __invoke($fields=null, $default=null, bool $excludeEmpty=false)
+    public function __invoke(bool $excludeEmpty=false, $fields=null, $default=null )
     {
         return $this->get($fields, $default, $excludeEmpty);
     }
