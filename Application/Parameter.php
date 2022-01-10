@@ -40,11 +40,12 @@ class Parameter implements \JsonSerializable
     public $original = null;
     
     const MESSAGE = "Parameter error, {name} = {value} is wrong!";
+    const KEY_SEPARATOR = '.';
     /**
      * Parameter constructor
      *
-     * @param $parent \Application\Rest
      * @param array $opt
+     * @param array $params
      */
     public function __construct( array $opt, array &$params )
     {
@@ -101,7 +102,7 @@ class Parameter implements \JsonSerializable
             $this->original = $this->name;
 //        $this->params[($this->alias ? preg_replace('/\(.*\)/U', $this->name , $this->alias) : $this->name)] = $this;
         } else {
-            $this->alert = \Application\IO::replace($opt['message'] ?? \Application\Parameter::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
+            $this->alert = \Application\IO::replace($opt['message'] ?? self::MESSAGE, ['name' => $this->name, 'value' => $this->value]);
         }
     }
 
@@ -146,7 +147,8 @@ class Parameter implements \JsonSerializable
      * @function property
      * Init contex of property
      *
-     * @param $p
+     * @param $name
+     * @param $default
      */
     protected function property($name, $default = null)
     {
@@ -190,7 +192,7 @@ class Parameter implements \JsonSerializable
                     $item->value = &$this->raw;
                     break;
                 default:
-                    $name = explode(\Application\PHPRoll::KEY_SEPARATOR, strtolower($this->name));
+                    $name = explode(self::KEY_SEPARATOR, strtolower($this->name));
                     if (strtolower($item->name) == end($name) || (!empty($this->alias) && strtolower($item->name) == strtolower(\Application\PDA::field($this->alias))) ) {
                         $item->value = &$this->value;
                     } else {
@@ -225,7 +227,7 @@ class Parameter implements \JsonSerializable
     {
         $data = [];
         foreach ($a as $k=>$v) {
-            $keys = explode(\Application\PHPRoll::KEY_SEPARATOR, $k);
+            $keys = explode(self::KEY_SEPARATOR, $k);
             $data[end($keys)] = $v;
         }
         return $data;
@@ -274,7 +276,7 @@ class Parameter implements \JsonSerializable
     public function array_to_string (array $a, $opt=null): ?string
     {
         $str = implode($this->glue, array_map(function ($v) use($opt) {
-            return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : \Application\Parameter::ize($v);
+            return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : self::ize($v);
         },  $a));
         return  (!$this->is_null($opt) && $opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
     }
@@ -347,17 +349,15 @@ class Parameter implements \JsonSerializable
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return array_map(function ($v) use ($opt){ return \Application\Parameter::ize($v, $opt); }, $this->value);
+            return array_map(function ($v) use ($opt){ return self::ize($v, $opt); }, $this->value);
         } else {
             if (is_string($this->value)) {
                 // JSON_OBJECT_AS_ARRAY | JSON_INVALID_UTF8_IGNORE
                 if (preg_match('/^\s*\[.*\]\s*$/', $this->value)) return json_decode($this->value, false, 512,JSON_OBJECT_AS_ARRAY | JSON_INVALID_UTF8_IGNORE) ?? null;
                 return explode(',', $this->value);
             }
-            return [\Application\Parameter::ize($this->value, $opt)];
         }
-
-        return $this->value !== NULL ? [] : null;
+        return [self::ize($this->value, $opt)];
     }
 
     /**

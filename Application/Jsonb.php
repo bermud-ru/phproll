@@ -19,6 +19,7 @@ class Jsonb implements \JsonSerializable
     const JSON_ALWAYS = 0;
     const JSON_STRICT = 1;
     const JSON_STRINGIFY = 2;
+    const JSON_EXCLUDE_EMPTY = true;
 
     protected $__json = null;
     protected $__error = JSON_ERROR_NONE;
@@ -89,7 +90,7 @@ class Jsonb implements \JsonSerializable
     {
 //        if (is_null($fields)) return $this->__json;
 
-        $fx = is_array($fields) ? $fields : explode(\Application\PHPRoll::KEY_SEPARATOR, $fields);
+        $fx = is_array($fields) ? $fields : explode(\Application\Parameter::KEY_SEPARATOR, $fields);
 
         if (count($fx) > 1) {
             $field = array_shift($fx);
@@ -120,39 +121,35 @@ class Jsonb implements \JsonSerializable
     public function get ($fields=null, $default=null, bool $excludeEmpty=false)
     {
         if (is_string($fields)) {
-            return \Application\Parameter::ize($this->getParam($fields, $this->__json, $default));
+            return $this->getParam($fields, $this->__json, $default);
         } elseif (is_array($fields)) {
             $fields = array_flip($fields);
             foreach ($fields as $k => $v) {
-                $fields[$k] = \Application\Parameter::ize($this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null));
-                if ($excludeEmpty && (is_null($fields[$k]) || $fields[$k] === '')) unset($fields[$k]);
+                $fields[$k] = $this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null);
+                if ($excludeEmpty && (is_null($f=\Application\Parameter::ize($fields[$k])) || $f === '')) unset($fields[$k]);
             }
             return $fields;
         }
 
-        return $excludeEmpty && is_array($this->__json) ? array_filter($this->__json, function($i) {
-            $v = \Application\Parameter::ize($i);
-            return !is_null($v) && $v !== '';
+        return $excludeEmpty && $this->__assoc ? array_filter($this->__json, function($i) {
+            $v = \Application\Parameter::ize($i); return !is_null($v) && $v !== '';
         }) : $this->__json;
     }
 
     /**
      * @method find
      *
-     * @param regex $pattern 
+     * @param string $pattern
      * @param string|null $with
      * @return mixed|null
      */
-    public function find ($pattern, string $with = null)
+    public function find (string $pattern, string $with = null)
     {
         if ( $this->__assoc ) {
             $a = $with && array_key_exists($with, $this->__json) ? $this->__json[$with] : $this->__json;
-            $keys = array_values(preg_grep($pattern, array_keys($a)));
-            if (count($keys)) return array($a[$keys[0]],$keys[0]);
+            array_walk_recursive($a, function ($item, $key) use ($pattern) { if ($pattern === $key) return $item; });
         } else {
-            $a = get_object_vars($this->__json);
-            $keys = array_values(preg_grep($pattern, $a));
-            if (count($keys)) return array($this->__json->{$keys[0]},$keys[0]) ;
+            return $this->$this->get(($with ? "$with." : '').$pattern);
         }
         return null;
     }
@@ -178,9 +175,9 @@ class Jsonb implements \JsonSerializable
      * @param null $default
      * @return array|callable|\stdClass|string|null
      */
-    public function __invoke($fields=null, $default=null)
+    public function __invoke($fields=null, $default=null, bool $excludeEmpty=false)
     {
-        return $this->get($fields, $default);
+        return $this->get($fields, $default, $excludeEmpty);
     }
 
     /**

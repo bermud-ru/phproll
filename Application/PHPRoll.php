@@ -26,7 +26,6 @@ class PHPRoll extends \Application\Request
 {
     const FRAMEWORK = 'PHPRoll';
     const VERSION = '2.1.2b';
-    const KEY_SEPARATOR = '.';
     // https://developer.mozilla.org/ru/docs/Web/HTTP/Status
     const HTTP_RESPONSE_CODE = [
         100 => 'Continue', 101 => 'Switching Protocol', 102 => 'Processing',
