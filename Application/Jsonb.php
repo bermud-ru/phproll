@@ -126,13 +126,14 @@ class Jsonb implements \JsonSerializable
             $fields = array_flip($fields);
             foreach ($fields as $k => $v) {
                 $fields[$k] = $this->getParam($k, $this->__json, is_array($default) ? $default[$k] : null);
-                if ($excludeEmpty && (is_null($f=\Application\Parameter::ize($fields[$k])) || $f === '')) unset($fields[$k]);
+                if ($excludeEmpty && (is_null($f=\Application\Parameter::ize($fields[$k], \PDO::NULL_EMPTY_STRING)) || $f === '')) unset($fields[$k]);
             }
             return $fields;
         }
 
         return $excludeEmpty && $this->__assoc ? array_filter($this->__json, function($i) {
-            $v = \Application\Parameter::ize($i); return !is_null($v) && $v !== '';
+            $v = \Application\Parameter::ize($i,\PDO::NULL_EMPTY_STRING);
+            return !is_null($v) && $v !== '';
         }) : $this->__json;
     }
 
@@ -152,6 +153,22 @@ class Jsonb implements \JsonSerializable
             return $this->$this->get(($with ? "$with." : '').$pattern);
         }
         return null;
+    }
+
+    /**
+     * @method merge
+     *
+     * @param array $a
+     * @return $this
+     */
+    public function merge(array $a)
+    {
+        if ( $this->__assoc ) {
+            $this->__json = array_merge($this->__json, $a);
+        } else {
+            foreach ($a as $k=> $v) $this->__json->{$k} = $v;
+        }
+        return $this;
     }
 
     /**
@@ -202,7 +219,7 @@ class Jsonb implements \JsonSerializable
      */
     public function __get ( $name )
     {
-        return $this->get($name);
+        return \Application\Parameter::ize($this->get($name));
     }
 
     /**

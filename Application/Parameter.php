@@ -32,7 +32,6 @@ class Parameter implements \JsonSerializable
     protected $formatter = null;
     protected $raw = null;
     protected $restore = false;
-    protected $glue = ',';
 
     public $isValid = true;
     public $params = [];
@@ -42,6 +41,7 @@ class Parameter implements \JsonSerializable
     
     const MESSAGE = "Parameter error, {name} = {value} is wrong!";
     const KEY_SEPARATOR = '.';
+    const glue = ',';
 
     /**
      * Parameter constructor
@@ -270,17 +270,17 @@ class Parameter implements \JsonSerializable
     }
 
     /**
-     * array_to_string
+     * @method array2str
      *
      * @param array $a
      * @return string|null
      */
-    public function array_to_string (array $a, $opt=null): ?string
+    public static function array2str (array $a, $opt=0): ?string
     {
-        $str = implode($this->glue, array_map(function ($v) use($opt) {
-            return (is_array($v) || $v instanceof \Countable) ? $this->array_to_string($v, $opt) : self::ize($v);
-        },  $a));
-        return  (!$this->is_null($opt) && $opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
+        $str = implode(self::glue, array_map(function ($v) use($opt) {
+            return (is_array($v) || $v instanceof \Countable) ? self::array2str($v, $opt) : self::ize($v);
+        }, $a));
+        return  ($opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
     }
 
     /**
@@ -295,7 +295,7 @@ class Parameter implements \JsonSerializable
         }
 
         if (is_array($this->value) || $this->value instanceof \Countable) {
-            return $this->array_to_string($this->value, $this->opt);
+            return $this->array2str($this->value, $this->opt);
         } elseif (($this->opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) && preg_match('/^\s*\[(.*)\]\s*$/', $this->value, $matches) ) {
             return $matches ? $matches[1] : $this->value;
         }

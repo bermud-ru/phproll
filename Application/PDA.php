@@ -359,14 +359,14 @@ class PDA
      * @param array $filter
      * @return string
      */
-    static function huge_paginator ( array $paginator, array &$filter): string
+    static function huge_paginator ( array $paginator, array &$filter, $opt=[4,5,10]): string
     {
         $page = intval("{$paginator['page']}");
         $limit = intval("{$paginator['limit']}");
-        $total = isset($paginator['total']) ? intval("{$paginator['total']}") : ($limit * 10 + 1);
-        $offset = ($page > 4) ? ($page-5) * $limit : 0;
+        $total = isset($paginator['total']) ? intval("{$paginator['total']}") : ($limit * $opt[2] + 1);
+        $offset = ($page > $opt[4]) ? ($page-$opt[1]) * $limit : 0;
         $filter['limit'] = $offset + $total;
-        return ($page > 5) ? "(case when count(*) < {$filter['limit']} then count(*) else {$filter['limit']} end)" : 'count(*)';
+        return ($page > $opt[1]) ? "(case when count(*) < {$filter['limit']} then count(*) else {$filter['limit']} end)" : 'count(*)';
     }
 
     /**
@@ -448,7 +448,7 @@ class PDA
             $keys = array_keys($fields);
             $stmt = $prepare($keys, $opt);
             foreach ($keys as $v) {
-                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
+                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING));
             }
             $this->status = $stmt->execute();
             return $this->status ? $stmt : null;
@@ -606,7 +606,7 @@ class PDA
             case 'string':
             default:
             if ( is_numeric($v) ) {
-                $val = floatval($v); $val = $folat != intval($folat) ? $folat : intval($v);
+                $folat = floatval($v); $val = $v != intval($folat) ? $folat : intval($v);
             } else {
                 $val = "'".self::pg_escape_string($v)."'";
             }
