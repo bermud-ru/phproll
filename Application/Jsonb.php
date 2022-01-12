@@ -193,9 +193,10 @@ class Jsonb implements \JsonSerializable
      * @param null $default
      * @return array|callable|\stdClass|string|null
      */
-    public function __invoke(bool $excludeEmpty=false, $fields=null, $default=null )
+    public function &__invoke(bool $excludeEmpty=false, $fields=null, $default=null )
     {
-        return $this->get($fields, $default, $excludeEmpty);
+        $result = $this->get($fields, $default, $excludeEmpty);
+        return $result;
     }
 
     /**
