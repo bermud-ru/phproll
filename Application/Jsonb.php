@@ -14,7 +14,7 @@
 namespace Application;
 
 
-class Jsonb implements \JsonSerializable
+class Jsonb implements \JsonSerializable, \Countable, \Iterator
 {
     const JSON_ALWAYS = 0;
     const JSON_STRICT = 1;
@@ -77,6 +77,51 @@ class Jsonb implements \JsonSerializable
     }
 
     /**
+     * @method \Countable
+     * @return mixed
+     */
+    public function count()
+    {
+        return $this->__assoc ? count($this->__json) :  0;
+    }
+
+    /**
+     * @method \Iterator
+     * @return mixed
+     */
+    public function rewind() {
+        reset($this->__json);
+    }
+
+    /**
+     * @method \Iterator
+     * @return mixed
+     */
+    public function current() {
+        return \Application\Parameter::ize(current($this->__json), \PDO::NULL_EMPTY_STRING);
+    }
+
+    /**
+     * @method \Iterator
+     * @return mixed
+     */
+    public function key() {
+        return (string) key($this->__json);
+    }
+
+    public function next() {
+        next($this->__json);
+    }
+
+    /**
+     * @method \Iterator
+     * @return mixed
+     */
+    public function valid() {
+        return key($this->__json) !== null;
+    }
+
+    /**
      * @method getParam
      * Get value by recusion name
      *
@@ -88,8 +133,6 @@ class Jsonb implements \JsonSerializable
      */
     protected function getParam ($fields, $src, $default=null)
     {
-//        if (is_null($fields)) return $this->__json;
-
         $fx = is_array($fields) ? $fields : explode(\Application\Parameter::KEY_SEPARATOR, $fields);
 
         if (count($fx) > 1) {
