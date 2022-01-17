@@ -64,9 +64,9 @@ abstract class Request
      * @param null $def
      * @return mixed|null
      */
-    public static function cookie($param, $def = null)
+    public function cookie($param, $def = null)
     {
-        return isset($_COOKIE[$param]) ? $_COOKIE[$param] : $def;;
+        return isset($_COOKIE[$param]) ? $_COOKIE[$param] : $def;
     }
 
     /**
