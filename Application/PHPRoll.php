@@ -253,6 +253,7 @@ class PHPRoll extends \Application\Request
         }
         http_response_code(intval($code));
         header('Expires: '. date('r'), false);
+        header('X-Powered-By: Roll FW '.\Application\PHPRoll::VERSION,true);
 //        header("Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
 //        header("X-Content-Security-Policy: default-src *; connect-src *; script-src *; object-src *;", false);
 //        header("X-Webkit-CSP: default-src *; connect-src *; script-src 'unsafe-inline' 'unsafe-eval' *; object-src *;", false);
