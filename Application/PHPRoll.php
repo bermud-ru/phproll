@@ -370,23 +370,34 @@ class PHPRoll extends \Application\Request
     }
 
     /**
-     * @function exceptionInfo
+     * @function crash
+     * Crash handler
      *
      * @param \Exception $e
-     * @param false|int $is_view
      *
      */
-    public function exceptionInfo(\Exception $e, $is_view = 0)
-    {
-        if ($is_view)
+    function crash(\Exception $e){
+        if (is_a($this, 'View'))
         {
-            $this->response_header['Action-Status'] = 'SYSTEM ERROR';
-            \Application\IO::console_error($e, [1=>['<script>','</script>'],2=>['{%','%}'],3=>['<%','%>']][$is_view]);
-        } else {
             echo $this->response('json', ['result' => 'error', 'code' => 500, 'message' => $e->getMessage()]);
             exit;
+        } else {
+            $this->response_header['Action-Status'] = 'SYSTEM ERROR';
+            \Application\IO::console_error($e, [1=>['<script>','</script>'],2=>['{%','%}'],3=>['<%','%>']][$is_view]);
         }
     }
+
+//    /**
+//     * @function exceptionInfo
+//     *
+//     * @param \Exception $e
+//     * @param false|int $is_view
+//     *
+//     */
+//    public function exceptionInfo(\Exception $e, $is_view = 0)
+//    {
+//
+//    }
 
     /**
      * Сборка и генерация контента

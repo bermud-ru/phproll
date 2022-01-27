@@ -167,6 +167,14 @@ abstract class Request
     }
 
     /**
+     * Crash handler
+     *
+     * @param \Exception $e
+     * @return mixed
+     */
+    abstract function crash(\Exception $e);
+
+    /**
      * run Abstract method
      *
      * @return mixed

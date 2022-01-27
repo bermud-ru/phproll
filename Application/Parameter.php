@@ -253,7 +253,7 @@ class Parameter implements \JsonSerializable
      */
     public function is_null($opt=null): bool
     {
-        $val = $this->getValue($opt === NULL ?  $this->opt : $opt);
+        $val = $this->getValue($opt === null ?  $this->opt : $opt);
         return is_null($val);
     }
 
@@ -300,7 +300,7 @@ class Parameter implements \JsonSerializable
             return $matches ? $matches[1] : $this->value;
         }
 
-        return $this->value !== NULL && is_scalar($this->value) ? strval($this->value) : '';
+        return $this->value !== null && is_scalar($this->value) ? strval($this->value) : '';
     }
 
     /**
@@ -314,7 +314,7 @@ class Parameter implements \JsonSerializable
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
         }
 
-        if ( $this->value !== NULL && $this->value !=='' && is_scalar($this->value) ) {
+        if ( $this->value !== null && $this->value !=='' && is_scalar($this->value) ) {
             $val = is_int($this->value) ? $this->value : intval(filter_var($this->value, FILTER_SANITIZE_NUMBER_INT));
             return $val;
         }
@@ -333,7 +333,7 @@ class Parameter implements \JsonSerializable
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
         }
 
-        if ( $this->value !== NULL && $this->value !=='' && is_scalar($this->value) ) {
+        if ( $this->value !== null && $this->value !=='' && is_scalar($this->value) ) {
             $val = is_float($this->value) ? $this->value : floatval(filter_var($this->value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
             return $val;
         }
@@ -396,7 +396,7 @@ class Parameter implements \JsonSerializable
      */
     public function getValue($option=null)
     {
-        $opt = $option === NULL ? $this->opt : $option;
+        $opt = $option === null ? $this->opt : $option;
         $val = null;
         if ($this->isValid) switch (strtolower($this->type)) {
             case 'file':
@@ -435,8 +435,8 @@ class Parameter implements \JsonSerializable
                 if (!empty($val)) {
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) $val = "'".\Application\PDA::pg_escape_string($val)."'";
-                } elseif ($opt & \PDO::NULL_EMPTY_STRING) { $val = NULL; }
-                elseif (($val === NULL || $val === '') && !($opt & \PDO::NULL_EMPTY_STRING)) { $val = 'NULL'; }
+                } elseif ($opt & \PDO::NULL_EMPTY_STRING) { $val = null; }
+                elseif (($val === null || $val === '') && !($opt & \PDO::NULL_EMPTY_STRING)) { $val = 'null'; }
         }
         return $val;
     }
@@ -452,14 +452,14 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($param)) return $param;
 
-        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === NULL ? ($opt | \Application\PDA::ADDSLASHES) : $param->opt );
+        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === null ? ($opt | \Application\PDA::ADDSLASHES) : $param->opt );
 
         switch (gettype($param)) {
             case 'array':
                 $val = array_map(function ($v) { return self::ize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
                 break;
             case 'NULL':
-                $val = null;
+                $val = null; // 'null' JSON QOUTER
                 break;
             case 'boolean':
                 $val = boolval($param) ? 1 : 0;
@@ -490,7 +490,7 @@ class Parameter implements \JsonSerializable
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
                     if ($opt & \Application\PDA::QUERY_STRING_QUOTES) {
-                        if ($val !== null) $val = "'$val'"; elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'NULL';
+                        if ($val !== null) $val = "'$val'"; elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'null';
                     }
                 }
                 break;
@@ -528,7 +528,7 @@ class Parameter implements \JsonSerializable
      */
     public function __sleep(): array
     {
-        return [$this->alias ?? $this->name => $this->getValue($this->opt === NULL ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt)];
+        return [$this->alias ?? $this->name => $this->getValue($this->opt === null ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt)];
     }
 
     /**
@@ -536,7 +536,7 @@ class Parameter implements \JsonSerializable
      * @return array
      */
     public function __debugInfo() {
-        return [ $this->alias ?? $this->name => $this->getValue($this->opt === NULL ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt) ];
+        return [ $this->alias ?? $this->name => $this->getValue($this->opt === null ? (\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES) : $this->opt) ];
     }
 
 }

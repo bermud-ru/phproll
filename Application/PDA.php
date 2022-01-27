@@ -304,7 +304,7 @@ class PDA
 
         if (($fields = self::queryParams($sql)) && \Application\Parameter::is_assoc($params) ) {
             foreach (array_intersect_key($params, $fields) as $k=>$v) {
-//                $query = str_replace(":$k", is_numeric($value) ? $value : ( $value === null ? 'NULL' :"'$value'"), $query);
+//                $query = str_replace(":$k", is_numeric($value) ? $value : ( $value === null ? 'null' :"'$value'"), $query);
                 $query = str_replace(':' . str_replace('.','_', $k), \Application\Parameter::ize($v,  \Application\PDA::ADDSLASHES | \Application\PDA::QUERY_STRING_QUOTES), $query);
             }
         }
@@ -591,7 +591,7 @@ class PDA
                 $val = "'" . json_encode($v, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK) . "'";
                 break;
             case 'NULL':
-                $val = 'NULL';
+                $val = null; // 'null'; // JSON NULL CHECK QOUTER
                 break;
             case 'boolean':
                 $val = boolval($v) ? 1 : 0;
