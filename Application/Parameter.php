@@ -88,7 +88,7 @@ class Parameter implements \JsonSerializable
 
         if (is_callable($this->required)) $this->required = call_user_func_array($this->required->bindTo($this), $this->arguments($this->required));
 
-        $empty  = $this->value === null || $this->value === '';
+        $empty = $this->value === null || $this->value === '';
         if ($this->required && $empty) { $this->isValid = false; }
         if ($this->isValid && ($this->validator && !$empty)) {
             if (is_callable($this->validator)) {
@@ -457,9 +457,10 @@ class Parameter implements \JsonSerializable
         switch (gettype($param)) {
             case 'array':
                 $val = array_map(function ($v) { return self::ize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
+                if ($opt & \Application\PDA::ARRAY_STRINGIFY) $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
                 break;
             case 'NULL':
-                $val = null; // 'null' JSON QOUTER
+                $val = $opt & \PDO::NULL_EMPTY_STRING  ? 'null' : null; // 'null' JSON QOUTER
                 break;
             case 'boolean':
                 $val = boolval($param) ? 1 : 0;
