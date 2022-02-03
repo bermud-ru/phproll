@@ -278,7 +278,7 @@ class Parameter implements \JsonSerializable
     public static function array2str (array $a, $opt=0): ?string
     {
         $str = implode(self::glue, array_map(function ($v) use($opt) {
-            return (is_array($v) || $v instanceof \Countable) ? self::array2str($v, $opt) : self::ize($v);
+            return (is_array($v) || $v instanceof \Countable) ? self::array2str($v, $opt) : self::ize($v, $opt);
         }, $a));
         return  ($opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) ? $str : '[' . $str . ']';
     }
@@ -346,7 +346,7 @@ class Parameter implements \JsonSerializable
      *
      * @return array | mixed | null
      */
-    public function __toArray($opt=null): ?array
+    public function __toArray($opt=0): ?array
     {
         if (is_callable($this->formatter)) return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
 
@@ -432,11 +432,12 @@ class Parameter implements \JsonSerializable
             case 'string':
             default:
                 $val = $this->__toString();
-                if (!empty($val)) {
+                if (empty($val)) {
+                    $val = ($opt & \PDO::NULL_EMPTY_STRING) ?  null : 'null' ;
+                } else {
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) $val = "'".\Application\PDA::pg_escape_string($val)."'";
-                } elseif ($opt & \PDO::NULL_EMPTY_STRING) { $val = null; }
-                elseif (($val === null || $val === '') && !($opt & \PDO::NULL_EMPTY_STRING)) { $val = 'null'; }
+                }
         }
         return $val;
     }
@@ -452,7 +453,7 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($param)) return $param;
 
-        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === null ? ($opt | \Application\PDA::ADDSLASHES) : $param->opt );
+        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === null ? ($opt | \Application\PDA::ADDSLASHES |\PDO::NULL_EMPTY_STRING) : $param->opt );
 
         switch (gettype($param)) {
             case 'array':
@@ -460,7 +461,7 @@ class Parameter implements \JsonSerializable
                 if ($opt & \Application\PDA::ARRAY_STRINGIFY) $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
                 break;
             case 'NULL':
-                $val = $opt & \PDO::NULL_EMPTY_STRING  ? 'null' : null; // 'null' JSON QOUTER
+                $val = null; // 'null' JSON QOUTER
                 break;
             case 'boolean':
                 $val = boolval($param) ? 1 : 0;
@@ -489,16 +490,17 @@ class Parameter implements \JsonSerializable
                 } else {
                     $val = strval($param);
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
-                    if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES) {
-                        if ($val !== null) $val = "'$val'"; elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'null';
-                    }
+                    if (empty($val) && $opt & \PDO::NULL_EMPTY_STRING) $val = null;
+                    if ($opt & \Application\PDA::QUERY_STRING_QUOTES)  $val = "'$val'";
+//                    {
+//                        if ($val !== null) $val = "'$val'"; //elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'null';
+//                    }
                 }
                 break;
             default:
                 $val = strval($param);
-                if ($opt & \PDO::NULL_EMPTY_STRING) $val = ($val === '' ? null : $val);
-                if (($opt & \Application\PDA::QUERY_STRING_QUOTES) && $val !== null) $val = "'".\Application\PDA::pg_escape_string($val)."'";
+                if (empty($val) && $opt & \PDO::NULL_EMPTY_STRING) $val = null;
+                if ($val && ($opt & \Application\PDA::QUERY_STRING_QUOTES)) $val = "'".\Application\PDA::pg_escape_string($val)."'";
         }
 
         return $val;
@@ -515,9 +517,10 @@ class Parameter implements \JsonSerializable
     {
         $v = $this->getValue();
         
-        if ( $v instanceof \Application\Jsonb ) return $v->get($name);
-        elseif (is_array($v) && key_exists($name,$v)) return $v[$name];
-        elseif (is_object($v) && property_exists($v, $name)) return $v->{naem};
+//        if ( $v instanceof \Application\Jsonb ) return $v->{$name};
+//        else
+            if (is_array($v) && key_exists($name,$v)) return $v[$name];
+        elseif (is_object($v) && property_exists($v, $name)) return $v->{$name};
 
         return null;
     }

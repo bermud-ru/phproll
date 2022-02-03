@@ -17,11 +17,14 @@ class PDA
 {
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
 
-    const OBJECT_STRINGIFY = 4;
-    const ADDSLASHES = 8;
-    const QUERY_STRING_QUOTES = 16;
-    const QUERY_ARRAY_SEQUENCE = 32;
-    const ARRAY_STRINGIFY = 64;
+    public const NULL_NATURAL = 0;
+    public const NULL_EMPTY_STRING = 1;
+    public const NULL_TO_STRING = 2;
+    public const OBJECT_STRINGIFY = 4;
+    public const ADDSLASHES = 8;
+    public const QUERY_STRING_QUOTES = 16;
+    public const QUERY_ARRAY_SEQUENCE = 32;
+    public const ARRAY_STRINGIFY = 64;
 
     public $status = false;
 
@@ -595,7 +598,7 @@ class PDA
                 $val = null; // 'null'; // JSON NULL CHECK QOUTER
                 break;
             case 'boolean':
-                $val = boolval($v) ? 1 : 0;
+                $val = $v ? 1 : 0;
                 break;
             case 'float':
             case 'double':
@@ -627,7 +630,7 @@ class PDA
     final static function array2insert(array $a, array $fiels = [], bool $keys = true):string
     {
         $query = '';
-        $ds = !\Application\Parameter::is_assoc($a) ? $a : [$a];
+        $ds = \Application\Parameter::is_assoc($a) ? [$a] : $a;
 
         if ($keys) $query = ' (' . ( count($fiels) ? implode(',', array_keys(array_intersect_key($ds[0], array_flip($fiels)))) : implode(',', array_keys($ds[0]))) . ') ';
 
