@@ -47,9 +47,9 @@ class PHPRoll extends \Application\Request
      *
      * @param $config данные из файла конфигурации
      */
-    public function __construct($params)
+    public function __construct($params, ?array $header = null)
     {
-        parent::__construct($params);
+        parent::__construct($params, $header);
         $this->file = pathinfo(__FILE__, PATHINFO_BASENAME);
         $this->query_type = isset($this->header['Xhr-Version']) ? ($this->header['Content-Type'] === 'text/x-template' ? '#': '@') : '';
 //            $this->path = array_filter(explode("/", substr($this->uri, 1)));
