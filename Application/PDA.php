@@ -452,7 +452,7 @@ class PDA
             $keys = array_keys($fields);
             $stmt = $prepare($keys, $opt);
             foreach ($keys as $v) {
-                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING));
+                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
             }
             $this->status = $stmt->execute();
             return $this->status ? $stmt : null;
@@ -462,7 +462,7 @@ class PDA
             if (\Application\Parameter::is_assoc($opt['params'])) {
                 $params = array_intersect_key($opt['params'], array_flip($keys));
                 foreach ($keys as $v) {
-                    $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
+                    $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
                 }
                 $this->status = $stmt->execute();
                 return $this->status ? $stmt : null;
@@ -477,7 +477,7 @@ class PDA
         foreach ($opt['params'] as $k=>$v){
             $params = array_intersect_key($v, array_flip($keys));
             foreach ($keys as $v) {
-                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING));
+                $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
             }
             $this->status = $this->status && $stmt->execute();
             if ($returning) $returning[] = $stmt;

@@ -397,6 +397,7 @@ class Parameter implements \JsonSerializable
     public function getValue($option=null)
     {
         $opt = $option === null ? $this->opt : $option;
+
         $val = null;
         if ($this->isValid) switch (strtolower($this->type)) {
             case 'file':
@@ -415,10 +416,16 @@ class Parameter implements \JsonSerializable
                 }
                 break;
             case 'json':
-                $val = $this->__toJSON(is_array($opt) ? $opt : ['assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS ]);
+                $val = $this->__toJSON(is_array($opt) ? $opt : ['assoc' => true, 'mode' => \Application\Jsonb::JSON_ALWAYS]);
+                if ($opt & \Application\PDA::OBJECT_STRINGIFY || $opt & \Application\PDA::OBJECT_STRINGIFY ) {
+                    $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
                 break;
             case 'array':
                 $val = $this->__toArray($opt);
+                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
+                    $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
                 break;
             case 'bool':
                 $val = boolval($this->value) ? 1 : 0;
@@ -453,7 +460,7 @@ class Parameter implements \JsonSerializable
     {
         if (is_callable($param)) return $param;
 
-        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === null ? ($opt | \Application\PDA::ADDSLASHES |\PDO::NULL_EMPTY_STRING) : $param->opt );
+        if ($param instanceof \Application\Parameter) return $param->getValue($param->opt === null ? ($opt | \Application\PDA::ADDSLASHES | \PDO::NULL_EMPTY_STRING) : $param->opt );
 
         switch (gettype($param)) {
             case 'array':
@@ -519,7 +526,7 @@ class Parameter implements \JsonSerializable
         
 //        if ( $v instanceof \Application\Jsonb ) return $v->{$name};
 //        else
-            if (is_array($v) && key_exists($name,$v)) return $v[$name];
+        if (is_array($v) && key_exists($name,$v)) return $v[$name];
         elseif (is_object($v) && property_exists($v, $name)) return $v->{$name};
 
         return null;
