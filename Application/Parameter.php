@@ -464,8 +464,8 @@ class Parameter implements \JsonSerializable
 
         switch (gettype($param)) {
             case 'array':
-                $val = array_map(function ($v) { return self::ize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY); }, $param);
-                if ($opt & \Application\PDA::ARRAY_STRINGIFY) $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                $val = ($opt & \Application\PDA::ARRAY_STRINGIFY) ? new \Application\Jsonb($param) :
+                array_map(function ($v) { return self::ize($v, \PDO::NULL_EMPTY_STRING | \Application\PDA::OBJECT_STRINGIFY ); }, $param);
                 break;
             case 'NULL':
                 $val = null; // 'null' JSON QOUTER
