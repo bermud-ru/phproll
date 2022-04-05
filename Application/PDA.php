@@ -48,7 +48,7 @@ class PDA
 
         try {
             $this->pdo = new \PDO($dsn, $opt['username'] ?? null, $opt['passwd'] ?? null, $opt['PDO'] ?? $this->opt);
-           // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING);
+           // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY);
         } catch (\Exception $e) {
             throw new \Exception(__CLASS__.": ".$e->getMessage());
         }
@@ -206,10 +206,10 @@ class PDA
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original IS NOT NULL";
                         case '&^': ; // ( <параметр> == Parameter::ize(...) OR <параметр> is null )
-                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY) : 0;
                             return "$c $glue ($key_original = $val OR $key_original IS NULL)";
                         case '$^': ; // если пусто подставить <параметр> is null а если есть значение то значение
-                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : null;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY) : null;
                             if (!empty($val)) break;
                         case '^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
@@ -223,13 +223,13 @@ class PDA
                         case '~*': ;
                             return "$c $glue $key_original ILIKE :$key";
                         case '&': ;
-                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : 0;
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY) : 0;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original & $val = $val";
                         case '==': ;
                             return "$c $glue LOWER($key_original) = LOWER(:$key)";
                         case '++': ;
-                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING) : ":$key";
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY) : ":$key";
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $val";
                         case '@': ;
@@ -274,13 +274,13 @@ class PDA
         if ($keys = self::queryParams($sql)) {
             if (\Application\Parameter::is_assoc($params)) {
                 foreach (array_intersect_key($params, $keys) as $k => $v) {
-                    $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
+                    $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
                 }
             } else {
                 $this->status = true;
                 foreach ($params as $i=>$row) {
                     foreach (array_intersect_key($row, $keys) as $k => $v) {
-                        $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
+                        $stmt->bindValue(':' . str_replace('.','_', $k), \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
                     }
                     $this->status = $this->status && $stmt->execute();
                 }
@@ -524,7 +524,7 @@ class PDA
 
         $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $opt['PDO'] ?? $this->opt);
         foreach ($params as $k=>$v) {
-            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING));
+            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
         }
 
         $this->status = $stmt->execute();
