@@ -441,6 +441,7 @@ class PDA
     public function insert(string $table, array $fields, $opt = [])
     {
         $self = $this;
+        if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
         if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
 
         $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
@@ -500,6 +501,7 @@ class PDA
      */
     public function update(string $table, array $fields, $where = null, $opt = []): ?\PDOStatement
     {
+        if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
         if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
         if (\Application\Parameter::is_assoc($fields)) {
             $keys = array_keys($fields);
@@ -541,14 +543,14 @@ class PDA
      * @param $hostname
      * @param $processId
      * @param $id
-     * @return ObjectId value. The 12-byte ObjectId value consists of:
+     * @return string value. The 12-byte ObjectId value consists of:
      * 4-byte timestamp value, representing the ObjectId’s creation, measured in seconds since the Unix epoch
      * 5-byte random value
      * 3-byte incrementing counter, initialized to a random value
      *
      * @example \Application\PDA::ObjectId(time(), php_uname('n'), getmypid(), $id);
      */
-    static function ObjectId($timestamp, $hostname, $processId, $id)
+    static function ObjectId($timestamp, $hostname, $processId, $id): string
     {
         // Building binary data.
         $bin = sprintf("%s%s%s%s",
