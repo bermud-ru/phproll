@@ -576,9 +576,10 @@ class PDA
      * @param array $idx
      * @return array
      */
-    final static function fields_diff($row, array $idx): array
+    final static function fields_diff($row, array $idx, $fields = false): array
     {
-        return array_values(array_diff(array_keys($row), $idx));
+        if ($fields) return array_values(array_diff(array_keys($row), $idx));
+        return array_intersect_key($row, \Application\Parameter::is_assoc($idx) ? $idx : array_flip($idx));
     }
 
     /**
