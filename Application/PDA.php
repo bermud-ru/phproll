@@ -508,7 +508,6 @@ class PDA
             $params = $fields;
         } elseif ($opt) {
             $keys = array_values($fields);
-
             $params = array_intersect_key($opt, array_flip($keys));
         } else {
             trigger_error("Application\PDA::update(table=$table) нет данных!", E_USER_WARNING);
@@ -576,10 +575,10 @@ class PDA
      * @param array $idx
      * @return array
      */
-    final static function fields_diff($row, array $idx, $fields = false): array
+    final static function fields_diff($row, array $idx, $fields = true): array
     {
         if ($fields) return array_values(array_diff(array_keys($row), $idx));
-        return array_intersect_key($row, \Application\Parameter::is_assoc($idx) ? $idx : array_flip($idx));
+        return array_diff_key($row, \Application\Parameter::is_assoc($idx) ? $idx : array_flip($idx));
     }
 
     /**
