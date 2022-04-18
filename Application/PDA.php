@@ -438,9 +438,11 @@ class PDA
      * @param array $opt,  $opt['params'] {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @return bool
      */
-    public function insert(string $table, array $fields, array $opt = [])
+    public function insert(string $table, array $fields, $opt = [])
     {
         $self = $this;
+        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
+
         $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
         {
             return $self->prepare("INSERT INTO $table (".implode(',', $keys)
@@ -456,11 +458,11 @@ class PDA
             }
             $this->status = $stmt->execute();
             return $this->status ? $stmt : null;
-        } elseif (isset($opt['params'])) {
+        } elseif (isset($opt)) {
             $keys = $fields ;
             $stmt = $prepare($keys, $opt);
-            if (\Application\Parameter::is_assoc($opt['params'])) {
-                $params = array_intersect_key($opt['params'], array_flip($keys));
+            if (\Application\Parameter::is_assoc($opt)) {
+                $params = array_intersect_key($opt, array_flip($keys));
                 foreach ($keys as $v) {
                     $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
                 }
@@ -474,7 +476,7 @@ class PDA
 
         $this->status = true;
         $returning = [];
-        foreach ($opt['params'] as $k=>$v){
+        foreach ($opt as $k=>$v){
             $params = array_intersect_key($v, array_flip($keys));
             foreach ($keys as $v) {
                 $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($params[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
@@ -496,33 +498,34 @@ class PDA
      * @param array $opt
      * @return bool
      */
-    public function update(string $table, array $fields, $where = null, array $opt = []): ?\PDOStatement
+    public function update(string $table, array $fields, $where = null, $opt = []): ?\PDOStatement
     {
-        $params = []; $keys = $fields; $exta = isset($opt['params']) ? $opt['params'] : [];
+        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
         if (\Application\Parameter::is_assoc($fields)) {
             $keys = array_keys($fields);
             $params = $fields;
-        } elseif (isset($opt['params'])) {
-            foreach ($keys as $k=>$v) { $params[$v] = isset($exta[$v]) ? $exta[$v] : null; }
+        } elseif ($opt) {
+            $keys = array_values($fields);
+
+            $params = array_intersect_key($opt, array_flip($keys));
         } else {
             trigger_error("Application\PDA::update(table=$table) нет данных!", E_USER_WARNING);
-            return false;
+            return null;
         }
         $f = implode(',', array_map(function ($v) { return $v .' = :'. str_replace('.','_', $v); }, $keys));
 
         $w = '';
         if (is_string($where)) {
-            $w = $this->where($where, $params, $exta);
+            $w = $this->where($where, $params, $opt);
         } elseif (\Application\Parameter::is_assoc($where)) {
             $w = $this->where($where,$params);
         } elseif ($where) {
-            $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $exta) ? $exta[$v] : (isset($params[$v]) ? $params[$v] : null); }
+            $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $opt) ? $opt[$v] : (array_key_exists($params[$v]) ? $params[$v] : null); }
             $w = $this->where($a,$params);
         }
         if (!empty($w)) $w = " WHERE $w";
-        if (isset($opt['where'])) $w .= empty($w) ? " WHERE {$opt['where']}": " AND ({$opt['where']}) ";
 
-        $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $opt['PDO'] ?? $this->opt);
+        $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $this->opt);
         foreach ($params as $k=>$v) {
             $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
         }
@@ -571,7 +574,7 @@ class PDA
      * @param array $idx
      * @return array
      */
-    final static function fields_diff(array $row, array $idx): array
+    final static function fields_diff($row, array $idx): array
     {
         return array_values(array_diff(array_keys($row), $idx));
     }

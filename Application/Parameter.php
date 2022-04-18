@@ -514,6 +514,20 @@ class Parameter implements \JsonSerializable
     }
 
     /**
+     * @magicmethod __set Native property
+     *
+     * @param $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function __set ($name, $value)
+    {
+        if (($this->type === 'array' || $this->type === 'json') && is_string($this->value)) { $this->value = $this->getValue(); }
+        if (is_array($this->value)) $this->value[$name] = $value; elseif (is_object($this->value)) $this->value->{$name} = $value;
+        else $this->{$name} = $value;
+    }
+
+    /**
      * Native property
      *
      * @param $name
@@ -523,9 +537,6 @@ class Parameter implements \JsonSerializable
     public function __get ( $name )
     {
         $v = $this->getValue();
-        
-//        if ( $v instanceof \Application\Jsonb ) return $v->{$name};
-//        else
         if (is_array($v) && key_exists($name,$v)) return $v[$name];
         elseif (is_object($v) && property_exists($v, $name)) return $v->{$name};
 
