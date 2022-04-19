@@ -25,6 +25,7 @@ class PDA
     public const QUERY_STRING_QUOTES = 16;
     public const QUERY_ARRAY_SEQUENCE = 32;
     public const ARRAY_STRINGIFY = 64;
+    public const STRING_TO_OBJECT= 128;
 
     public $status = false;
 

@@ -495,6 +495,10 @@ class Parameter implements \JsonSerializable
                 if ( is_numeric($param) ) {
                     $folat = floatval($param); $val = $folat != intval($folat) ? floatval($param) : intval($param);
                 } else {
+                    if ($opt & \Application\PDA::STRING_TO_OBJECT) {
+                        $val = json_decode($param, false, 512, JSON_INVALID_UTF8_IGNORE);
+                        if (json_last_error() === JSON_ERROR_NONE) return $val;
+                    }
                     $val = strval($param);
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if (empty($val) && $opt & \PDO::NULL_EMPTY_STRING) $val = null;
