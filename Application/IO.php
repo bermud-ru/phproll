@@ -299,7 +299,7 @@ class IO
                         } return $item->value;
                     }, (new \ReflectionFunction($r[$key]))->getParameters())) : $r[$key];
                 } elseif (array_key_exists($key, $d)) {
-                    $value = $d[$key];
+                    $value = \Application\Parameter::ize($d[$key],\Application\PDA::ARRAY_STRINGIFY|\Application\PDA::OBJECT_STRINGIFY);
                 } else {
                     $value = $matches[0];
                 }
