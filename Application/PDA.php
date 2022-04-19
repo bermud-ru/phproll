@@ -194,7 +194,7 @@ class PDA
                         if ($key != $k) unset($where[$k]);
                     } else {
                         while (array_key_exists($key, $params)) { $key .= '_1'; }
-                        $params[$key] = $vals[$k] ?? $source = [$k] ?? null;
+                        $params[$key] = $vals[$k] ?? $source = $params[$k] ?? null;
                     }
 
                     switch ( trim($exp[1]) ) {
@@ -434,11 +434,11 @@ class PDA
      * @function insert
      *
      * @param string $table
-     * @param array $fields {is_assoc === TRUE for sing rowset, is_assoc === FALSE for $opt['params'] dataset }
+     * @param array { $fields | \Application\Parameter }   {is_assoc === TRUE for sing rowset, is_assoc === FALSE for $opt['params'] dataset }
      * @param array $opt,  $opt['params'] {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @return bool
      */
-    public function insert(string $table, array $fields, $opt = [])
+    public function insert(string $table, $fields, $opt = [])
     {
         $self = $this;
         if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
@@ -499,7 +499,7 @@ class PDA
      * @param array $opt
      * @return bool
      */
-    public function update(string $table, array $fields, $where = null, $opt = []): ?\PDOStatement
+    public function update(string $table, $fields, $where = null, $opt = []): ?\PDOStatement
     {
         if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
         if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
@@ -521,11 +521,10 @@ class PDA
         } elseif (\Application\Parameter::is_assoc($where)) {
             $w = $this->where($where,$params);
         } elseif ($where) {
-            $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $opt) ? $opt[$v] : (array_key_exists($params[$v]) ? $params[$v] : null); }
+            $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $opt) ? $opt[$v] : (array_key_exists($v,$params) ? $params[$v] : null); }
             $w = $this->where($a,$params);
         }
         if (!empty($w)) $w = " WHERE $w";
-
         $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $this->opt);
         foreach ($params as $k=>$v) {
             $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
@@ -571,12 +570,14 @@ class PDA
     /**
      * fields_diff
      *
-     * @param array $row
-     * @param array $idx
+     * @param array | \Application\Parameter $row
+     * @param array | \Application\Parameter $idx
      * @return array
      */
-    final static function fields_diff($row, array $idx, $fields = true): array
+    final static function fields_diff($row, $idx, $fields = false): array
     {
+        if ($row instanceof \Application\Parameter) $row = $row->getValue();
+        if ($idx instanceof \Application\Parameter) $idx = $idx->getValue();
         if ($fields) return array_values(array_diff(array_keys($row), $idx));
         return array_diff_key($row, \Application\Parameter::is_assoc($idx) ? $idx : array_flip($idx));
     }
