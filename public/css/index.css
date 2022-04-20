@@ -1094,6 +1094,10 @@ button.delete {
     font-size: 12px;
     color: #777;
 }
+.form-label-group input:not(:placeholder-shown) ~ label.singl {
+    padding-left: 1.25rem;
+}
+
 .form-label-group.form-label-group-sm input:not(:placeholder-shown) ~ label {
     padding-left: 1.2rem;
     font-size: 10px;
@@ -1425,4 +1429,45 @@ span.badge-title {
     font-size: 1.2rem;
     /*font-weight: 500;*/
     /*line-height: 1.2;*/
+}
+
+div[class^='col'] > .form-label-group.form-label-group-sm > input.single+label {
+    padding-left: .85rem;
+}
+.input-group.form-label-group.form-label-group-sm input.single {
+    background: transparent;
+}
+
+.input-group.form-label-group.form-label-group-sm input.single:disabled {
+    background: #e9ecef;
+}
+.input-group.form-label-group>.input-group-append>.input-group-text {
+    line-height: 1.55rem;
+    color: #aaa;
+    border-top-color: #ccc;
+    border-right-color: #ccc;
+    border-bottom-color: #ccc;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+.form-label-group.form-label-group-sm input[type="checkbox"] {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.input-group.form-label-group.form-label-group-sm input.is-valid:not([type=checkbox]):not([type=radio]),
+.input-group.form-label-group.form-label-group-sm input.is-invalid:not([type=checkbox]):not([type=radio]),
+.input-group.form-label-group.form-label-group-sm input.is-warn:not([type=checkbox]):not([type=radio])
+{
+    background-repeat: no-repeat;
+    background-position: right 0.2rem top 0.6rem;
+    background-size: 1.2rem;
+}
+
+.filter-box > ul.typeahead {
+    width: 100%;
+    margin-top: 1.75rem;
+}
+.form-label-group.form-label-group-sm > ul.typeahead {
+    width: 100%;
 }

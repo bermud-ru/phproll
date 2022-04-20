@@ -76,8 +76,10 @@
     margin-top: .5rem;
 }
 .tabpane .pane-toolbar .input-group {
-    border-left: 1px solid #dee2e6;
+    /*border-left: 1px solid #dee2e6;*/
+    /*border-right: 1px solid #dee2e6;*/
     background-image: linear-gradient(to bottom, rgba(236, 238, 239, 1) 0.75rem, rgba(255, 255, 255, 1) 3.25rem, rgba(255, 255, 255, 0));
+    border-radius: 0.25rem 0.25rem 0 0;
     margin: 0 0
 }
 .tabpane .card-body {
@@ -220,9 +222,24 @@
 .grid .row {
     --bs-gutter-x: 0.1rem;
 }
+
+.grid tbody tr td:first-of-type:not(:empty) {
+    min-height: 2rem;
+}
+.grid tbody tr td div.th-control {
+    overflow: hidden;
+    white-space: nowrap;
+    -moz-text-overflow: ellipsis;
+    -ms-text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    position: fixed;
+    height: auto;
+    width: 100%;
+}
 .th-control input.form-control-sm {
     font-size: .6rem;
 }
-.th-control button {
+.grid .th-control button {
     margin-top: -2px;
 }
