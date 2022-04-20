@@ -223,19 +223,21 @@
     --bs-gutter-x: 0.1rem;
 }
 
+.grid thead tr th:first-of-type,
+.grid tbody tr td:first-of-type
+{
+    min-width: 3rem;
+}
+.grid thead tr th:first-of-type,
 .grid tbody tr td:first-of-type:not(:empty) {
     min-height: 2rem;
 }
 .grid tbody tr td div.th-control {
-    overflow: hidden;
     white-space: nowrap;
-    -moz-text-overflow: ellipsis;
-    -ms-text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
-    text-overflow: ellipsis;
-    position: fixed;
+    display: inline-block;
     height: auto;
     width: 100%;
+    z-index: 1000;
 }
 .th-control input.form-control-sm {
     font-size: .6rem;
