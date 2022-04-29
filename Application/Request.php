@@ -21,6 +21,10 @@ abstract class Request
     public $params = [];
     public $uri = null;
 
+    const DEFAULT = 1;
+    const BASE64 = 2;
+    const OBJECT = 4;
+
     /**
      * Конструктор
      *
@@ -60,13 +64,22 @@ abstract class Request
     /**
      * COOKIE
      *
-     * @param $param
-     * @param null $def
+     * @param string $param
+     * @param int $opt
      * @return mixed|null
      */
-    public function cookie($param, $def = null)
+    public function cookie(string $param, int $opt = \Application\Request::DEFAULT)
     {
-        return isset($_COOKIE[$param]) ? $_COOKIE[$param] : $def;
+        $p = null;
+        if (isset($_COOKIE[$param])) {
+            if ($opt & \Application\Request::BASE64) $p = base64_decode($_COOKIE[$param]);
+            if ($opt & \Application\Request::OBJECT) {
+                $p = json_decode($p ?? $_COOKIE[$param], false, 512, JSON_INVALID_UTF8_IGNORE);
+                if (json_last_error() === JSON_ERROR_NONE) return null;
+            }
+            if ($opt === \Application\Request::DEFAULT) $p = \Application\Parameter::ize($_COOKIE[$param]);
+        }
+        return $p;
     }
 
     /**
