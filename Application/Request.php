@@ -75,7 +75,7 @@ abstract class Request
             if ($opt & \Application\Request::BASE64) $p = base64_decode($_COOKIE[$param]);
             if ($opt & \Application\Request::OBJECT) {
                 $p = json_decode($p ?? $_COOKIE[$param], false, 512, JSON_INVALID_UTF8_IGNORE);
-                if (json_last_error() !== JSON_ERROR_NONE) return null;
+                if (json_last_error() !== JSON_ERROR_NONE) return null; //new \stdClass();
             }
             if ($opt === \Application\Request::DEFAULT) $p = \Application\Parameter::ize($_COOKIE[$param]);
         }
