@@ -325,6 +325,54 @@ class IO
     }
 
     /**
+     * @function  serialize
+     *
+     * @param object $obj
+     * @param int $opt
+     * @return string|null
+     */
+    static public function serialize(object $obj, int $opt = \Application\Request::DEFAULT): ?string
+    {
+        $a = explode('\\', get_class($obj));
+        if (count($a)) {
+            $s = array_pop($a) . ':' . json_encode($obj);
+            if ($opt & \Application\Request::BASE64) $s = base64_encode($s);
+            return $s;
+        }
+        return null;
+    }
+
+    /**
+     * @function unserialize
+     *
+     * @param string $obj
+     * @param int $opt
+     * @return object|null
+     */
+    static public function unserialize(string $obj, int $opt = \Application\Request::DEFAULT): ?object
+    {
+        $s = $obj;
+        if ($opt & \Application\Request::BASE64) $s = base64_decode($s);
+        $a = explode(':{', $s);
+        $obj = array_shift($a);
+
+        if (count($a)) {
+            $class = (strpos($obj, '\\') !== false) ? $obj : __NAMESPACE__ . '\\' .$obj;
+            $obj = '{'.array_pop($a);
+        }
+
+        $p = json_decode($obj, false, 512, JSON_INVALID_UTF8_IGNORE);
+        if (json_last_error() !== JSON_ERROR_NONE) return null;
+
+        if (class_exists($class)) {
+            $o = new $class; foreach (get_object_vars($p) as $k => $v) $o->{$k} = $v;
+            return  $o;
+        }
+
+        return $p;
+    }
+
+    /**
      * Дерево прараметров в запросе разворачивает в массив ключ-значение,
      * создавая идекс вложенности
      *
