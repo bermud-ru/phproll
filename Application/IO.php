@@ -349,24 +349,17 @@ class IO
      * @param int $opt
      * @return object|null
      */
-    static public function unserialize(string $obj, int $opt = \Application\Request::DEFAULT): ?object
+    static public function unserialize(string $src, int $opt = \Application\Request::DEFAULT): ?object
     {
-        $s = $obj;
+        $s = $src;
         if ($opt & \Application\Request::BASE64) $s = base64_decode($s);
-        $a = explode(':{', $s);
-        $obj = array_shift($a);
-
-        if (count($a)) {
-            $class = (strpos($obj, '\\') !== false) ? $obj : __NAMESPACE__ . '\\' .$obj;
-            $obj = '{'.array_pop($a);
-        }
-
-        $p = json_decode($obj, false, 512, JSON_INVALID_UTF8_IGNORE);
+        preg_match('/^(([a-zA-Z0-9_]+?):)*(.*)$/', $s, $a);
+        $class = $a[2] ? ((strpos($a[2], '\\') !== false) ? $a[2] : __NAMESPACE__ . '\\' .$a[2]) : null;
+        $p = json_decode($a[3], false, 512, JSON_INVALID_UTF8_IGNORE);
         if (json_last_error() !== JSON_ERROR_NONE) return null;
-
         if (class_exists($class)) {
             $o = new $class; foreach (get_object_vars($p) as $k => $v) $o->{$k} = $v;
-            return  $o;
+            return $o;
         }
 
         return $p;
