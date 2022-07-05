@@ -222,10 +222,25 @@ organizationalunit=IT
 commonname=$DOMAIN
 #Email Address []:
 email=box@$DOMAIN
-########################################################################################################################
-openssl req -nodes -x509 -newkey rsa:2048 -keyout $SSL_path/nginx.key -out $SSL_path/nginx.crt -days 365 \
+# -------------------------
+if [ -z "\$1" ]; then
+PKIPATH="$SSL_path"
+else
+PKIPATH=\$1
+fi
+
+FNAME="$DOMAIN"
+DAYS=365
+# ######################################################################################################################
+if [ -f "\$PKIPATH/\$FNAME.crt" ]; then
+printf "\$PKIPATH/\$FNAME.crt exist!\n\n"
+openssl x509 -in \$PKIPATH/\$FNAME.crt -text -noout
+else
+printf "Creating...\n\n"
+openssl req -nodes -x509 -newkey rsa:2048 -keyout \$PKIPATH/\$FNAME.key -out \$PKIPATH/\$FNAME.crt -days \$DAYS \
 -subj "/C=\$country/ST=\$state/L=\$locality/O=\$organization/OU=\$organizationalunit/CN=\$commonname/emailAddress=\$email" \
--config $SSL_path/sertificat.cnf
+-config \$PKIPATH/sertificat.cnf
+fi
 exit
 EOF
 fi
