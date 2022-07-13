@@ -165,7 +165,7 @@ class PHPRoll extends \Application\Request
                 $keys[] = $key = isset($bound[$x]) ? $y : $x;
                 $options['include'][$depth][$key] = $this->context($y, $options, $x, ++$depth);
             }
-            return $this->context($keys, $options);
+            return count($keys) ? $this->context($keys, $options) : null;
         } else {
             $p = array_reverse($is_set ? $pattern : [$pattern]);
         }
