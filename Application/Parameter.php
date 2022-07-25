@@ -20,6 +20,7 @@ class Parameter implements \JsonSerializable
     protected $index = null;
     protected $name = null;
     protected $type = 'string';
+    protected $nullable = false;
     protected $alias = null;
     protected $default = null;
     protected $validator = null;
@@ -55,7 +56,7 @@ class Parameter implements \JsonSerializable
         foreach ($opt as $k => $v) { if (property_exists($this, $k)) $this->{$k} = $v; }
 
         $this->raw = isset($params[$this->alias]) ? $params[$this->alias] : (isset($params[$this->name]) ? $params[$this->name] : null);
-        $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default->bindTo($this), $this->arguments($this->default)) : $this->default) : $this->raw ;
+        $this->value = is_null($this->raw) ? (is_callable($this->default) ? call_user_func_array($this->default->bindTo($this), $this->arguments($this->default)) : $this->default) : $this->raw;
 
         if (empty($this->validator) && $this->type != 'string') {
             switch (strtolower($this->type)) {
@@ -72,12 +73,18 @@ class Parameter implements \JsonSerializable
                 case 'bool':
                     $this->validator = '/^(0|1)$/';
                     break;
+                case '?date':
+                    $this->nullable = true;
                 case 'date':
                     $this->validator = '/^(0|1|2|3)\d\.(0|1)\d\.\d{4}$/';
                     break;
+                case '?float':
+                    $this->nullable = true;
                 case 'float':
-                    $this->validator = '[+-]?([0-9]*[.])?[0-9]+';
+                    $this->validator = '[\+-]?([0-9]*[.])?[0-9]+';
                     break;
+                case '?int':
+                    $this->nullable = true;
                 case 'int':
                     $this->validator = '/^[+-]?\d+$/';
                     break;
@@ -89,7 +96,7 @@ class Parameter implements \JsonSerializable
         if (is_callable($this->required)) $this->required = call_user_func_array($this->required->bindTo($this), $this->arguments($this->required));
 
         $empty = $this->value === null || $this->value === '';
-        if ($this->required && $empty) { $this->isValid = false; }
+        if (!$this->nullable && $this->required && $empty) { $this->isValid = false; }
         if ($this->isValid && ($this->validator && !$empty)) {
             if (is_callable($this->validator)) {
                 $this->isValid = call_user_func_array($this->validator->bindTo($this), $this->arguments($this->validator));
@@ -308,7 +315,7 @@ class Parameter implements \JsonSerializable
      *
      * @return int | mixed | null
      */
-    public function __toInt($opt=null)
+    public function __toInt($opt=null): ?int
     {
         if ( is_callable($this->formatter) ) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -327,7 +334,7 @@ class Parameter implements \JsonSerializable
      *
      * @return float | mixed | null
      */
-    public function __toFloat($opt=null)
+    public function __toFloat($opt=null): ?float
     {
         if (is_callable($this->formatter)) {
             return call_user_func_array($this->formatter->bindTo($this), $this->arguments($this->formatter));
@@ -403,6 +410,7 @@ class Parameter implements \JsonSerializable
             case 'file':
                 $val = new \Application\Jsonb($_FILES[$this->name]);
                 break;
+            case '?date':
             case 'date':
                 if (empty($this->value)) {
                     $val = null;
@@ -430,9 +438,11 @@ class Parameter implements \JsonSerializable
             case 'bool':
                 $val = boolval($this->value) ? 1 : 0;
                 break;
+            case '?float':
             case 'float':
                 $val =  $this->__toFloat($opt);
                 break;
+            case '?int':
             case 'int':
                 $val = $this->__toInt($opt);
                 break;
