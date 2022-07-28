@@ -415,9 +415,9 @@ class Parameter implements \JsonSerializable
                 if (empty($this->value)) {
                     $val = null;
                 } else {
-                    if (preg_match('/^(0|1|2|3)*\d.(0|1)\d.\d{4}$/', $this->value)) {
+                    if (preg_match('/^(0|1|2|3)?\d.(0|1)?\d.\d{4}$/', $this->value)) {
                         $dt = implode('-', array_reverse(explode('.', $this->value)));
-                    } elseif (preg_match('/^(\d{4}-(0|1)\d-(0|1|2|3)\d).*$/', $this->value, $match)) {
+                    } elseif (preg_match('/^(\d{4}-(0|1)?\d-(0|1|2|3)?\d).*$/', $this->value, $match)) {
                         $dt = $match[1];
                     }
                     if ($opt & \Application\PDA::QUERY_STRING_QUOTES ) { $val = "'$dt'"; } else { $val = "$dt";}
