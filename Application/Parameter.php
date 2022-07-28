@@ -76,7 +76,7 @@ class Parameter implements \JsonSerializable
                 case '?date':
                     $this->nullable = true;
                 case 'date':
-                    $this->validator = '/^(0|1|2|3)\d\.(0|1)\d\.\d{4}$/';
+                    $this->validator = '/^(0|1|2|3)?\d\.(0|1)?\d\.\d{4}$/';
                     break;
                 case '?float':
                     $this->nullable = true;
