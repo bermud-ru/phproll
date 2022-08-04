@@ -173,22 +173,20 @@ class PDA
                     $exp = explode($key_original, $k);
                     $jsoned = FALSE;
 
-                    if (in_array(trim($exp[0]), ['>>','#>','#2>','#4>','#8>'])) {
+                    if (in_array(trim($exp[0]), ['>>','#>','2>','4>','8>'])) {
                         $jsoned = TRUE;
-                        $f = explode(',', $key_original);
-                        $i = array_pop($f);
-                        $prefix = count($f) > 1 ? implode("->'", $f) . "'" : $f[0];
+                        $p = preg_replace('#(?<=>)([^>]*?)(?=(-|$))#', "'$1'", str_replace([',',';'], ['->','->>'], $key_original));
                         switch ($exp[0]) {
-                            case '>>': $key_original = "$prefix->>'{$i}'"; break;
-                            case '#>':  case '#4>': $key_original = "($prefix->>'{$i}')::int"; break;
-                            case '#2>': $key_original = "($prefix->>'{$i}')::int2"; break;
-                            case '#8>': $key_original = "($prefix->>'{$i}')::int8"; break;
-                            default:
+                            case '#>':  $key_original = "($p)::numeric"; break;
+                            case '2>': $key_original = "($p)::int2"; break;
+                            case '4>': $key_original = "($p)::int"; break;
+                            case '8>': $key_original = "($p)::int8"; break;
+                            default: case '>>': $key_original = $p;
                         }
                     }
 
                     $glue = !empty($c) ? 'AND' : '';
-                    $key = $jsoned ? $i : str_replace('.','_', $key_original);
+                    $key = $jsoned ? strtok($key_original, '-') : str_replace('.','_', $key_original);
 
                     if ($params == null) {
                         $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
