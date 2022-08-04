@@ -397,7 +397,7 @@ class IO
      */
     static function console_error( $e, $tags=['<script>','</script>'])
     {
-        echo $tags[0].' console.error("PHP Exception: "+decodeURIComponent("'.rawurlencode( ($e instanceof \Exception) ? $e->getMessage() : strval($e)).'")); '.$tags[1];
+        echo $tags[0].' console.error("PHP Exception: "+decodeURIComponent("'.rawurlencode( addslashes($e instanceof \Exception ? $e->getMessage() : strval($e))).'")); '.$tags[1];
     }
 
     /**
@@ -407,7 +407,7 @@ class IO
      */
     static function console_log(string $s, $tags=['<script>','</script>'])
     {
-        echo $tags[0].' console.log(decodeURIComponent("'.rawurlencode($s).'")); '.$tags[1];;
+        echo $tags[0].' console.log(decodeURIComponent("'.rawurlencode(addslashes($s)).'")); '.$tags[1];;
     }
 
     /**
