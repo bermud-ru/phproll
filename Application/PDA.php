@@ -197,10 +197,9 @@ class PDA
                     }
 
                     switch ( trim($exp[1]) ) {
-    //                    case '{}': ;  //TODO: JSON filter
-    //                        return "$c $glue $key_original IN ($val)";
                         case '[]': ;
-                            return "$c $glue $key_original IN (:$key)";
+                            $val = array_key_exists($k, $vals) ? \Application\Parameter::ize($vals[$k],  \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY | self::QUERY_ARRAY_SEQUENCE) : ":$key";
+                            return  "$c $glue $key_original IN ($val)";
                         case '!^': ;
                             if ($params == null) { unset( $where[$key]); } else { unset($params[$key]); }
                             return "$c $glue $key_original IS NOT NULL";

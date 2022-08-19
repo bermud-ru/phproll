@@ -425,14 +425,20 @@ class Parameter implements \JsonSerializable
                 break;
             case 'json':
                 $val = $this->__toJSON(is_array($opt) ? $opt : ['assoc' => true, 'mode' => \Application\Jsonb::JSON_ALWAYS]);
-                if ($opt & \Application\PDA::OBJECT_STRINGIFY || $opt & \Application\PDA::OBJECT_STRINGIFY ) {
+                if ( $opt & \Application\PDA::OBJECT_STRINGIFY ) {
                     $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
+                if (($opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) && preg_match('/^\s*\[(.*)\]\s*$/', $val, $matches)) {
+                    $val =  $matches ? $matches[1] : $val;
                 }
                 break;
             case 'array':
                 $val = $this->__toArray($opt);
-                if ($opt & \Application\PDA::OBJECT_STRINGIFY) {
+                if ( $opt & \Application\PDA::OBJECT_STRINGIFY ) {
                     $val = json_encode($val, JSON_BIGINT_AS_STRING | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+                }
+                if (($opt & \Application\PDA::QUERY_ARRAY_SEQUENCE) && preg_match('/^\s*\[(.*)\]\s*$/', $val, $matches)) {
+                    $val =  $matches ? $matches[1] : $val;
                 }
                 break;
             case 'bool':
