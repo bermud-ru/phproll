@@ -18,10 +18,8 @@ class Parameter implements \JsonSerializable
     protected $owner = null;
     protected $alert = '';
     protected $index = null;
-    protected $name = null;
     protected $type = 'string';
     protected $nullable = false;
-    protected $alias = null;
     protected $default = null;
     protected $validator = null;
     protected $opt = null;
@@ -36,9 +34,10 @@ class Parameter implements \JsonSerializable
 
     public $isValid = true;
     public $params = [];
+    public $name = null;
+    public $alias = null;
     public $key = null;
     public $value = null;
-//    public $original = null;
     
     const MESSAGE = "Parameter error, {name} = {value} is wrong!";
     const KEY_SEPARATOR = '.';

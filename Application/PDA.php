@@ -173,7 +173,7 @@ class PDA
                     $exp = explode($key_original, $k);
                     $jsoned = FALSE;
 
-                    if (in_array(trim($exp[0]), ['>>','#>','2>','4>','8>'])) {
+                    if (in_array($exp[0], ['>>','#>','2>','4>','8>'])) {
                         $jsoned = TRUE;
                         $p = preg_replace('#(?<=>)([^>]*?)(?=(-|$))#', "'$1'", str_replace([',',';'], ['->','->>'], $key_original));
                         switch ($exp[0]) {
@@ -235,14 +235,18 @@ class PDA
                         case '@@': ;
                             return "$c $glue to_tsvector('russian', $key_original::text) @@ to_tsquery(:$key)";
                         case '>': case '>=': case '<': case '=<': case '=': case '!=':
-    //                        $val = is_numeric($val) ? $val : "'$val'";
-                            return "$c $glue $key_original {$exp[1]} :$key";
+//                            return "$c $glue $key_original {$exp[1]} :$key";
+                            break;
                         default:
-    //                        $val = is_numeric($val) ? $val : "'$val'";
-                            ;
+                           $exp[1] = '=';
                     }
 
-                    return "$c $glue $key_original = :$key";
+                    if ( in_array($exp[0], ['&&','||']) && is_object($where[$key_original])) {
+                        $and = $exp[0] === '&&' ? 'AND' : 'OR';
+                        return "$c $glue ({$where[$key_original]->name} {$exp[1]} :$key $and $key_original {$exp[1]} :$key)";
+                    }
+
+                    return "$c $glue $key_original {$exp[1]} :$key";
                 }, ''
             );
         }
