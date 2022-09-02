@@ -102,7 +102,7 @@ class PDA
      */
     final static function field(string $key): string
     {
-        preg_match('/([a-zA-Z]+[a-zA-Z0-9\._,]*)/', $key, $v);
+        preg_match('/([a-zA-Z]+[a-zA-Z0-9\._,;]*)/', $key, $v);
         if ($v) return $v[1];
         return $key;
     }
