@@ -512,15 +512,12 @@ class Parameter implements \JsonSerializable
                 } else {
                     if ($opt & \Application\PDA::STRING_TO_OBJECT) {
                         $val = json_decode($param, false, 512, JSON_INVALID_UTF8_IGNORE);
-                        if (json_last_error() === JSON_ERROR_NONE) return $val;
+                        if (json_last_error() === JSON_ERROR_NONE) return ($opt & \Application\PDA::ARRAY_STRINGIFY) ? $param : $val;
                     }
                     $val = strval($param);
                     if ($opt & \Application\PDA::ADDSLASHES) $val = addslashes($val);
                     if (empty($val) && $opt & \PDO::NULL_EMPTY_STRING) $val = null;
                     if ($opt & \Application\PDA::QUERY_STRING_QUOTES)  $val = "'$val'";
-//                    {
-//                        if ($val !== null) $val = "'$val'"; //elseif (!($opt & \PDO::NULL_EMPTY_STRING)) $val = 'null';
-//                    }
                 }
                 break;
             default:
