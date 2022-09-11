@@ -215,6 +215,23 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
     }
 
     /**
+     * @method assign
+     *
+     * @param array $a
+     * @return \Application\Jsonb
+     */
+    public function assign(array $a, array $opt = [])
+    {
+        if ( $this->__assoc ) {
+            $res = array_merge($this->__json, $a);
+        } else {
+            $res = clone $this->__json;
+            foreach ($a as $k=> $v) $res->{$k} = $v;
+        }
+        return new \Application\Jsonb($res, $opt);
+    }
+
+    /**
      * @method delete
      *
      * @param $key
