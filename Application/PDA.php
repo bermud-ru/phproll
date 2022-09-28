@@ -499,7 +499,7 @@ class PDA
      * @param array $fields
      * @param string | array $where
      * @param array $opt
-     * @return bool
+     * @return \PDOStatement | null
      */
     public function update(string $table, $fields, $where = null, $opt = []): ?\PDOStatement
     {
@@ -539,12 +539,14 @@ class PDA
 
     /**
      * @function upsert
+     * CAUTION first stap is insert rise SQLSTATE[23502]: Not null violation: ERROR:  null value in column
+     * Not null violation - field must exist in params
      *
      * @param string $table
      * @param array $fields
      * @param array $where
      * @param array $opt
-     * @return bool
+     * @return \PDOStatement | null
      */
     public function upsert(string $table, $fields, array $where = [], $opt = []): ?\PDOStatement
     {
