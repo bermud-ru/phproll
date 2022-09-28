@@ -192,7 +192,7 @@ class PDA
                         $where[$key] =  $vals[$k] ?? $source = [$k] ?? null;
                         if ($key != $k) unset($where[$k]);
                     } else {
-                        while (array_key_exists($key, $params)) { $key .= '_1'; }
+//                        while (array_key_exists($key, $params)) { $key .= '_1'; }
                         $params[$key] = $vals[$k] ?? $source = $params[$k] ?? null;
                     }
 
@@ -254,7 +254,7 @@ class PDA
         $keys = self::queryParams($where);
         foreach ($keys as $k=>$v) {
             $key = str_replace('.','_', $k);
-            while (array_key_exists($key, $params)) { $key .= '_1'; }
+//            while (array_key_exists($key, $params)) { $key .= '_1'; }
             $params[$key] = $source=[$k] ?? $params[$k] ?? null;
         }
 
@@ -436,7 +436,7 @@ class PDA
      * @function insert
      *
      * @param string $table
-     * @param array { $fields | \Application\Parameter }   {is_assoc === TRUE for sing rowset, is_assoc === FALSE for $opt['params'] dataset }
+     * @param array | \Application\Parameter $fields  {is_assoc === TRUE for sing rowset, is_assoc === FALSE for $opt['params'] dataset }
      * @param array $opt,  $opt['params'] {is_assoc === TRUE for sing rowset, is_assoc === FALSE for BULK dataset }
      * @return bool
      */
@@ -497,7 +497,7 @@ class PDA
      *
      * @param string $table
      * @param array $fields
-     * @param {string | array} $where
+     * @param string | array $where
      * @param array $opt
      * @return bool
      */
@@ -526,12 +526,54 @@ class PDA
             $a = []; foreach ($where as $k=>$v) { $a[$v] = array_key_exists($v, $opt) ? $opt[$v] : (array_key_exists($v,$params) ? $params[$v] : null); }
             $w = $this->where($a,$params);
         }
+
         if (!empty($w)) $w = " WHERE $w";
         $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $this->opt);
         foreach ($params as $k=>$v) {
-            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
+            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
         }
 
+        $this->status = $stmt->execute();
+        return $this->status ? $stmt : null;
+    }
+
+    /**
+     * @function upsert
+     *
+     * @param string $table
+     * @param array $fields
+     * @param array $where
+     * @param array $opt
+     * @return bool
+     */
+    public function upsert(string $table, $fields, array $where = [], $opt = []): ?\PDOStatement
+    {
+        $self = $this;
+        if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
+        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
+        $keys = array_keys($fields);
+
+        $prepare = function (array $keys, array $opt) use(&$self, $table, $where): \PDOStatement
+        {
+            $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
+
+            if (count($where)) {
+                $ups = implode(',', array_filter(array_map(function ($v) use($where) {
+                    return in_array($v, $where) ? null : $v .' = :'. str_replace('.','_', $v);
+                }, $keys)));
+                $update = ' ON CONFLICT ('.implode(',', $where).") DO UPDATE SET $ups";
+            } else {
+                $update = '';
+            }
+
+            $query = "INSERT INTO $table (".implode(',', $keys).") VALUES ($ins)" . $update . " RETURNING *";
+            return $self->prepare($query, $opt['PDO'] ?? $self->opt);
+        };
+
+        $stmt = $prepare($keys, $opt);
+        foreach ($keys as $v) {
+            $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
+        }
         $this->status = $stmt->execute();
         return $this->status ? $stmt : null;
     }
