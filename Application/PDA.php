@@ -544,26 +544,27 @@ class PDA
      *
      * @param string $table
      * @param array $fields
-     * @param array $where
+     * @param array $idx
      * @param array $opt
      * @return \PDOStatement | null
      */
-    public function upsert(string $table, $fields, array $where = [], $opt = []): ?\PDOStatement
+    public function upsert(string $table, $fields, array $idx = [], $opt = []): ?\PDOStatement
     {
         $self = $this;
         if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
         if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
         $keys = array_keys($fields);
 
-        $prepare = function (array $keys, array $opt) use(&$self, $table, $where): \PDOStatement
+        $prepare = function (array $keys, array $opt) use(&$self, $table, $idx, $opt): \PDOStatement
         {
             $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
 
-            if (count($where)) {
-                $ups = implode(',', array_filter(array_map(function ($v) use($where) {
-                    return in_array($v, $where) ? null : $v .' = :'. str_replace('.','_', $v);
+            if (count($idx)) {
+                $where = isset($opt['WHERE']) ? ' WHERE ' . $self->where($opt['WHERE']) : '';
+                $ups = implode(',', array_filter(array_map(function ($v) use($idx) {
+                    return in_array($v, $idx) ? null : $v .' = :'. str_replace('.','_', $v);
                 }, $keys)));
-                $update = ' ON CONFLICT ('.implode(',', $where).") DO UPDATE SET $ups";
+                $update = ' ON CONFLICT ('.implode(',', $idx).") DO UPDATE SET $ups" . $where;
             } else {
                 $update = '';
             }
