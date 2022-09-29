@@ -448,9 +448,24 @@ class PDA
 
         $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
         {
-            return $self->prepare("INSERT INTO $table (".implode(',', $keys)
-                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).') RETURNING *',
-                $opt['PDO'] ?? $self->opt);
+//            return $self->prepare("INSERT INTO $table (".implode(',', $keys)
+//                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).') RETURNING *',
+//                $opt['PDO'] ?? $self->opt);
+
+            $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
+
+            if (isset($opt['UPSERT'])) {
+                $where = isset($opt['WHERE']) ? ' WHERE ' . $self->where($opt['WHERE']) : '';
+                $ups = implode(',', array_filter(array_map(function ($v) use($opt) {
+                    return in_array($v, $opt['UPSERT']) ? null : $v .' = :'. str_replace('.','_', $v);
+                }, $keys)));
+                $update = ' ON CONFLICT ('.implode(',', $opt['UPSERT']).") DO UPDATE SET $ups" . $where;
+            } else {
+                $update = '';
+            }
+
+            $query = "INSERT INTO $table (".implode(',', $keys).") VALUES ($ins)" . $update . " RETURNING *";
+            return $self->prepare($query, $opt['PDO'] ?? $self->opt);
         };
 
         if (\Application\Parameter::is_assoc($fields)) {
@@ -548,38 +563,38 @@ class PDA
      * @param array $opt
      * @return \PDOStatement | null
      */
-    public function upsert(string $table, $fields, array $idx = [], $opt = []): ?\PDOStatement
-    {
-        $self = $this;
-        if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
-        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
-        $keys = array_keys($fields);
-
-        $prepare = function (array $keys, array $opt) use(&$self, $table, $idx, $opt): \PDOStatement
-        {
-            $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
-
-            if (count($idx)) {
-                $where = isset($opt['WHERE']) ? ' WHERE ' . $self->where($opt['WHERE']) : '';
-                $ups = implode(',', array_filter(array_map(function ($v) use($idx) {
-                    return in_array($v, $idx) ? null : $v .' = :'. str_replace('.','_', $v);
-                }, $keys)));
-                $update = ' ON CONFLICT ('.implode(',', $idx).") DO UPDATE SET $ups" . $where;
-            } else {
-                $update = '';
-            }
-
-            $query = "INSERT INTO $table (".implode(',', $keys).") VALUES ($ins)" . $update . " RETURNING *";
-            return $self->prepare($query, $opt['PDO'] ?? $self->opt);
-        };
-
-        $stmt = $prepare($keys, $opt);
-        foreach ($keys as $v) {
-            $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
-        }
-        $this->status = $stmt->execute();
-        return $this->status ? $stmt : null;
-    }
+//    public function upsert(string $table, $fields, array $idx = [], $opt = []): ?\PDOStatement
+//    {
+//        $self = $this;
+//        if ($fields instanceof \Application\Parameter) $fields = $fields->getValue();
+//        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
+//        $keys = array_keys($fields);
+//
+//        $prepare = function (array $keys, array $opt) use(&$self, $table, $idx, $opt): \PDOStatement
+//        {
+//            $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
+//
+//            if (count($idx)) {
+//                $where = isset($opt['WHERE']) ? ' WHERE ' . $self->where($opt['WHERE']) : '';
+//                $ups = implode(',', array_filter(array_map(function ($v) use($idx) {
+//                    return in_array($v, $idx) ? null : $v .' = :'. str_replace('.','_', $v);
+//                }, $keys)));
+//                $update = ' ON CONFLICT ('.implode(',', $idx).") DO UPDATE SET $ups" . $where;
+//            } else {
+//                $update = '';
+//            }
+//
+//            $query = "INSERT INTO $table (".implode(',', $keys).") VALUES ($ins)" . $update . " RETURNING *";
+//            return $self->prepare($query, $opt['PDO'] ?? $self->opt);
+//        };
+//
+//        $stmt = $prepare($keys, $opt);
+//        foreach ($keys as $v) {
+//            $stmt->bindValue(':'.str_replace('.','_', $v), \Application\Parameter::ize($fields[$v], \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
+//        }
+//        $this->status = $stmt->execute();
+//        return $this->status ? $stmt : null;
+//    }
 
     /**
      * @function ObjectId
