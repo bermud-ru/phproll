@@ -28,8 +28,11 @@ echo "Post-update scripting ..."
 # [ -f $js ] && cp -n $js ./public/js/
 #done
 
+export SELinux=$(sestatus)
+if [ ! -z "$SELinux" ]; then
 printf "WEB context resotre\n"
 chcon -R -t httpd_sys_content_t $serverRoot
 semanage fcontext -a -t httpd_sys_content_t "${serverRoot}/(/.*)?"
+fi
 
 exit

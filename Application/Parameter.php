@@ -64,6 +64,8 @@ class Parameter implements \JsonSerializable
                         return isset($_FILES[$this->name]);
                     };
                     break;
+                case '?array':
+                    $this->nullable = true;
                 case 'array':
                     $this->validator = function () {
                         return is_string($this->value) ? preg_match('/^\s*\[.*\]\s*$/', $this->value) : is_array($this->value);
@@ -87,6 +89,8 @@ class Parameter implements \JsonSerializable
                 case 'int':
                     $this->validator = '/^[+-]?\d+$/';
                     break;
+                case '?json':
+                    $this->nullable = true;
             }
         }
 
