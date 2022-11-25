@@ -448,10 +448,6 @@ class PDA
 
         $prepare = function (array $keys, array $opt) use(&$self, $table): \PDOStatement
         {
-//            return $self->prepare("INSERT INTO $table (".implode(',', $keys)
-//                .') VALUES ('.implode(',', array_map(function($v){return ':'.str_replace('.','_', $v); }, $keys)).') RETURNING *',
-//                $opt['PDO'] ?? $self->opt);
-
             $ins = implode(',', array_map(function ($v) { return ':'.str_replace('.','_', $v); }, $keys));
 
             if (isset($opt['UPSERT'])) {
@@ -545,6 +541,30 @@ class PDA
         if (!empty($w)) $w = " WHERE $w";
         $stmt = $this->prepare("UPDATE $table SET $f $w RETURNING *", $this->opt);
         foreach ($params as $k=>$v) {
+            $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
+        }
+
+        $this->status = $stmt->execute();
+        return $this->status ? $stmt : null;
+    }
+
+    /**
+     * PDO delete helper
+     * @function delete
+     *
+     * @param string $table
+     * @param string | array $where
+     * @param array $opt
+     * @return \PDOStatement | null
+     */
+    public function delete(string $table, $where = null, $opt = []): ?\PDOStatement
+    {
+        if ($where instanceof \Application\Parameter) $where = $where->getValue();
+        if ($opt instanceof \Application\Parameter) $opt = $opt->getValue();
+        $w = $this->where($where, $opt);
+        if (!empty($w)) $w = " WHERE $w";
+        $stmt = $this->prepare("DELETE FROM $table $w RETURNING *", $this->opt);
+        foreach (is_string($where) ? $opt : $where as $k=>$v) {
             $stmt->bindValue(':'.$k, \Application\Parameter::ize($v, \PDO::NULL_EMPTY_STRING | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY));
         }
 
