@@ -161,7 +161,7 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @param bool $excludeEmpty
      * @return mixed
      */
-    public function get ($fields=null, $default=null, bool $excludeEmpty=false)
+    public function get ($fields=null, $default=null, $excludeEmpty=false)
     {
         if (is_string($fields)) {
             return $this->getParam($fields, $this->__json, $default);
@@ -174,10 +174,10 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
             return $fields;
         }
 
-        return $excludeEmpty && $this->__assoc ? array_filter($this->__json, function($i) {
-            $v = \Application\Parameter::ize($i,\PDO::NULL_EMPTY_STRING);
-            return !is_null($v) && $v !== '';
-        }) : $this->__json;
+        return boolval($excludeEmpty) && $this->__assoc ? array_filter($this->__json, function($v, $k) use($excludeEmpty) {
+            $p = \Application\Parameter::ize($v,\PDO::NULL_EMPTY_STRING);
+            return !is_null($p) && $p !== '' ? true : (is_array($excludeEmpty) ? in_array($k, $excludeEmpty) : false);
+        }, \ARRAY_FILTER_USE_BOTH) : $this->__json;
     }
 
     /**
@@ -253,7 +253,7 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @param null $default
      * @return array|callable|\stdClass|string|null
      */
-    public function &__invoke(bool $excludeEmpty=false, $fields=null, $default=null )
+    public function &__invoke($excludeEmpty=false, $fields=null, $default=null )
     {
         $result = $this->get($fields, $default, $excludeEmpty);
         return $result;
