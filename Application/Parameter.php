@@ -449,11 +449,13 @@ class Parameter implements \JsonSerializable
                 break;
             case '?float':
             case 'float':
-                $val =  $this->__toFloat($opt);
+                $val = $this->__toFloat($opt);
+//                $val = (is_null($val) && $this->type === '?float') ? null : floatval(0);
                 break;
             case '?int':
             case 'int':
                 $val = $this->__toInt($opt);
+//                $val = (is_null($val) && $this->type === '?int') ? null : intval(0);
                 break;
             case 'string':
             default:
