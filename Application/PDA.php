@@ -13,6 +13,7 @@
  */
 namespace Application;
 
+#[\AllowDynamicProperties]
 class PDA
 {
     const FILTER_DEFAULT = ['page'=>0,'limit'=>100];
@@ -49,7 +50,6 @@ class PDA
 
         try {
             $this->pdo = new \PDO($dsn, $opt['username'] ?? null, $opt['passwd'] ?? null, $opt['PDO'] ?? $this->opt);
-           // $this->pdo->setAttribute(\PDO::ATTR_ORACLE_NULLS, \PDO::NULL_EMPTY_STRING  | self::OBJECT_STRINGIFY | self::ARRAY_STRINGIFY);
         } catch (\Exception $e) {
             throw new \Exception(__CLASS__.": ".$e->getMessage());
         }

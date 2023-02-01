@@ -13,7 +13,7 @@
 
 namespace Application;
 
-
+#[\AllowDynamicProperties]
 class Jsonb implements \JsonSerializable, \Countable, \Iterator
 {
     const JSON_ALWAYS = 0;

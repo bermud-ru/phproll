@@ -13,6 +13,7 @@
 
 namespace Application;
 
+#[\AllowDynamicProperties]
 class Parameter implements \JsonSerializable
 {
     protected $owner = null;
