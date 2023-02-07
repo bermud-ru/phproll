@@ -17,18 +17,22 @@ namespace Application;
 
 if (version_compare(PHP_VERSION, "5.3.0", '<')) { declare(ticks = 1); }
 
-#[AllowDynamicProperties]
+if (!defined('SIGSTKFLT')) { define('SIGSTKFLT', 16); }
+if (!defined('SIGPOLL')) { define('SIGPOLL', 29); }
+if (!defined('SIGPWR')) { define('SIGPWR', 30); }
+
+#[\AllowDynamicProperties]
 abstract class CLI
 {
     const SYSTEM_SIGNALS = [
-        'SIGHUP' => SIGHUP, 'SIGINT'=> SIGINT , 'SIGQUIT' => SIGQUIT, 'SIGILL' => SIGILL,
-        'SIGTRAP' => SIGTRAP, 'SIGABRT5' => SIGABRT, 'SIGBUS' => SIGBUS, 'SIGFPE' => SIGFPE,
-        'SIGKILL' => SIGKILL, 'SIGUSR1' => SIGUSR1, 'SISEGV' => SIGSEGV, 'SIGUSR2' => SIGUSR2,
-        'SIGPIPE' => SIGPIPE, 'SIGALRM' => SIGALRM, 'SIGTERM' => SIGTERM, 'SIGSTKFLT' => SIGSTKFLT,
-        'SIGCHLD' => SIGCHLD, 'SIGCONT' => SIGCONT, 'SIGSTOP' => SIGSTOP, 'SIGTSTP' => SIGTSTP,
-        'SIGTTIN' => SIGTTIN,  'SIGTTOU' => SIGTTOU, 'SIGURG' => SIGURG, 'SIGXCPU' => SIGXCPU,
-        'SIGXFSZ' => SIGXFSZ, 'SIGVTALRM' => SIGVTALRM, 'SIGPROF' => SIGPROF, 'SIGWINCH' => SIGWINCH,
-        'SIGIO' => SIGPOLL, 'SIGPWR' => SIGPWR, 'SIGSYS' => SIGSYS,
+        'SIGHUP' => \SIGHUP, 'SIGINT'=> \SIGINT , 'SIGQUIT' => \SIGQUIT, 'SIGILL' => \SIGILL,
+        'SIGTRAP' => \SIGTRAP, 'SIGABRT5' => \SIGABRT, 'SIGBUS' => \SIGBUS, 'SIGFPE' => \SIGFPE,
+        'SIGKILL' => \SIGKILL, 'SIGUSR1' => \SIGUSR1, 'SISEGV' => \SIGSEGV, 'SIGUSR2' => \SIGUSR2,
+        'SIGPIPE' => \SIGPIPE, 'SIGALRM' => \SIGALRM, 'SIGTERM' => \SIGTERM, 'SIGSTKFLT' => \SIGSTKFLT,
+        'SIGCHLD' => \SIGCHLD, 'SIGCONT' => \SIGCONT, 'SIGSTOP' => \SIGSTOP, 'SIGTSTP' => \SIGTSTP,
+        'SIGTTIN' => \SIGTTIN,  'SIGTTOU' => \SIGTTOU, 'SIGURG' => \SIGURG, 'SIGXCPU' => \SIGXCPU,
+        'SIGXFSZ' => \SIGXFSZ, 'SIGVTALRM' => \SIGVTALRM, 'SIGPROF' => SIGPROF, 'SIGWINCH' => \SIGWINCH,
+        'SIGIO' => \SIGPOLL, 'SIGPWR' => \SIGPWR, 'SIGSYS' => \SIGSYS,
 //        'SIGRTMIN' => 34,
 //        'SIGRTMIN+1' => 35, 'SIGRTMIN+2' => 36, 'SIGRTMIN+3' => 37, 'SIGRTMIN+4' => 38,
 //        'SIGRTMIN+5' => 39, 'SIGRTMIxN+6' => 40, 'SIGRTMIN+7' => 41, 'SIGRTMIN+8' => 42,
@@ -214,7 +218,7 @@ abstract class CLI
      */
     final function fork(int $max = 1, int $opt = \Application\CLI::FORK_DEFAULT, int $timeout=0)
     {
-        if (defined('SINGLETON') && SINGLETON) return $this->job();
+        if (defined('SINGLETON') && \SINGLETON) return $this->job();
 
         if (version_compare(PHP_VERSION, "5.3.0", '>=')) {
 //            pcntl_signal_dispatch();
