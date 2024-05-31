@@ -80,7 +80,7 @@ class PHPRoll extends \Application\Request
         } else if (strpos($_SERVER['CONTENT_TYPE'], 'json') !== FALSE) {
             $params = json_decode($this->RAWRequet(), true);
         } else {
-            mb_parse_str($this->RAWRequet(), $params);
+            mb_parse_str($this->RAWRequet() ?? '', $params);
         }
 
         $this->params = new \Application\Jsonb($params, ['owner'=> $this, 'assoc'=>true, 'mode'=>\Application\Jsonb::JSON_ALWAYS]);

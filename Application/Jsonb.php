@@ -80,7 +80,7 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @method \Countable
      * @return mixed
      */
-    public function count()
+    public function count(): int
     {
         return $this->__assoc ? count($this->__json) :  0;
     }
@@ -89,7 +89,8 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @method \Iterator
      * @return mixed
      */
-    public function rewind() {
+    public function rewind(): void 
+    {
         reset($this->__json);
     }
 
@@ -97,7 +98,8 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @method \Iterator
      * @return mixed
      */
-    public function current() {
+    public function current(): mixed
+    {
         return \Application\Parameter::ize(current($this->__json), \PDO::NULL_EMPTY_STRING);
     }
 
@@ -105,11 +107,13 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @method \Iterator
      * @return mixed
      */
-    public function key() {
+    public function key(): mixed
+    {
         return (string) key($this->__json);
     }
 
-    public function next() {
+    public function next(): void 
+    {
         next($this->__json);
     }
 
@@ -117,7 +121,8 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      * @method \Iterator
      * @return mixed
      */
-    public function valid() {
+    public function valid(): bool 
+    {
         return key($this->__json) !== null;
     }
 
@@ -319,7 +324,8 @@ class Jsonb implements \JsonSerializable, \Countable, \Iterator
      *
      * @return mixed|null
      */
-    public function jsonSerialize()
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize():mixed
     {
         return $this->__assoc ? $this->__json : json_decode($this->__json, true);
     }

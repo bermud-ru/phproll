@@ -395,7 +395,8 @@ class Parameter implements \JsonSerializable
      * \JsonSerializable interface release
      * @return mixed|null
      */
-    public function jsonSerialize()
+    #[\ReturnTypeWillChange] 
+    public function jsonSerialize(): mixed
     {
 //        return self::ize($this->value);
         return $this->getValue(\PDO::NULL_NATURAL | \Application\PDA::ADDSLASHES);
