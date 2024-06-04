@@ -22,6 +22,7 @@ namespace Application;
  *
  * @package Application
  */
+#[AllowDynamicProperties]
 class PHPRoll extends \Application\Request
 {
     const FRAMEWORK = 'PHPRoll';

@@ -46,8 +46,9 @@ class PDA
      */
     public function __construct($dsn, array $opt = [])
     {
+     
         if (empty($dsn)) throw new \Exception('\Application\PDA - необходимо указать параметры подключения!');
-
+      
         try {
             $this->pdo = new \PDO($dsn, $opt['username'] ?? null, $opt['passwd'] ?? null, $opt['PDO'] ?? $this->opt);
         } catch (\Exception $e) {
@@ -61,9 +62,10 @@ class PDA
      * @return string|null
      *
      */
-    public static function pg_escape_string(string $s): ?string
+    public static function pg_escape_string(string $s, \PgSql\Connection $con = null): ?string
     {
-       return (function_exists('pg_escape_string')) ? pg_escape_string($s) : str_replace( "'", "''" , $s);
+       //return (function_exists('pg_escape_string')) ? pg_escape_string($con, $s) : str_replace( "'", "''" , $s);
+       return str_replace( "'", "''" , $s);
     }
 
     /**

@@ -13,6 +13,7 @@
 
 namespace Application;
 
+#[AllowDynamicProperties]
 abstract class Request
 {
     public $cfg = null;

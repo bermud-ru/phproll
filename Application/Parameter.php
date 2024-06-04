@@ -190,28 +190,45 @@ class Parameter implements \JsonSerializable
      */
     protected function arguments(callable &$fn): array
     {
-        return array_map(function (&$item) {
+        return array_map(function ($item) {
+            // switch (strtolower($item->name)) {
+            //     case 'owner':
+            //         $item->value = &$this->owner;
+            //         break;
+            //     case 'self':
+            //         $item->value = &$this;
+            //         break;
+            //     case 'params':
+            //         $item->value = &$this->params;
+            //         break;
+            //     case 'raw':
+            //         $item->value = &$this->raw;
+            //         break;
+            //     default:
+            //         $name = explode(self::KEY_SEPARATOR, strtolower($this->name));
+            //         if (strtolower($item->name) == end($name) || (!empty($this->alias) && strtolower($item->name) == strtolower(\Application\PDA::field($this->alias))) ) {
+            //             $item->value = &$this->value;
+            //         } else {
+            //             $item->value = null;
+            //         }
+            // } return $item->value;
             switch (strtolower($item->name)) {
                 case 'owner':
-                    $item->value = &$this->owner;
-                    break;
+                    return $this->owner;
                 case 'self':
-                    $item->value = &$this;
-                    break;
+                    return $this;
                 case 'params':
-                    $item->value = &$this->params;
-                    break;
+                    return $this->params;
                 case 'raw':
-                    $item->value = &$this->raw;
-                    break;
+                    return $this->raw;
                 default:
                     $name = explode(self::KEY_SEPARATOR, strtolower($this->name));
                     if (strtolower($item->name) == end($name) || (!empty($this->alias) && strtolower($item->name) == strtolower(\Application\PDA::field($this->alias))) ) {
-                        $item->value = &$this->value;
+                        return $this->value;
                     } else {
-                        $item->value = null;
+                        return null;
                     }
-            } return $item->value;
+            } return null;
         }, (new \ReflectionFunction($fn))->getParameters());
     }
 
